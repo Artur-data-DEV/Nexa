@@ -1,0 +1,36 @@
+# OS junk
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Node
+**/node_modules/
+**/dist/
+**/dist-ssr/
+**/.cache/
+**/coverage/
+**/tmp/
+
+# PHP / Composer
+**/vendor/
+**/storage/
+**/bootstrap/cache/
+**/public/hot
+**/public/build
+**/.phpunit.result.cache
+**/.phpunit.cache
+
+# Env files
+.env
+.env.*
+**/.env
+**/.env.*
+
+# IDE
+**/.idea/
+**/.vscode/
+**/.fleet/
+
+# Trae workspace artifacts
+.trae/
+
