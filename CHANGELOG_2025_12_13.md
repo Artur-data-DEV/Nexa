@@ -55,12 +55,15 @@ Configured local environment variables to resolve Google Authentication redirect
 
 ### Backend (`Nexa_BackEnd/.env`)
 - Updated `GOOGLE_REDIRECT_URI` to `http://localhost:5001/auth/google/callback`.
-- Updated `FRONTEND_URL` and `APP_FRONTEND_URL` to `http://localhost:5001`.
+- Updated `FRONTEND_URL` and `APP_FRONTEND_URL` to `http://localhost:5000`.
 - Updated `APP_URL` to `http://localhost:8000`.
+- **WebSocket Fix**: Updated `REVERB_HOST` to `127.0.0.1` to resolve backend connection failures (cURL error 7).
+- **Queue Configuration**: Changed `QUEUE_CONNECTION` to `sync` to ensure immediate message delivery without running a queue worker.
 
 ### Frontend (`Nexa_FrontEnd/.env`)
 - Added Laravel Reverb configuration keys (`VITE_REVERB_APP_KEY`, `VITE_REVERB_HOST`, `VITE_REVERB_PORT`, `VITE_REVERB_SCHEME`).
 - Verified `VITE_BACKEND_URL` points to `http://localhost:8000`.
+- **WebSocket Fix**: Updated `VITE_REVERB_HOST` to `127.0.0.1` to align with backend configuration.
 
 ## Database Configuration (Local Development)
 Addressed SQLite compatibility issues in migrations to enable local development setup (`migrate:fresh`).
@@ -83,5 +86,16 @@ Addressed SQLite compatibility issues in migrations to enable local development 
 
 ## Server Status
 - **Backend**: Running on `http://localhost:8000` (PHP Artisan Serve).
-- **Frontend**: Running on `http://localhost:5001` (Vite).
+- **Frontend**: Running on `http://localhost:5000` (Vite).
 - **WebSocket**: Running on `ws://localhost:8080` (Laravel Reverb).
+
+## Bug Fixes & Improvements (Brand Login & Subscription)
+Resolved critical issues preventing brand login and subscription plan checkout in the local environment.
+
+### Backend Fixes
+- **Brand Login Error**: Fixed an `Internal Server Error` in `BrandProfileController.php` caused by unnecessary `json_decode` on the `languages` field (already cast to array by model).
+- **User Factory**: Updated `UserFactory.php` to initialize `languages` as an array instead of a string, aligning with model casting.
+- **Subscription Plans**: Fixed "Subscribe" button inactivity by seeding missing Stripe Product/Price IDs in the `subscription_plans` table using the `stripe:setup-prices` command.
+- **CORS Configuration**: Updated `cors.php` to replace wildcard `allowed_origins` with explicit local URLs (`http://localhost:5001`, etc.) to fix WebSocket connection errors ("offline wifi icon").
+- **Broadcast Auth Fix**: Updated `BroadcastServiceProvider.php` to register routes with `api` prefix and `auth:sanctum` middleware, resolving 404/401 errors during chat WebSocket authentication.
+- **Debug Logging**: Enabled `APP_DEBUG=true` in `.env` to ensure proper error logging.
