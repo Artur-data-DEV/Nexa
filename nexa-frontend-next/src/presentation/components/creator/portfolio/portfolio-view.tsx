@@ -22,6 +22,7 @@ import { Skeleton } from "@/presentation/components/ui/skeleton"
 import { Camera, Plus, Trash2, Edit2, Link as LinkIcon, Upload, X, BarChart3, Image as ImageIcon, Video } from "lucide-react"
 import { toast } from "sonner"
 import { PortfolioItem, PortfolioStats } from "@/domain/entities/portfolio"
+import Image from "next/image"
 
 // Setup dependencies
 const portfolioRepository = new ApiPortfolioRepository(api)
@@ -306,7 +307,7 @@ export default function PortfolioView() {
                         {portfolio.items.map((item) => (
                             <div key={item.id} className="group relative aspect-square bg-muted rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all">
                                 {item.file_type === 'image' ? (
-                                    <img 
+                                    <Image 
                                         src={item.file_url} 
                                         alt={item.title || ""} 
                                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
@@ -491,7 +492,7 @@ export default function PortfolioView() {
                                 {uploadPreviews.map((preview, i) => (
                                     <div key={i} className="relative aspect-square bg-muted rounded-md overflow-hidden group">
                                         {preview.type === 'image' ? (
-                                            <img src={preview.url} className="w-full h-full object-cover" />
+                                            <Image src={preview.url} className="w-full h-full object-cover" alt="Preview Image" />
                                         ) : (
                                             <video src={preview.url} className="w-full h-full object-cover" />
                                         )}

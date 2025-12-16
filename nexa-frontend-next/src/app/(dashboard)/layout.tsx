@@ -32,6 +32,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/presentation/components/u
 import { useAuth } from "@/presentation/contexts/auth-provider"
 import { AuthGuard } from "@/presentation/components/auth/auth-guard"
 import { EchoProvider } from "@/presentation/contexts/echo-provider"
+import { NotificationProvider } from "@/presentation/contexts/notification-provider"
+import { NotificationBell } from "@/presentation/components/notification-bell"
 import { Logo } from "@/presentation/components/logo"
 import {
   Sheet,
@@ -76,119 +78,118 @@ export default function DashboardLayout({
   return (
     <AuthGuard>
       <EchoProvider>
-      <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
-        <div className="hidden border-r bg-muted/40 md:block">
-          <div className="flex h-full max-h-screen flex-col gap-2">
-            <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-              <Link href="/" className="flex items-center gap-2 font-semibold">
-                <Logo
-                  width={90}
-                  height={30}
-                  className="w-24"
-                  priority
-                />
-              </Link>
-              <Button variant="outline" size="icon" className="ml-auto h-8 w-8">
-                <Bell className="h-4 w-4" />
-                <span className="sr-only">Toggle notifications</span>
-              </Button>
+        <NotificationProvider>
+          <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+            <div className="hidden border-r bg-muted/40 md:block">
+              <div className="flex h-full max-h-screen flex-col gap-2">
+                <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+                  <Link href="/" className="flex items-center gap-2 font-semibold">
+                    <Logo
+                      width={90}
+                      height={30}
+                      className="w-24"
+                      preload={true}
+                    />
+                  </Link>
+                </div>
+                <div className="flex-1">
+                  <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
+                    {navItems.map((item) => {
+                      const Icon = item.icon
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
+                            pathname === item.href
+                              ? "bg-muted text-primary"
+                              : "text-muted-foreground"
+                          }`}
+                        >
+                          <Icon className="h-4 w-4" />
+                          {item.name}
+                        </Link>
+                      )
+                    })}
+                  </nav>
+                </div>
+              </div>
             </div>
-            <div className="flex-1">
-              <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-                {navItems.map((item) => {
-                  const Icon = item.icon
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
-                        pathname === item.href
-                          ? "bg-muted text-primary"
-                          : "text-muted-foreground"
-                      }`}
-                    >
-                      <Icon className="h-4 w-4" />
-                      {item.name}
-                    </Link>
-                  )
-                })}
-              </nav>
+            <div className="flex flex-col">
+              <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
+                <div className="w-full flex-1 flex items-center gap-3">
+                  <div className="md:hidden">
+                    <Sheet>
+                      <SheetTrigger asChild>
+                        <Button variant="outline" size="icon">
+                          <Menu className="h-4 w-4" />
+                        </Button>
+                      </SheetTrigger>
+                      <SheetContent side="left" className="w-72 p-0">
+                        <SheetHeader className="p-4 border-b">
+                          <SheetTitle>Navegação</SheetTitle>
+                        </SheetHeader>
+                        <nav className="grid gap-1 p-2 text-sm font-medium">
+                          {navItems.map((item) => {
+                            const Icon = item.icon
+                            return (
+                              <SheetClose asChild key={item.href}>
+                                <Link
+                                  href={item.href}
+                                  className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
+                                    pathname === item.href
+                                      ? "bg-muted text-primary"
+                                      : "text-muted-foreground"
+                                  }`}
+                                >
+                                  <Icon className="h-4 w-4" />
+                                  {item.name}
+                                </Link>
+                              </SheetClose>
+                            )
+                          })}
+                        </nav>
+                      </SheetContent>
+                    </Sheet>
+                  </div>
+                  <h1 className="font-semibold text-lg">Dashboard</h1>
+                </div>
+                <NotificationBell />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="secondary" size="icon" className="rounded-full">
+                      <Avatar>
+                          <AvatarImage src={user?.avatar} />
+                          <AvatarFallback>{user?.name?.substring(0,2).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      <span className="sr-only">Toggle user menu</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem>
+                        <User className="mr-2 h-4 w-4" />
+                        Perfil
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                        <Settings className="mr-2 h-4 w-4" />
+                        Configurações
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={logout} className="text-destructive">
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Sair
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </header>
+              <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+                {children}
+              </main>
             </div>
           </div>
-        </div>
-        <div className="flex flex-col">
-          <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
-            <div className="w-full flex-1 flex items-center gap-3">
-              <div className="md:hidden">
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" size="icon">
-                      <Menu className="h-4 w-4" />
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side="left" className="w-72 p-0">
-                    <SheetHeader className="p-4 border-b">
-                      <SheetTitle>Navegação</SheetTitle>
-                    </SheetHeader>
-                    <nav className="grid gap-1 p-2 text-sm font-medium">
-                      {navItems.map((item) => {
-                        const Icon = item.icon
-                        return (
-                          <SheetClose asChild key={item.href}>
-                            <Link
-                              href={item.href}
-                              className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
-                                pathname === item.href
-                                  ? "bg-muted text-primary"
-                                  : "text-muted-foreground"
-                              }`}
-                            >
-                              <Icon className="h-4 w-4" />
-                              {item.name}
-                            </Link>
-                          </SheetClose>
-                        )
-                      })}
-                    </nav>
-                  </SheetContent>
-                </Sheet>
-              </div>
-              <h1 className="font-semibold text-lg">Dashboard</h1>
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="secondary" size="icon" className="rounded-full">
-                  <Avatar>
-                      <AvatarImage src={user?.avatar} />
-                      <AvatarFallback>{user?.name?.substring(0,2).toUpperCase()}</AvatarFallback>
-                  </Avatar>
-                  <span className="sr-only">Toggle user menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                    <User className="mr-2 h-4 w-4" />
-                    Perfil
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                    <Settings className="mr-2 h-4 w-4" />
-                    Configurações
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={logout} className="text-destructive">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Sair
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </header>
-          <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
-            {children}
-          </main>
-        </div>
-      </div>
+        </NotificationProvider>
       </EchoProvider>
     </AuthGuard>
   )
