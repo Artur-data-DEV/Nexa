@@ -1,0 +1,44 @@
+"use client"
+
+import { Play } from "lucide-react"
+import { Button } from "@/presentation/components/ui/button"
+import Link from "next/link"
+
+export const Hero = () => {
+    return (
+        <section className="relative overflow-hidden mt-[88px]">
+            <div className="absolute inset-0 bg-gradient-to-br from-pink-500/10 via-purple-500/10 to-orange-500/10"></div>
+            <div className="relative max-w-7xl mx-auto px-4 md:px-6 py-12 md:py-20">
+                <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+                    <div className="space-y-6 md:space-y-8 text-center lg:text-left">
+                        <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-foreground leading-tight">
+                            A nova era das colaborações já começou. <br/>
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600">
+                                Sua nova central de conexões entre criadores e marcas.
+                            </span>
+                        </h1>
+                        <p className="text-lg md:text-xl text-muted-foreground max-w-lg mx-auto lg:mx-0">
+                            Todos os dias, novas marcas, campanhas e possibilidades esperando por você na NEXA.
+                        </p>
+                        <p className="text-lg md:text-xl text-muted-foreground max-w-lg mx-auto lg:mx-0">
+                            Fature R$ 5.000+ Por Mês Criando Vídeos de até 60 Segundos! sem precisar ter seguidores ou se expor, com as conexões certas. 
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                            <Button variant="outline" size="lg" className="px-8 w-full sm:w-auto rounded-full" asChild>
+                                <Link href="/signup/brand">
+                                    <Play className="mr-2 h-4 w-4" />
+                                    Conhecer a plataforma
+                                </Link>
+                            </Button>
+                        </div>
+                    </div>
+                    <div className="relative order-first lg:order-last">
+                        <div className="w-[280px] h-64 sm:w-96 sm:h-96 lg:w-[550px] lg:h-[550px] mx-auto flex items-center justify-center">
+                            <img src="/assets/landing/hero-img.png" alt="Hero-Image" className="w-full h-full object-contain" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    )
+}
