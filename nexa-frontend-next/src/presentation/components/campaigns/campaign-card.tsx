@@ -5,6 +5,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/presentation/compon
 import { Badge } from "@/presentation/components/ui/badge"
 import { Button } from "@/presentation/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/presentation/components/ui/avatar"
+import Image from "next/image"
 
 interface CampaignCardProps {
   campaign: Campaign
@@ -16,10 +17,11 @@ export function CampaignCard({ campaign }: CampaignCardProps) {
       <CardHeader className="p-0">
         <div className="relative h-32 bg-muted w-full">
            {campaign.image_url ? (
-             <img 
+             <Image 
                src={campaign.image_url} 
                alt={campaign.title} 
-               className="w-full h-full object-cover"
+               fill
+               className="object-cover"
              />
            ) : (
              <div className="w-full h-full bg-gradient-to-r from-pink-500 to-purple-600 opacity-20" />

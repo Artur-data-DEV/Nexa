@@ -1,64 +1,41 @@
-import React, { useEffect, useRef } from "react";
-import intlTelInput from "intl-tel-input";
-import "intl-tel-input/build/css/intlTelInput.css";
-import { Input } from "./input";
-import { cn } from "@/lib/utils";
+import React, { forwardRef } from "react"
+import PhoneInputFromLib from "react-phone-number-input"
+import "react-phone-number-input/style.css"
+import { Input } from "@/presentation/components/ui/input"
+import { cn } from "@/lib/utils"
 
-interface PhoneInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onCountryChange?: (country: string) => void;
+interface PhoneInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange" | "value"> {
+  value: string
+  onChange: (value: string | undefined) => void
 }
 
-export const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
-  ({ className, value, onChange, onCountryChange, ...props }, ref) => {
-    const inputRef = useRef<HTMLInputElement>(null);
-    const itiRef = useRef<any>(null);
-
-    useEffect(() => {
-      if (inputRef.current) {
-        itiRef.current = intlTelInput(inputRef.current, {
-          initialCountry: "br",
-          loadUtils: () => import("intl-tel-input/utils"),
-          separateDialCode: true,
-        });
-
-        inputRef.current.addEventListener("countrychange", () => {
-            if (onCountryChange) {
-                const countryData = itiRef.current?.getSelectedCountryData();
-                onCountryChange(countryData?.iso2 || "br");
-            }
-        });
-      }
-
-      return () => {
-        itiRef.current?.destroy();
-      };
-    }, []);
-
-    // Sync external value changes if needed (handling controlled input might need more care with intl-tel-input)
-    
+const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
+  ({ className, value, onChange, ...props }, ref) => {
     return (
-      <div className="relative">
-        <Input
-          ref={(node) => {
-            // Maintain both refs
-            if (typeof ref === 'function') {
-                ref(node);
-            } else if (ref) {
-                (ref as React.MutableRefObject<HTMLInputElement | null>).current = node;
-            }
-            (inputRef as React.MutableRefObject<HTMLInputElement | null>).current = node;
-          }}
-          type="tel"
-          className={cn("pl-14", className)} // Adjust padding for flag
-          value={value}
-          onChange={onChange}
-          {...props}
-        />
-      </div>
-    );
+      <PhoneInputFromLib
+        international
+        defaultCountry="BR"
+        value={value}
+        onChange={onChange}
+        inputComponent={Input}
+        /**
+         * We need to handle the ref manually because react-phone-number-input
+         * might pass it differently or we want to forward it to the underlying Input.
+         * However, react-phone-number-input forwards ref to the input component.
+         */
+        // ref={ref} // react-phone-number-input handles ref forwarding if using inputComponent?
+        // Let's verify standard usage. Usually it just works.
+        className={cn("flex", className)}
+        numberInputProps={{
+            className: cn("rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50", className), // styling the input itself
+            ref: ref, // Forward ref to the input
+            ...props
+        }}
+      />
+    )
   }
-);
+)
 
-PhoneInput.displayName = "PhoneInput";
+PhoneInput.displayName = "PhoneInput"
+
+export { PhoneInput }

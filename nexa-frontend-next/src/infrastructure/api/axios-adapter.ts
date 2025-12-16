@@ -30,6 +30,15 @@ export class AxiosAdapter implements HttpClient {
         if (token) {
           config.headers.Authorization = `Bearer ${token}`
         }
+
+        // Add Socket ID for broadcasting toOthers()
+        if (typeof window !== "undefined" && (window as any).Echo) {
+             const socketId = (window as any).Echo.socketId();
+             if (socketId) {
+                 config.headers['X-Socket-Id'] = socketId;
+             }
+        }
+
         return config
       },
       (error) => Promise.reject(error)

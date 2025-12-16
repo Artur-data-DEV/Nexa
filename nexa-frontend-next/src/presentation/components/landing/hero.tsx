@@ -3,6 +3,7 @@
 import { Play } from "lucide-react"
 import { Button } from "@/presentation/components/ui/button"
 import Link from "next/link"
+import Image from "next/image"
 
 export const Hero = () => {
     return (
@@ -33,8 +34,14 @@ export const Hero = () => {
                         </div>
                     </div>
                     <div className="relative order-first lg:order-last">
-                        <div className="w-[280px] h-64 sm:w-96 sm:h-96 lg:w-[550px] lg:h-[550px] mx-auto flex items-center justify-center">
-                            <img src="/assets/landing/hero-img.png" alt="Hero-Image" className="w-full h-full object-contain" />
+                        <div className="w-[280px] h-64 sm:w-96 sm:h-96 lg:w-[550px] lg:h-[550px] mx-auto flex items-center justify-center relative">
+                            <Image 
+                                src="/assets/landing/hero-img.png" 
+                                alt="Hero-Image" 
+                                fill
+                                className="object-contain" 
+                                priority
+                            />
                         </div>
                     </div>
                 </div>

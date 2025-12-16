@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { ArrowLeft, Calendar, MapPin, DollarSign, Building2 } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 
 import { GetCampaignByIdUseCase } from "@/application/use-cases/get-campaign-by-id.use-case"
 import { ApiCampaignRepository } from "@/infrastructure/repositories/campaign-repository"
@@ -100,10 +101,11 @@ export default function CampaignDetailsPage() {
       {/* Header Image & Info */}
       <div className="relative w-full h-64 md:h-80 bg-muted rounded-xl overflow-hidden">
         {campaign.image_url ? (
-             <img 
+             <Image 
                src={campaign.image_url} 
                alt={campaign.title} 
-               className="w-full h-full object-cover"
+               fill
+               className="object-cover"
              />
            ) : (
              <div className="w-full h-full bg-gradient-to-r from-pink-500 to-purple-600 opacity-20" />

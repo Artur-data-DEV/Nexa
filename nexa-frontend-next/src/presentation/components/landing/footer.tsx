@@ -1,10 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { useTheme } from "next-themes"
+import { Logo } from "@/presentation/components/logo"
 
 export const Footer = () => {
-  const { theme } = useTheme()
 
   return (
     <footer className="bg-background text-foreground py-8 md:py-12 border-t">
@@ -12,13 +11,11 @@ export const Footer = () => {
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
           
           <div className="sm:col-span-2 lg:col-span-1">
-            <div className="text-xl md:text-2xl font-bold mb-4">
-                 <img 
-                    src={theme === 'dark' ? "/assets/light-logo.png" : "/assets/dark-logo.png"} 
-                    alt="NEXA UGC" 
-                    width={90} 
-                    className="w-30 h-10" 
-                 />
+            <div className="text-xl md:text-2xl font-bold mb-4 relative h-10 w-32">
+                <Logo 
+                  fill
+                  className="object-contain object-left"
+                />
             </div>
             <p className="text-gray-400 text-sm">
               Construindo o maior ecossistema de UGC da América Latina, uma parceria autêntica por vez.

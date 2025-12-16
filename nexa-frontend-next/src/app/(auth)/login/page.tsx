@@ -34,6 +34,7 @@ import { LoginUseCase } from "@/application/use-cases/login.use-case"
 import { ApiAuthRepository } from "@/infrastructure/repositories/auth-repository"
 import { api } from "@/infrastructure/api/axios-adapter"
 import { useAuth } from "@/presentation/contexts/auth-provider"
+import { Logo } from "@/presentation/components/logo"
 
 // Dependency Injection
 const authRepository = new ApiAuthRepository(api)
@@ -74,7 +75,7 @@ export default function LoginPage() {
     try {
       const response = await loginUseCase.execute(data)
       login(response.token, response.user)
-      
+
       router.push("/dashboard")
     } catch (error: any) {
       console.error(error)
@@ -90,7 +91,12 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted/50 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Bem-vindo de volta</CardTitle>
+          <div className="flex items-center justify-between gap-4">
+            <CardTitle className="text-2xl font-bold">
+              Bem-vindo(a) de volta à 
+            </CardTitle>
+            <Logo width={100} height={100} />
+          </div>
           <CardDescription>
             Entre na sua conta para acessar o painel.
           </CardDescription>
@@ -124,26 +130,26 @@ export default function LoginPage() {
                   </FormItem>
                 )}
               />
-              
+
               <div className="flex items-center justify-between">
                 <FormField
-                    control={form.control}
-                    name="remember"
-                    render={({ field }) => (
-                        <div className="flex items-center space-x-2">
-                        <Checkbox 
-                            id="remember" 
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                        />
-                        <label
-                            htmlFor="remember"
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                            Lembrar de mim
-                        </label>
-                        </div>
-                    )}
+                  control={form.control}
+                  name="remember"
+                  render={({ field }) => (
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="remember"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                      <label
+                        htmlFor="remember"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        Lembrar de mim
+                      </label>
+                    </div>
+                  )}
                 />
                 <Link
                   href="/forgot-password"
@@ -174,18 +180,18 @@ export default function LoginPage() {
           </Form>
         </CardContent>
         <CardFooter className="flex flex-col gap-2 justify-center text-center">
-            <p className="text-sm text-muted-foreground">
-                Não tem uma conta?
-            </p>
-            <div className="flex gap-4 text-sm">
-                <Link href="/signup/creator" className="text-primary hover:underline">
-                    Sou Criador
-                </Link>
-                <span className="text-muted-foreground">•</span>
-                <Link href="/signup/brand" className="text-primary hover:underline">
-                    Sou Marca
-                </Link>
-            </div>
+          <p className="text-sm text-muted-foreground">
+            Não tem uma conta?
+          </p>
+          <div className="flex gap-4 text-sm">
+            <Link href="/signup/creator" className="text-primary hover:underline">
+              Sou Criador
+            </Link>
+            <span className="text-muted-foreground">•</span>
+            <Link href="/signup/brand" className="text-primary hover:underline">
+              Sou Marca
+            </Link>
+          </div>
         </CardFooter>
       </Card>
     </div>

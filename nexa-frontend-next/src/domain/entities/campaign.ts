@@ -21,7 +21,7 @@ export interface Campaign {
   brand_id?: number
   type?: string
   category?: string
-  status: 'pending' | 'approved' | 'rejected' | 'archived'
+  status: 'pending' | 'active' | 'approved' | 'rejected' | 'archived'
   created_at: string
   approved_creators?: number
   attachments?: string[]

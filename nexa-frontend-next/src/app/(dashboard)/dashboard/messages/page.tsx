@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
-import { Send } from "lucide-react"
+import { useEffect, useState, useRef, useCallback, useLayoutEffect } from "react"
+import { Menu, Send, Check, CheckCheck, Wifi, WifiOff, MoreVertical } from "lucide-react"
 import { useAuth } from "@/presentation/contexts/auth-provider"
 import { useEcho } from "@/presentation/contexts/echo-provider"
 import { ApiChatRepository } from "@/infrastructure/repositories/chat-repository"
@@ -11,203 +11,499 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/presentation/components/u
 import { Button } from "@/presentation/components/ui/button"
 import { Input } from "@/presentation/components/ui/input"
 import { ScrollArea } from "@/presentation/components/ui/scroll-area"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/presentation/components/ui/sheet"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
 
 const chatRepository = new ApiChatRepository(api)
 
 export default function MessagesPage() {
-  const { user } = useAuth()
-  const { echo } = useEcho()
-  const [chats, setChats] = useState<Chat[]>([])
-  const [selectedChat, setSelectedChat] = useState<Chat | null>(null)
-  const [messages, setMessages] = useState<Message[]>([])
-  const [newMessage, setNewMessage] = useState("")
-  const scrollRef = useRef<HTMLDivElement>(null)
+    const { user } = useAuth()
+    const { echo, isConnected } = useEcho()
+    const [chats, setChats] = useState<Chat[]>([])
+    const [selectedChat, setSelectedChat] = useState<Chat | null>(null)
+    const [messages, setMessages] = useState<Message[]>([])
+    const [newMessage, setNewMessage] = useState("")
+    const [isListOpen, setIsListOpen] = useState(false)
+    const [isTyping, setIsTyping] = useState(false)
+    const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+    const [remoteTyping, setRemoteTyping] = useState(false)
+    const scrollRef = useRef<HTMLDivElement>(null)
+    const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    fetchChats()
-  }, [])
-
-  useEffect(() => {
-    if (selectedChat) {
-      fetchMessages(selectedChat.id)
-      
-      // Subscribe to real-time channel
-      const channel = echo.private(`chat.${selectedChat.id}`)
-      channel.listen('MessageSent', (e: { message: Message }) => {
-        setMessages((prev) => [...prev, e.message])
-        scrollToBottom()
-      })
-
-      return () => {
-        channel.stopListening('MessageSent')
-      }
-    }
-  }, [selectedChat, echo])
-
-  const fetchChats = async () => {
-    try {
-        const data = await chatRepository.getChats()
-        setChats(data)
-    } catch (error) {
-        console.error("Failed to fetch chats", error)
-        // Mock data
-        setChats([
-            {
-                id: 1,
-                campaign_id: 1,
-                brand_id: 1,
-                creator_id: user?.id || 0,
-                status: 'active',
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-                brand: { id: 1, name: "Moda Fashion", avatar: "" },
-                last_message: { id: 1, chat_id: 1, user_id: 1, content: "Olá! Vimos sua proposta e gostamos muito.", is_read: false, created_at: new Date().toISOString() }
-            }
-        ])
-    }
-  }
-
-  const fetchMessages = async (chatId: number) => {
-    try {
-        const data = await chatRepository.getMessages(chatId)
-        setMessages(data)
-        scrollToBottom()
-    } catch (error) {
-        console.error("Failed to fetch messages", error)
-        // Mock messages
-         setMessages([
-            { id: 1, chat_id: 1, user_id: 1, content: "Olá! Vimos sua proposta e gostamos muito.", is_read: true, created_at: new Date(Date.now() - 3600000).toISOString() },
-            { id: 2, chat_id: 1, user_id: user?.id || 0, content: "Oi! Que ótima notícia. Estou muito animado para começar.", is_read: true, created_at: new Date(Date.now() - 1800000).toISOString() },
-        ])
-    }
-  }
-
-  const sendMessage = async () => {
-    if (!selectedChat || !newMessage.trim()) return
-
-    try {
-        // Optimistic update
-        const tempMessage: Message = {
-            id: Date.now(),
-            chat_id: selectedChat.id,
-            user_id: user?.id || 0,
-            content: newMessage,
-            is_read: false,
-            created_at: new Date().toISOString()
+    const scrollToBottom = useCallback(() => {
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
         }
-        setMessages(prev => [...prev, tempMessage])
-        setNewMessage("")
-        scrollToBottom()
+    }, [])
 
-        await chatRepository.sendMessage(selectedChat.id, newMessage)
-        // Real message will come via websocket or refresh
-    } catch (error) {
-        console.error("Failed to send message", error)
+    const updateChatList = useCallback((roomId: string, message: Message) => {
+    setChats(prevChats => {
+      const chatIndex = prevChats.findIndex(c => c.room_id === roomId)
+      if (chatIndex === -1) return prevChats 
+
+      const updatedChat = {
+        ...prevChats[chatIndex],
+        last_message: {
+          id: message.id,
+          message: message.message,
+          message_type: message.message_type,
+          sender_id: message.sender_id,
+          is_sender: message.is_sender,
+          created_at: message.created_at
+        },
+        last_message_at: message.created_at,
+        // Increment unread if message is not from me and not in the currently open chat
+        unread_count: (message.sender_id !== user?.id && selectedChat?.room_id !== roomId) 
+            ? prevChats[chatIndex].unread_count + 1 
+            : prevChats[chatIndex].unread_count
+      }
+
+      const newChats = [...prevChats]
+      newChats.splice(chatIndex, 1)
+      newChats.unshift(updatedChat)
+      return newChats
+    })
+  }, [selectedChat?.room_id, user?.id])
+
+  // Auto-scroll on new messages
+  useLayoutEffect(() => {
+    scrollToBottom()
+  }, [messages, scrollToBottom])
+
+    const handleTyping = () => {
+        if (!selectedChat) return
+
+        if (!isTyping) {
+            setIsTyping(true)
+            chatRepository.sendTypingStatus(selectedChat.room_id, true)
+        }
+
+        if (typingTimeoutRef.current) {
+            clearTimeout(typingTimeoutRef.current)
+        }
+
+        typingTimeoutRef.current = setTimeout(() => {
+            setIsTyping(false)
+            chatRepository.sendTypingStatus(selectedChat.room_id, false)
+        }, 2000)
     }
-  }
 
-  const scrollToBottom = () => {
-    if (scrollRef.current) {
-        scrollRef.current.scrollIntoView({ behavior: "smooth" })
+    const fetchChats = useCallback(async () => {
+        try {
+            const data = await chatRepository.getChats()
+            setChats(data)
+        } catch (error) {
+            console.error("Failed to fetch chats", error)
+            toast.error("Erro ao carregar conversas")
+        }
+    }, [])
+
+    const fetchMessages = useCallback(async (roomId: string) => {
+        try {
+            const { messages } = await chatRepository.getMessages(roomId)
+            setMessages(messages)
+            scrollToBottom()
+        } catch (error) {
+            console.error("Failed to fetch messages", error)
+            toast.error("Erro ao carregar mensagens")
+        }
+    }, [scrollToBottom])
+
+    const sendMessage = async () => {
+        if (!selectedChat || !newMessage.trim()) return
+
+        try {
+            // Optimistic update
+            const tempId = Date.now()
+            const tempMessage: Message = {
+                id: tempId,
+                message: newMessage,
+                message_type: "text",
+                sender_id: user?.id || 0,
+                sender_name: user?.name || "",
+                sender_avatar: user?.avatar ?? null,
+                is_sender: true,
+                is_read: true,
+                created_at: new Date().toISOString()
+            }
+            setMessages(prev => [...prev, tempMessage])
+            updateChatList(selectedChat.room_id, tempMessage)
+            setNewMessage("")
+            scrollToBottom()
+
+            const sentMessage = await chatRepository.sendMessage(selectedChat.room_id, newMessage)
+
+            // Replace temp message with real one
+            setMessages(prev => prev.map(msg => msg.id === tempId ? sentMessage : msg))
+            updateChatList(selectedChat.room_id, sentMessage)
+
+        } catch (error: any) {
+            console.error("Failed to send message", error)
+            // Remove optimistic message on error
+            // setMessages(prev => prev.filter(msg => msg.id !== tempId)) 
+            const errorMessage = error.response?.data?.message || "Erro desconhecido ao enviar mensagem"
+            toast.error(`Erro ao enviar: ${errorMessage}`)
+        }
     }
-  }
 
-  return (
-    <div className="flex h-[calc(100vh-120px)] rounded-lg border bg-background overflow-hidden">
-      {/* Chat List */}
-      <div className="w-80 border-r flex flex-col">
-        <div className="p-4 border-b font-semibold">Mensagens</div>
-        <ScrollArea className="flex-1">
-            <div className="flex flex-col gap-1 p-2">
-                {chats.map(chat => (
-                    <button
-                        key={chat.id}
-                        onClick={() => setSelectedChat(chat)}
-                        className={cn(
-                            "flex items-start gap-3 rounded-lg p-3 text-left text-sm transition-all hover:bg-accent",
-                            selectedChat?.id === chat.id && "bg-accent"
-                        )}
-                    >
-                        <Avatar>
-                            <AvatarImage src={chat.brand?.avatar} />
-                            <AvatarFallback>{chat.brand?.name.substring(0,2).toUpperCase()}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex flex-col w-full overflow-hidden">
-                            <div className="flex items-center justify-between">
-                                <span className="font-semibold">{chat.brand?.name}</span>
-                                <span className="text-xs text-muted-foreground">
-                                    {new Date(chat.last_message?.created_at || "").toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                                </span>
-                            </div>
-                            <span className="truncate text-muted-foreground">
-                                {chat.last_message?.content}
+    useEffect(() => {
+        // Prevent multiple calls if chats are already loading or if no user ID
+        if (!user?.id) return
+
+        const loadInitialData = async () => {
+            try {
+                // Fetch chats first
+                const chatsData = await chatRepository.getChats()
+                setChats(chatsData)
+
+                // Restore selected chat if exists
+                const lastRoomId = localStorage.getItem("last_selected_room_id")
+                if (lastRoomId && chatsData.length > 0) {
+                    const found = chatsData.find(c => c.room_id === lastRoomId)
+                    if (found) {
+                        setSelectedChat(found)
+                        // Fetch messages for restored chat
+                        const { messages: msgs } = await chatRepository.getMessages(found.room_id)
+                        setMessages(msgs)
+                        // We do not need to scroll here because useLayoutEffect will trigger when messages change
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to load initial data", error)
+                toast.error("Erro ao carregar dados")
+            }
+        }
+
+        loadInitialData()
+    }, [user?.id]) // Run only once when user is available
+
+    // Remove these individual useEffects to prevent double fetching
+    /*
+    useEffect(() => {
+        fetchChats()
+    }, [fetchChats])
+
+    useEffect(() => {
+        if (selectedChat) {
+            fetchMessages(selectedChat.room_id)
+            localStorage.setItem("last_selected_room_id", selectedChat.room_id)
+        }
+    }, [selectedChat, fetchMessages])
+    */
+
+    // Keep this for when user manually clicks a chat
+    const handleSelectChat = async (chat: Chat) => {
+        setSelectedChat(chat)
+        setIsListOpen(false)
+        localStorage.setItem("last_selected_room_id", chat.room_id)
+        
+        try {
+            const { messages: msgs } = await chatRepository.getMessages(chat.room_id)
+            setMessages(msgs)
+        } catch (error) {
+            console.error("Failed to fetch messages", error)
+            toast.error("Erro ao carregar mensagens")
+        }
+    }
+
+    useEffect(() => {
+        if (!selectedChat || !echo) {
+            return
+        }
+
+        const channel = echo.private(`chat.${selectedChat.room_id}`)
+
+        // Bind all events similar to useSocket.ts
+        console.log(`Subscribing to channel: chat.${selectedChat.room_id}`)
+
+        channel.listen('.new_message', (e: any) => {
+            console.log('EVENT RECEIVED: .new_message', e)
+            const incoming: Message = {
+                id: e.messageId || Date.now(),
+                message: e.message,
+                message_type: e.messageType || "text",
+                sender_id: e.senderId,
+                sender_name: e.senderName,
+                sender_avatar: e.senderAvatar,
+                is_sender: e.senderId === user?.id,
+                is_read: e.senderId === user?.id,
+                created_at: e.timestamp || new Date().toISOString(),
+                file_path: e.fileData?.file_path,
+                file_name: e.fileData?.file_name,
+                file_size: e.fileData?.file_size,
+                file_type: e.fileData?.file_type,
+                file_url: e.fileData?.file_url,
+                offer_data: e.offerData,
+            }
+
+            setMessages((prev) => {
+                // Se a mensagem já existe (por ID ou ID temporário que virou real), ignora
+                if (prev.some(m => m.id === incoming.id)) return prev
+
+                // Se a mensagem é minha e chegou via socket, preciso remover a otimista se ela ainda estiver lá (embora o fluxo de envio já deva ter tratado)
+                // Mas como estamos recebendo via socket, o socket pode chegar antes ou depois da resposta da API.
+                // Se for minha mensagem, vamos garantir que não duplique verificando se já tem uma mensagem igual recente (otimista)
+                if (incoming.is_sender) {
+                    // Procura mensagem otimista (id gerado por Date.now() é grande, id do banco é incremental e menor)
+                    // Ou verifica por conteúdo e timestamp próximo
+                    const isDuplicateOptimistic = prev.some(m =>
+                        (m.id > 1000000000000 && m.message === incoming.message) || // ID grande = otimista
+                        m.id === incoming.id
+                    )
+                    if (isDuplicateOptimistic) {
+                        // Se achou otimista, substitui pela real
+                        return prev.map(m => (m.id > 1000000000000 && m.message === incoming.message) ? incoming : m)
+                    }
+                }
+
+                return [...prev, incoming]
+            })
+            updateChatList(selectedChat.room_id, incoming)
+            scrollToBottom()
+
+            // Mark as read if it's not my message
+            if (incoming.sender_id !== user?.id) {
+                chatRepository.markAsRead(selectedChat.room_id, [incoming.id])
+            }
+        })
+
+        // Handle typing events
+        channel.listen('.user_typing', (e: {
+            roomId: string
+            userId: number
+            userName: string
+            isTyping: boolean
+        }) => {
+            console.log('EVENT RECEIVED: .user_typing', e)
+            if (e.userId !== user?.id) {
+                setRemoteTyping(e.isTyping)
+                // Auto-clear typing status after 3 seconds just in case we miss the false event
+                if (e.isTyping) {
+                    setTimeout(() => setRemoteTyping(false), 3000)
+                }
+            }
+        })
+
+        // Handle read receipts
+        channel.listen('.messages_read', (e: any) => {
+            setMessages(prev => prev.map(msg =>
+                e.messageIds.includes(msg.id) ? { ...msg, is_read: true } : msg
+            ))
+        })
+
+        return () => {
+            channel.stopListening('.new_message')
+            channel.stopListening('.user_typing')
+            channel.stopListening('.messages_read')
+        }
+    }, [selectedChat, echo, scrollToBottom, user?.id])
+
+    const renderChatList = () => (
+        <div className="flex flex-col gap-1 p-2">
+            {chats.map((chat) => (
+                <button
+                    key={chat.room_id}
+                    onClick={() => handleSelectChat(chat)}
+                    className={cn(
+                        "flex items-start gap-3 rounded-lg p-3 text-left text-sm transition-all hover:bg-accent",
+                        selectedChat?.room_id === chat.room_id && "bg-accent"
+                    )}
+                >
+                    <Avatar>
+                        <AvatarImage src={chat.other_user.avatar || undefined} />
+                        <AvatarFallback>
+                            {chat.other_user.name.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col w-full overflow-hidden">
+                        <div className="flex items-center justify-between">
+                            <span className="font-semibold">{chat.other_user.name}</span>
+                            <span className="text-xs text-muted-foreground">
+                                {chat.last_message?.created_at
+                                    ? new Date(chat.last_message.created_at).toLocaleTimeString([], {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                    })
+                                    : ""}
                             </span>
                         </div>
-                    </button>
-                ))}
-            </div>
-        </ScrollArea>
-      </div>
-
-      {/* Chat Area */}
-      <div className="flex-1 flex flex-col">
-        {selectedChat ? (
-            <>
-                <div className="p-4 border-b flex items-center gap-3">
-                    <Avatar>
-                        <AvatarImage src={selectedChat.brand?.avatar} />
-                        <AvatarFallback>{selectedChat.brand?.name.substring(0,2).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                        <div className="font-semibold">{selectedChat.brand?.name}</div>
-                        <div className="text-xs text-muted-foreground">Online agora</div>
+                        {chat.campaign_title && (
+                            <span className="text-xs font-medium text-primary truncate">
+                                {chat.campaign_title}
+                            </span>
+                        )}
+                        <span className="truncate text-muted-foreground">
+                            {chat.last_message?.message}
+                        </span>
                     </div>
-                </div>
-                
-                <ScrollArea className="flex-1 p-4">
-                    <div className="flex flex-col gap-4">
-                        {messages.map((msg, index) => {
-                            const isMe = msg.user_id === user?.id
-                            return (
-                                <div
-                                    key={index}
-                                    className={cn(
-                                        "flex w-max max-w-[75%] flex-col gap-2 rounded-lg px-3 py-2 text-sm",
-                                        isMe 
-                                        ? "ml-auto bg-primary text-primary-foreground" 
-                                        : "bg-muted"
-                                    )}
-                                >
-                                    {msg.content}
-                                    <span className={cn("text-[10px] self-end", isMe ? "text-primary-foreground/70" : "text-muted-foreground")}>
-                                        {new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                                    </span>
+                </button>
+            ))}
+            {chats.length === 0 && (
+                <span className="px-3 py-2 text-sm text-muted-foreground">
+                    Nenhuma conversa encontrada.
+                </span>
+            )}
+        </div>
+    )
+
+    return (
+        <div className="flex flex-col md:flex-row h-[calc(100dvh-130px)] md:h-[calc(100vh-9rem)] rounded-lg border bg-background overflow-hidden">
+            <div className="hidden md:flex md:w-80 border-r flex-col flex-none">
+                <div className="p-4 border-b font-semibold">Mensagens</div>
+                <ScrollArea className="flex-1">{renderChatList()}</ScrollArea>
+            </div>
+
+            <div className="flex-1 flex flex-col min-h-0">
+                {selectedChat ? (
+                    <>
+                        <div className="p-4 border-b flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                                <div className="md:hidden">
+                                    <Sheet open={isListOpen} onOpenChange={setIsListOpen}>
+                                        <SheetTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="-ml-2">
+                                                <Menu className="h-5 w-5" />
+                                            </Button>
+                                        </SheetTrigger>
+                                        <SheetContent side="left" className="w-80 p-0">
+                                            <SheetHeader className="p-4 border-b">
+                                                <SheetTitle>Mensagens</SheetTitle>
+                                            </SheetHeader>
+                                            <ScrollArea className="h-full">
+                                                <SheetClose asChild>
+                                                    <div>{renderChatList()}</div>
+                                                </SheetClose>
+                                            </ScrollArea>
+                                        </SheetContent>
+                                    </Sheet>
                                 </div>
+
+                                <Avatar>
+                                    <AvatarImage src={selectedChat.other_user.avatar || undefined} />
+                                    <AvatarFallback>
+                                        {selectedChat.other_user.name.substring(0, 2).toUpperCase()}
+                                    </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <div className="font-semibold flex items-center gap-2">
+                                        {selectedChat.other_user.name}
+                                        {isConnected ? (
+                                            <div className="flex items-center gap-1 bg-green-800/70 text-green-400 px-1 py-0.5 rounded-full text-[10px] font-medium border ">
+                                                <Wifi className="h-3 w-3" />
+
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center gap-1 bg-red-100 text-red-700 px-1 py-0.5 rounded-full text-[10px] font-medium border">
+                                                <WifiOff className="h-3 w-3" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground h-4">
+                                        {remoteTyping ? (
+                                            <div className="flex items-center gap-1">
+                                                <span className="text-primary font-medium">Digitando</span>
+                                                <div className="flex gap-0.5 pt-1">
+                                                    <div className="w-1 h-1 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]" />
+                                                    <div className="w-1 h-1 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]" />
+                                                    <div className="w-1 h-1 bg-primary rounded-full animate-bounce" />
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <span className={isConnected ? "text-green-600" : "text-muted-foreground"}>
+                                                {isConnected ? "Online agora" : "Aguardando conexão..."}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <Button variant="ghost" size="icon" onClick={() => fetchMessages(selectedChat.room_id)}>
+                                <MoreVertical className="h-5 w-5" />
+                            </Button>
+                        </div>
+
+                        {/* Substituindo ScrollArea por div nativa para garantir scroll */}
+                        <div className="flex-1 overflow-y-auto p-4" id="messages-container">
+                            <div className="flex flex-col gap-4">
+                                {messages.map((msg, index) => {
+                                    const isMe = msg.sender_id === user?.id
+                                    return (
+                                        <div
+                                            key={index}
+                                            className={cn(
+                                                "flex w-max max-w-[75%] flex-col gap-2 rounded-lg px-3 py-2 text-sm",
+                                                isMe
+                                                    ? "ml-auto bg-primary text-primary-foreground"
+                                                    : "bg-muted"
+                                            )}
+                                        >
+                                            {msg.message}
+                                            <span className={cn("text-[10px] self-end flex items-center gap-1", isMe ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                                                {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                {isMe && (
+                                                    msg.is_read ? <CheckCheck className="h-3 w-3" /> : <Check className="h-3 w-3" />
+                                                )}
+                                            </span>
+                                        </div>
                             )
                         })}
-                        <div ref={scrollRef} />
-                    </div>
-                </ScrollArea>
+                        {remoteTyping && (
+                            <div className="flex w-max max-w-[75%] flex-col gap-2 rounded-lg px-4 py-3 text-sm bg-muted self-start">
+                                <div className="flex gap-1 items-center">
+                                    <div className="w-1.5 h-1.5 bg-muted-foreground/60 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                                    <div className="w-1.5 h-1.5 bg-muted-foreground/60 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                                    <div className="w-1.5 h-1.5 bg-muted-foreground/60 rounded-full animate-bounce" />
+                                </div>
+                            </div>
+                        )}
+                        <div ref={messagesEndRef} />
+                            </div>
+                        </div>
 
-                <div className="p-4 border-t flex gap-2">
-                    <Input 
-                        placeholder="Digite sua mensagem..." 
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                    />
-                    <Button size="icon" onClick={sendMessage}>
-                        <Send className="h-4 w-4" />
-                    </Button>
-                </div>
-            </>
-        ) : (
-            <div className="flex-1 flex items-center justify-center text-muted-foreground">
-                Selecione uma conversa para começar
+                        <div className="p-4 border-t flex gap-2 flex-none bg-background z-10">
+                            <Input
+                                placeholder="Digite sua mensagem..."
+                                value={newMessage}
+                                onChange={(e) => {
+                                    setNewMessage(e.target.value)
+                                    handleTyping()
+                                }}
+                                onFocus={() => {
+                                    setTimeout(scrollToBottom, 100)
+                                }}
+                                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                            />
+                            <Button size="icon" onClick={sendMessage}>
+                                <Send className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </>
+                ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center gap-4 text-muted-foreground">
+                        <p>Selecione uma conversa para começar</p>
+                        <div className="md:hidden">
+                            <Sheet open={isListOpen} onOpenChange={setIsListOpen}>
+                                <SheetTrigger asChild>
+                                    <Button variant="outline">
+                                        Abrir lista de mensagens
+                                    </Button>
+                                </SheetTrigger>
+                                <SheetContent side="left" className="w-80 p-0">
+                                    <SheetHeader className="p-4 border-b">
+                                        <SheetTitle>Mensagens</SheetTitle>
+                                    </SheetHeader>
+                                    <ScrollArea className="h-full">
+                                        <SheetClose asChild>
+                                            <div>{renderChatList()}</div>
+                                        </SheetClose>
+                                    </ScrollArea>
+                                </SheetContent>
+                            </Sheet>
+                        </div>
+                    </div>
+                )}
             </div>
-        )}
-      </div>
-    </div>
-  )
+        </div>
+    )
 }

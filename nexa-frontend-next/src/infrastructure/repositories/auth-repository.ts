@@ -11,12 +11,12 @@ export class ApiAuthRepository implements AuthRepository {
     await this.http.get(`${rootUrl}/sanctum/csrf-cookie`)
   }
 
-  async login(credentials: any): Promise<AuthResponse> {
+  async login(credentials: Record<string, any>): Promise<AuthResponse> {
     await this.csrf()
     return this.http.post<AuthResponse>("/login", credentials)
   }
 
-  async register(data: any): Promise<AuthResponse> {
+  async register(data: Record<string, any>): Promise<AuthResponse> {
     // In Laravel usually register returns user or token, adapting to generic response
     return this.http.post<AuthResponse>("/register", data)
   }
@@ -27,5 +27,28 @@ export class ApiAuthRepository implements AuthRepository {
 
   async me(): Promise<User> {
     return this.http.get<User>("/user")
+  }
+
+  async updateProfile(data: Record<string, any> | FormData): Promise<User> {
+    // If FormData, we might need POST with _method=PUT depending on Laravel/Server config for file uploads
+    // Assuming standard PUT for JSON or FormData handling
+    if (data instanceof FormData) {
+        data.append('_method', 'PUT');
+        return this.http.post<User>("/user/profile-update", data); // Often better to use POST for files with method spoofing
+    }
+    return this.http.put<User>("/user/profile", data)
+  }
+
+  async sendOtp(contact: string, type: 'email' | 'whatsapp'): Promise<void> {
+    await this.http.post("/otp/send", { contact, type })
+  }
+
+  async verifyOtp(contact: string, type: 'email' | 'whatsapp', code: string): Promise<boolean> {
+    try {
+        const response: any = await this.http.post("/otp/verify", { contact, type, code })
+        return response.verified === true
+    } catch (error) {
+        return false
+    }
   }
 }

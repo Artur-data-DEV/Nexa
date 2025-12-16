@@ -1,34 +1,72 @@
 "use client"
 
-import React, { createContext, useContext, useEffect, useState } from "react"
+import React, { createContext, useContext, useEffect, useState, useRef } from "react"
 import { createEcho } from "@/infrastructure/services/echo-service"
 import { useAuth } from "./auth-provider"
 
 interface EchoContextType {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   echo: any
+  isConnected: boolean
 }
 
 const EchoContext = createContext<EchoContextType | undefined>(undefined)
 
 export function EchoProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [echo, setEcho] = useState<any>(null)
+  const [isConnected, setIsConnected] = useState(false)
+  const echoInstanceRef = useRef<any>(null)
 
   useEffect(() => {
     const token = localStorage.getItem("auth_token")
-    if (user && token && !echo) {
-      const echoInstance = createEcho(token)
-      setEcho(echoInstance)
+    if (user?.id && token) {
+      if (!echoInstanceRef.current) {
+          const echoInstance = createEcho(token)
+          
+          // Monitor connection status
+          if (echoInstance.connector && echoInstance.connector.pusher) {
+            echoInstance.connector.pusher.connection.bind('connected', () => {
+                setIsConnected(true)
+            })
+            echoInstance.connector.pusher.connection.bind('disconnected', () => {
+                setIsConnected(false)
+            })
+            echoInstance.connector.pusher.connection.bind('error', () => {
+                setIsConnected(false)
+            })
+            
+            // Check initial state
+            if (echoInstance.connector.pusher.connection.state === 'connected') {
+                setIsConnected(true)
+            }
+          }
 
-      return () => {
-        echoInstance.disconnect()
-        setEcho(null)
+          // Expose Echo globally for Axios interceptor
+          if (typeof window !== 'undefined') {
+             (window as any).Echo = echoInstance;
+          }
+
+          echoInstanceRef.current = echoInstance
+          setEcho(echoInstance)
       }
+    } else {
+        if (echoInstanceRef.current) {
+            echoInstanceRef.current.disconnect()
+            echoInstanceRef.current = null
+            setEcho(null)
+            setIsConnected(false)
+        }
     }
-  }, [user])
+
+    return () => {
+        // Cleanup handled by ref check
+    }
+  }, [user?.id])
 
   return (
-    <EchoContext.Provider value={{ echo }}>
+    <EchoContext.Provider value={{ echo, isConnected }}>
       {children}
     </EchoContext.Provider>
   )
