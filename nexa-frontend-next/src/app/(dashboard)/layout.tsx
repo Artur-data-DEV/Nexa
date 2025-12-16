@@ -16,6 +16,7 @@ import {
   PlusCircle,
   LogOut,
   Menu,
+  Briefcase
 } from "lucide-react"
 
 import { Button } from "@/presentation/components/ui/button"
@@ -52,14 +53,12 @@ export default function DashboardLayout({
   const creatorNavItems = [
     { name: "Início", href: "/dashboard", icon: Home },
     { name: "Campanhas", href: "/dashboard/campaigns", icon: Package },
-    { name: "Minhas Aplicações", href: "/dashboard/applications", icon: FileText },
+    // { name: "Minhas Aplicações", href: "/dashboard/applications", icon: FileText },
     { name: "Conversas", href: "/dashboard/messages", icon: MessageCircle },
+    { name: "Meu Portfólio", href: "/dashboard/portfolio", icon: Briefcase },
+    { name: "Financeiro", href: "/dashboard/financial", icon: Wallet },
     { name: "Minha Conta", href: "/dashboard/profile", icon: User },
-    // { name: "Meu Portfólio", href: "/dashboard/portfolio", icon: Briefcase },
-    { name: "Saldo e Saques", href: "/dashboard/finance", icon: Wallet },
-    // { name: "Assinatura", href: "/dashboard/subscription", icon: CreditCard },
-    // { name: "Verificação de Aluno", href: "/dashboard/student-verify", icon: GraduationCap },
-    { name: "Guia da Plataforma", href: "/dashboard/guide", icon: BookOpen },
+    // { name: "Guia da Plataforma", href: "/dashboard/guide", icon: BookOpen },
   ]
 
   const brandNavItems = [
@@ -67,9 +66,9 @@ export default function DashboardLayout({
     { name: "Minhas Campanhas", href: "/dashboard/campaigns", icon: Package },
     { name: "Nova Campanha", href: "/dashboard/campaigns/create", icon: PlusCircle },
     { name: "Conversas", href: "/dashboard/messages", icon: MessageCircle },
+    { name: "Financeiro", href: "/dashboard/financial", icon: Wallet },
     { name: "Meu Perfil", href: "/dashboard/profile", icon: User },
-    { name: "Pagamentos", href: "/dashboard/payments", icon: BanknoteIcon },
-    { name: "Guia da Plataforma", href: "/dashboard/guide", icon: BookOpen },
+    // { name: "Guia da Plataforma", href: "/dashboard/guide", icon: BookOpen },
   ]
 
   const navItems = user?.role === 'brand' ? brandNavItems : creatorNavItems

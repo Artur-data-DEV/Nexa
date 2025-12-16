@@ -92,9 +92,9 @@ export default function CampaignDetailsPage() {
                className="object-cover"
              />
            ) : (
-             <div className="w-full h-full bg-gradient-to-r from-pink-500 to-purple-600 opacity-20" />
+             <div className="w-full h-full bg-linear-to-r from-pink-500 to-purple-600 opacity-20" />
            )}
-           <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/80 to-transparent p-6 pt-20">
+           <div className="absolute bottom-0 left-0 w-full bg-linear-to-t from-black/80 to-transparent p-6 pt-20">
                 <div className="flex flex-col md:flex-row md:items-end gap-4 justify-between text-white">
                     <div className="flex items-center gap-4">
                         <Avatar className="h-16 w-16 border-4 border-background/20">
