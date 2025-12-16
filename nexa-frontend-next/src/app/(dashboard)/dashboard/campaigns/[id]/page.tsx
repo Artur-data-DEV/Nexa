@@ -41,22 +41,6 @@ export default function CampaignDetailsPage() {
       setCampaign(data)
     } catch (error) {
       console.error("Failed to fetch campaign", error)
-      // Mock for demo if API fails
-      if (id === 1) {
-          setCampaign({
-              id: 1,
-              title: "Lançamento Coleção Verão 2026",
-              description: "Estamos procurando criadores de conteúdo fashion para o lançamento da nossa nova coleção de verão. O foco é Instagram Reels e TikTok. Queremos vídeos dinâmicos, coloridos e que mostrem a versatilidade das peças.\n\nRequisitos:\n- Mínimo 10k seguidores\n- Engajamento > 3%\n- Estilo Fashion/Lifestyle",
-              briefing: "O criador deverá produzir 1 Reels e 3 Stories. O produto será enviado para a casa do criador. O vídeo deve conter música em alta e transições criativas.",
-              budget: 5000,
-              deadline: "2025-12-31",
-              status: "approved",
-              target_states: ["SP", "RJ", "MG"],
-              requirements: ["Instagram", "TikTok", "Fashion"],
-              brand: { id: 1, name: "Moda Fashion", email: "contact@moda.com", avatar: "https://github.com/shadcn.png" },
-              created_at: new Date().toISOString()
-          })
-      }
     } finally {
       setLoading(false)
     }

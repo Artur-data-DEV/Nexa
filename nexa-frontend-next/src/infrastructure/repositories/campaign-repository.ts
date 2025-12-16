@@ -20,7 +20,15 @@ export class ApiCampaignRepository implements CampaignRepository {
   }
 
   async findById(id: number): Promise<Campaign | null> {
-    return this.http.get<Campaign>(`/campaigns/${id}`)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const response: any = await this.http.get<any>(`/campaigns/${id}`)
+    
+    // Handle wrapper { success: true, data: Campaign }
+    if (response && response.data) {
+        return response.data
+    }
+    
+    return response
   }
 
   async create(data: FormData | Record<string, any>): Promise<Campaign> {

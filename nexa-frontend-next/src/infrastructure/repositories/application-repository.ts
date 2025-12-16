@@ -8,7 +8,13 @@ export class ApiApplicationRepository implements ApplicationRepository {
     async getMyApplications(filters?: Record<string, any>): Promise<Application[]> {
         const params = new URLSearchParams(filters).toString()
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const response: any = await this.http.get<any>(`/applications/my?${params}`)
+        const response: any = await this.http.get<any>(`/applications?${params}`)
+        
+        // Handle Laravel Paginator: { success: true, data: { data: [...] } }
+        if (response && response.data && Array.isArray(response.data.data)) {
+            return response.data.data
+        }
+        // Fallback
         if (response && Array.isArray(response.data)) {
             return response.data
         }
@@ -19,6 +25,12 @@ export class ApiApplicationRepository implements ApplicationRepository {
         const params = new URLSearchParams(filters).toString()
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const response: any = await this.http.get<any>(`/campaigns/${campaignId}/applications?${params}`)
+        
+        // Handle Laravel Paginator: { success: true, data: { data: [...] } }
+        if (response && response.data && Array.isArray(response.data.data)) {
+            return response.data.data
+        }
+        // Fallback
         if (response && Array.isArray(response.data)) {
             return response.data
         }

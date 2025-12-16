@@ -30,39 +30,6 @@ export default function CampaignsPage() {
       setCampaigns(data)
     } catch (error) {
       console.error("Failed to fetch campaigns", error)
-      // Mock data for fallback/demo
-      setCampaigns([
-          {
-              id: 1,
-              title: "Lançamento Coleção Verão 2026",
-              description: "Estamos procurando criadores de conteúdo fashion para o lançamento da nossa nova coleção de verão. O foco é Instagram Reels e TikTok.",
-              budget: 5000,
-              deadline: "2025-12-31",
-              status: "approved",
-              brand: { id: 1, name: "Moda Fashion", email: "contact@moda.com" },
-              created_at: new Date().toISOString()
-          },
-          {
-              id: 2,
-              title: "Review Tech Gadget X",
-              description: "Review detalhado do nosso novo fone de ouvido com cancelamento de ruído. Youtube e Tech Blogs.",
-              budget: 2500,
-              deadline: "2026-01-15",
-              status: "approved",
-              brand: { id: 2, name: "TechZone", email: "marketing@techzone.io" },
-              created_at: new Date().toISOString()
-          },
-           {
-              id: 3,
-              title: "Parceria SkinCare Natural",
-              description: "Campanha focada em rotina de pele com produtos 100% naturais e veganos.",
-              budget: 1200,
-              deadline: "2026-02-01",
-              status: "approved",
-              brand: { id: 3, name: "EcoBeauty", email: "hello@ecobeauty.com" },
-              created_at: new Date().toISOString()
-          }
-      ])
     } finally {
       setLoading(false)
     }
