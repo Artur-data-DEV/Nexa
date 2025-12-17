@@ -51,4 +51,19 @@ export class ApiAuthRepository implements AuthRepository {
         return false
     }
   }
+
+  async forgotPassword(email: string): Promise<any> {
+    return this.http.post("/forgot-password", { email })
+  }
+
+  async resetPassword(data: Record<string, any>): Promise<any> {
+    return this.http.post("/reset-password", data)
+  }
+
+  async verifyStudent(data: { email: string, username: string, courseName: string }): Promise<any> {
+    return this.http.post("/student/verify", {
+        purchase_email: data.email,
+        course_name: data.courseName
+    })
+  }
 }

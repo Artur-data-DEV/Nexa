@@ -7,6 +7,7 @@ import { Notification } from "@/domain/entities/notification"
 import { ApiNotificationRepository } from "@/infrastructure/repositories/notification-repository"
 import { api } from "@/infrastructure/api/axios-adapter"
 import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 interface BroadcastNotificationPayload {
     id: number
@@ -36,6 +37,7 @@ const notificationRepository = new ApiNotificationRepository(api)
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
     const { user } = useAuth()
     const { echo } = useEcho()
+    const router = useRouter()
     const [notifications, setNotifications] = useState<Notification[]>([])
     const [unreadCount, setUnreadCount] = useState(0)
     const [isLoading, setIsLoading] = useState(false)
@@ -140,6 +142,14 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             channel.listen(".new_notification", (e: BroadcastNotificationPayload) => {
                 console.log("[NotificationProvider] New notification received:", e)
 
+                const data = e.data || {}
+                const roomIdFromNotification =
+                    data.room_id ||
+                    data.roomId ||
+                    data.chat_room_id ||
+                    (data.room && data.room.room_id) ||
+                    null
+
                 const newNotification: Notification = {
                     id: e.id,
                     type: e.type,
@@ -153,14 +163,46 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                 setNotifications(prev => [newNotification, ...prev])
                 setUnreadCount(prev => prev + 1)
 
-                toast(e.title, {
-                    description: e.message,
-                    action: {
-                        label: "Ver",
-                        onClick: () => {
+                let shouldShowToast = true
+
+                if (typeof window !== "undefined") {
+                    const pathname = window.location.pathname
+                    const isOnMessagesPage = pathname.startsWith("/dashboard/messages")
+                    const lastRoomId = localStorage.getItem("last_selected_room_id")
+
+                    if (
+                        isOnMessagesPage &&
+                        roomIdFromNotification &&
+                        lastRoomId &&
+                        String(roomIdFromNotification) === String(lastRoomId)
+                    ) {
+                        shouldShowToast = false
+                    }
+                }
+
+                if (shouldShowToast) {
+                    toast(e.title, {
+                        description: e.message,
+                        action: {
+                            label: "Ver",
+                            onClick: () => {
+                                if (roomIdFromNotification) {
+                                    if (typeof window !== "undefined") {
+                                        localStorage.setItem(
+                                            "last_selected_room_id",
+                                            String(roomIdFromNotification)
+                                        )
+                                    }
+                                    router.push(
+                                        `/dashboard/messages?roomId=${String(roomIdFromNotification)}`
+                                    )
+                                } else {
+                                    router.push("/dashboard/messages")
+                                }
+                            },
                         },
-                    },
-                })
+                    })
+                }
             })
 
             return () => {

@@ -1,0 +1,420 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Button } from "@/presentation/components/ui/button";
+import { Label } from "@/presentation/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/presentation/components/ui/card";
+import { Loader2, ArrowLeft, CreditCard, Shield, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
+import { useAuth } from "@/presentation/contexts/auth-provider";
+import { ApiPaymentRepository } from "@/infrastructure/repositories/payment-repository";
+import { api } from "@/infrastructure/api/axios-adapter";
+import { stripePromise } from "@/lib/stripe";
+import { Elements, useStripe, useElements, CardElement } from "@stripe/react-stripe-js";
+import { SubscriptionPlan } from "@/domain/repositories/payment-repository.interface";
+
+const paymentRepository = new ApiPaymentRepository(api);
+
+function SubscriptionForm({ plan, onCancel }: { plan: SubscriptionPlan, onCancel: () => void }) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const { user } = useAuth();
+  const router = useRouter();
+  
+  const [isLoading, setIsLoading] = useState(false);
+  const [cardError, setCardError] = useState<string | null>(null);
+
+  const pollSubscriptionStatus = async (subscriptionId: number, attempts = 0): Promise<void> => {
+    const maxAttempts = 20;
+    
+    if (attempts === 0) {
+      toast("Processando pagamento", {
+        description: "Aguardando confirmação do pagamento...",
+      });
+    }
+    
+    if (attempts >= maxAttempts) {
+      toast("Processando pagamento", {
+        description: "O pagamento está sendo processado. Você receberá uma confirmação em breve.",
+      });
+      router.push('/dashboard/financial'); // Redirect to financial or subscription list
+      return;
+    }
+
+    try {
+      const status = await paymentRepository.getSubscriptionStatus();
+      console.log('Status:', status);
+
+      if (status.is_premium_active || status.subscription?.status === 'active') {
+        handleSuccess();
+        console.log('Successfully activated subscription');
+        return;
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      await pollSubscriptionStatus(subscriptionId, attempts + 1);
+      console.log('Polling again...');
+    } catch (err) {
+      console.error("Erro ao verificar status da assinatura:", err);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      await pollSubscriptionStatus(subscriptionId, attempts + 1);
+    }
+  };
+
+  const handleSuccess = async () => {
+    // In a real app, you might want to refresh user context here
+    toast.success("Assinatura Ativada!", {
+      description: "A assinatura premium está ativa!"
+    });
+    router.push('/dashboard/financial');
+  };
+
+  const handlePurchase = async () => {
+    if (!plan) return;
+    if (!stripe || !elements) {
+      toast.error("Erro de configuração", {
+        description: "Stripe não está carregado. Aguarde um momento e tente novamente.",
+      });
+      return;
+    }
+    
+    setIsLoading(true);
+    setCardError(null);
+    
+    try {
+      if (!user) {
+        toast.error("Login necessário", {
+            description: "Faça login para prosseguir",
+        });
+        router.push('/auth/login');
+        return;
+      }
+
+      const cardElement = elements.getElement(CardElement);
+      if (!cardElement) {
+        setCardError("Por favor, preencha os dados do cartão");
+        setIsLoading(false);
+        return;
+      }
+
+      const { paymentMethod, error: pmError } = await stripe.createPaymentMethod({
+        type: "card",
+        card: cardElement,
+      });
+
+      if (pmError) {
+        setCardError(pmError.message || "Erro ao processar cartão");
+        setIsLoading(false);
+        return;
+      }
+
+      if (!paymentMethod) {
+        setCardError("Não foi possível criar o método de pagamento");
+        setIsLoading(false);
+        return;
+      }
+
+      console.log('Creating subscription with:', {
+        subscription_plan_id: plan.id,
+        payment_method_id: paymentMethod.id
+      });
+      
+      const response = await paymentRepository.processSubscription({
+        subscription_plan_id: plan.id,
+        payment_method_id: paymentMethod.id,
+      });
+
+      console.log('Subscription response:', response);
+      
+      if (response.requires_action && response.client_secret) {
+        const { error: confirmError } = await stripe.confirmCardPayment(response.client_secret);
+        
+        if (confirmError) {
+          setCardError(confirmError.message || "Erro ao confirmar pagamento");
+          setIsLoading(false);
+          return;
+        }
+        
+        await pollSubscriptionStatus(response.subscription_id);
+        return;
+      }
+      
+      if (response.activated && response.subscription_status === 'active') {
+        await handleSuccess();
+        return;
+      }
+      
+      await pollSubscriptionStatus(response.subscription_id);
+
+    } catch (err: any) {
+      console.error("Erro no pagamento:", err);
+      
+      const errorMessage = err.response?.data?.message || err.message || "Tente novamente";
+      
+      if (err.response?.status === 409 || errorMessage.includes('premium') || errorMessage.includes('already has')) {
+        toast("Você já possui uma assinatura ativa", {
+          description: errorMessage,
+        });
+        
+        setTimeout(() => {
+          router.push('/dashboard/financial');
+        }, 5000);
+      } else {
+        toast.error("Falha no pagamento", {
+          description: errorMessage,
+        });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="lg:col-span-2">
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Resumo do Pedido</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <h3 className="font-semibold text-lg">{plan.name}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {plan.description || 'Descrição não disponível'}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-pink-600 dark:text-pink-400">
+                    R$ {typeof plan.price === 'number' ? plan.price.toFixed(2).replace('.', ',') : '0,00'}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {plan.duration_months === 1 
+                      ? 'por mês' 
+                      : `por mês • ${plan.duration_months || 1} meses de acesso`
+                    }
+                  </p>
+                </div>
+              </div>
+              
+              {plan.features && Array.isArray(plan.features) && plan.features.length > 0 && (
+                <div className="mt-4 pt-4 border-t">
+                  <p className="text-sm font-semibold mb-2 text-foreground">
+                    Benefícios incluídos:
+                  </p>
+                  <ul className="space-y-2">
+                    {plan.features.map((feature: string, index: number) => (
+                      <li key={index} className="flex items-start gap-2 text-sm text-muted-foreground">
+                        <CheckCircle2 className="w-4 h-4 text-pink-500 mt-0.5 flex-shrink-0" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            <div className="pt-4 border-t">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="font-semibold text-lg text-foreground">Total</p>
+                  {plan.duration_months > 1 && typeof plan.monthly_price === 'number' && (
+                    <p className="text-sm text-muted-foreground">
+                      (R$ {plan.monthly_price.toFixed(2).replace('.', ',')}/mês)
+                    </p>
+                  )}
+                </div>
+                <p className="text-2xl font-bold text-foreground">
+                  R$ {typeof plan.price === 'number' ? plan.price.toFixed(2).replace('.', ',') : '0,00'}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Forma de Pagamento</CardTitle>
+            <CardDescription>
+              O pagamento será processado de forma segura através do Stripe
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="flex items-start gap-3">
+                <Shield className="w-6 h-6 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-1" />
+                <div>
+                  <p className="font-semibold text-sm text-blue-900 dark:text-blue-200">
+                    Pagamento Seguro
+                  </p>
+                  <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                    Suas informações de pagamento são criptografadas e processadas de forma segura.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="lg:col-span-1">
+        <Card>
+          <CardHeader>
+            <CardTitle>Finalizar Pagamento</CardTitle>
+            <CardDescription>
+              Complete o pagamento para ativar sua assinatura
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="card-element">Dados do Cartão</Label>
+                <div className="p-4 border rounded-lg bg-background">
+                  <CardElement
+                    id="card-element"
+                    options={{
+                      style: {
+                        base: {
+                          fontSize: '16px',
+                          color: '#424770',
+                          '::placeholder': {
+                            color: '#aab7c4',
+                          },
+                        },
+                        invalid: {
+                          color: '#9e2146',
+                        },
+                      },
+                      hidePostalCode: true,
+                    }}
+                    onChange={(event) => {
+                      setCardError(event.error ? event.error.message : null);
+                    }}
+                  />
+                </div>
+                {cardError && (
+                  <p className="text-sm text-red-600 dark:text-red-400">{cardError}</p>
+                )}
+              </div>
+
+              <Button
+                onClick={handlePurchase}
+                disabled={isLoading || !stripe}
+                className="w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold py-3 text-lg"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Processando...
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="w-5 h-5 mr-2" />
+                    Assinar Agora
+                  </>
+                )}
+              </Button>
+              
+              <p className="text-xs text-center text-muted-foreground">
+                Ao clicar em "Assinar Agora", você concorda com nossos termos de serviço.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+export default function SubscriptionPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const planId = searchParams.get('planId');
+  
+  const [plan, setPlan] = useState<SubscriptionPlan | null>(null);
+  const [loadingPlan, setLoadingPlan] = useState(true);
+
+  useEffect(() => {
+    loadPlan();
+  }, [planId]);
+
+  const loadPlan = async () => {
+    try {
+      setLoadingPlan(true);
+      const plans = await paymentRepository.getSubscriptionPlans();
+      if (plans && Array.isArray(plans)) {
+        const selected = plans.find((p: any) => p.id.toString() === planId);
+        if (selected) {
+          setPlan(selected);
+        } else {
+          toast.error("Plano não encontrado", {
+            description: "O plano selecionado não existe",
+          });
+          // router.push('/creator/subscription'); // Redirect if not found
+        }
+      }
+    } catch (error) {
+      console.error('Error loading plan:', error);
+      toast.error("Erro", {
+        description: "Não foi possível carregar o plano",
+      });
+    } finally {
+      setLoadingPlan(false);
+    }
+  };
+
+  if (loadingPlan) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-pink-600" />
+          <p className="text-muted-foreground">Carregando plano...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!plan) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6">
+            <p className="text-center text-muted-foreground mb-4">
+              Plano não encontrado
+            </p>
+            <Button onClick={() => router.back()} className="w-full">
+              Voltar
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#f6f6f6] dark:bg-[#18181b] py-8 px-4">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-6">
+          <Button
+            variant="ghost"
+            onClick={() => router.back()}
+            className="mb-4"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar
+          </Button>
+          <h1 className="text-3xl font-bold text-foreground">Finalizar Assinatura</h1>
+          <p className="text-muted-foreground mt-2">
+            Complete seu pagamento para ativar o plano {plan.name}
+          </p>
+        </div>
+
+        <Elements stripe={stripePromise}>
+          <SubscriptionForm plan={plan} onCancel={() => router.back()} />
+        </Elements>
+      </div>
+    </div>
+  );
+}
