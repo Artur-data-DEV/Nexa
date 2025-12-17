@@ -3,8 +3,10 @@
 import { useState, useEffect, useMemo } from "react"
 import { useAuth } from "@/presentation/contexts/auth-provider"
 import { ApiCampaignRepository } from "@/infrastructure/repositories/campaign-repository"
+import { ApiPaymentRepository } from "@/infrastructure/repositories/payment-repository"
 import { api } from "@/infrastructure/api/axios-adapter"
 import { Campaign } from "@/domain/entities/campaign"
+import { SubscriptionStatus } from "@/domain/repositories/payment-repository.interface"
 import { CampaignCard } from "@/presentation/components/campaigns/campaign-card"
 import { CampaignStats } from "@/presentation/components/dashboard/campaign-stats"
 import ContractList from "@/presentation/components/dashboard/contract-list"
@@ -47,12 +49,15 @@ import {
     Search,
     Briefcase,
     FileText,
-    Send
+    Send,
+    Crown,
+    AlertCircle
 } from "lucide-react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 
 const campaignRepository = new ApiCampaignRepository(api)
+const paymentRepository = new ApiPaymentRepository(api)
 
 const categories = [
     "Todas as categorias",
@@ -93,6 +98,8 @@ export default function CreatorDashboard() {
     const [campaigns, setCampaigns] = useState<Campaign[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [showFilters, setShowFilters] = useState(false)
+    const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null)
+    const [loadingStatus, setLoadingStatus] = useState(false)
     
     const [filters, setFilters] = useState<FilterState>({
         category: "all",
@@ -108,6 +115,24 @@ export default function CreatorDashboard() {
     useEffect(() => {
         fetchCampaigns()
     }, [])
+
+    useEffect(() => {
+        const loadStatus = async () => {
+            try {
+                setLoadingStatus(true)
+                const status = await paymentRepository.getSubscriptionStatus()
+                setSubscriptionStatus(status)
+            } catch (error) {
+                console.error("Failed to fetch subscription status", error)
+            } finally {
+                setLoadingStatus(false)
+            }
+        }
+
+        if (user) {
+            loadStatus()
+        }
+    }, [user])
 
     const fetchCampaigns = async () => {
         setIsLoading(true)
@@ -233,6 +258,61 @@ export default function CreatorDashboard() {
                     Descubra novas campanhas e comece a criar conteúdo incrível!
                 </p>
             </div>
+
+            <Card className="border border-[#f3eaff] dark:border-[#3a2a4d] bg-[#faf6ff] dark:bg-[#23182e]">
+                <CardContent className="flex items-center gap-3 px-4 py-3 sm:px-6 sm:py-4">
+                    <div className="rounded-full bg-purple-100 dark:bg-purple-900/40 p-2 sm:p-3 flex items-center justify-center">
+                        <Crown className="w-5 h-5 text-purple-500 dark:text-purple-200" />
+                    </div>
+                    <div className="flex-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                        <div>
+                            <div className="font-semibold text-sm sm:text-base text-foreground flex items-center gap-2">
+                                Status da Assinatura
+                                {loadingStatus ? (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200">
+                                        Carregando...
+                                    </span>
+                                ) : subscriptionStatus?.is_premium_active ? (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200">
+                                        <Crown className="w-3 h-3" />
+                                        Premium ativo
+                                    </span>
+                                ) : subscriptionStatus?.has_premium && subscriptionStatus.days_remaining <= 0 ? (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200">
+                                        <AlertCircle className="w-3 h-3" />
+                                        Expirado
+                                    </span>
+                                ) : (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200">
+                                        Gratuito
+                                    </span>
+                                )}
+                            </div>
+                            <p className="text-xs sm:text-sm text-muted-foreground">
+                                {loadingStatus
+                                    ? "Verificando seu acesso premium..."
+                                    : subscriptionStatus?.is_premium_active
+                                    ? "Você tem acesso completo às campanhas exclusivas."
+                                    : subscriptionStatus?.has_premium && subscriptionStatus.days_remaining <= 0
+                                    ? "Sua assinatura expirou. Renove para continuar com acesso premium."
+                                    : "Você está usando o plano gratuito. Assine para liberar todo o potencial."}
+                            </p>
+                        </div>
+                        {!loadingStatus && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="mt-2 sm:mt-0"
+                                onClick={() => {
+                                    window.location.href = "/dashboard/subscription"
+                                }}
+                            >
+                                Gerenciar plano
+                            </Button>
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
 
             <CampaignStats
                 totalCampaigns={activeOpportunities}

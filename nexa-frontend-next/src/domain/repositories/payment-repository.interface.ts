@@ -30,6 +30,8 @@ export interface SubscriptionPaymentRequest {
 
 export interface PaymentRepositoryInterface {
     getSubscriptionPlans(): Promise<SubscriptionPlan[]>;
-    processSubscription(data: SubscriptionPaymentRequest): Promise<any>;
+    processSubscription(data: SubscriptionPaymentRequest): Promise<unknown>;
     getSubscriptionStatus(): Promise<SubscriptionStatus>;
+    getCheckoutUrl(planId: number): Promise<string>;
+    createSubscriptionFromCheckout(sessionId: string): Promise<unknown>;
 }

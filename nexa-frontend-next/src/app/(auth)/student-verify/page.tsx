@@ -24,9 +24,13 @@ export default function StudentVerifyPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   
-  // Check if we are inside dashboard (via query param or similar context)
-  // For now assuming standalone page, but if needed inside dashboard we can adjust layout
   const isInsideCreatorDashboard = searchParams.get("embedded") === "true"
+
+  useEffect(() => {
+    if (user && !isInsideCreatorDashboard) {
+      router.replace("/dashboard/student-verify?embedded=true")
+    }
+  }, [user, isInsideCreatorDashboard, router])
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

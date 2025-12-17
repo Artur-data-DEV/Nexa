@@ -215,7 +215,7 @@ export default function PrivacyPolicy() {
               
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                  <div className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></div>
                   <div>
                     <h4 className="font-semibold text-foreground">Marcas e Anunciantes</h4>
                     <p className="text-sm text-muted-foreground">

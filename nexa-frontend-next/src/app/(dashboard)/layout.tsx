@@ -16,7 +16,9 @@ import {
   PlusCircle,
   LogOut,
   Menu,
-  Briefcase
+  Briefcase,
+  CreditCard,
+  GraduationCap
 } from "lucide-react"
 
 import { Button } from "@/presentation/components/ui/button"
@@ -60,6 +62,10 @@ export default function DashboardLayout({
     { name: "Conversas", href: "/dashboard/messages", icon: MessageCircle },
     { name: "Meu Portfólio", href: "/dashboard/portfolio", icon: Briefcase },
     { name: "Financeiro", href: "/dashboard/financial", icon: Wallet },
+    { name: "Assinatura", href: "/dashboard/subscription", icon: CreditCard },
+    { name: "Métodos de Pagamento", href: "/dashboard/payment-methods", icon: BanknoteIcon },
+    { name: "Verificação de Aluno", href: "/dashboard/student-verify?embedded=true", icon: GraduationCap },
+    { name: "Notificações", href: "/dashboard/notifications", icon: Bell },
     { name: "Minha Conta", href: "/dashboard/profile", icon: User },
     // { name: "Guia da Plataforma", href: "/dashboard/guide", icon: BookOpen },
   ]
@@ -70,6 +76,7 @@ export default function DashboardLayout({
     { name: "Nova Campanha", href: "/dashboard/campaigns/create", icon: PlusCircle },
     { name: "Conversas", href: "/dashboard/messages", icon: MessageCircle },
     { name: "Financeiro", href: "/dashboard/financial", icon: Wallet },
+    { name: "Notificações", href: "/dashboard/notifications", icon: Bell },
     { name: "Meu Perfil", href: "/dashboard/profile", icon: User },
     // { name: "Guia da Plataforma", href: "/dashboard/guide", icon: BookOpen },
   ]
