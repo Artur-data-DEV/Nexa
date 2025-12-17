@@ -22,7 +22,6 @@ import { Skeleton } from "@/presentation/components/ui/skeleton"
 import { Camera, Plus, Trash2, Edit2, Link as LinkIcon, Upload, X, BarChart3, Image as ImageIcon, Video } from "lucide-react"
 import { toast } from "sonner"
 import { PortfolioItem, PortfolioStats } from "@/domain/entities/portfolio"
-import Image from "next/image"
 
 // Setup dependencies
 const portfolioRepository = new ApiPortfolioRepository(api)
@@ -196,17 +195,22 @@ export default function PortfolioView() {
         setUploading(true)
         try {
             const formData = new FormData()
-            uploadFiles.forEach(f => formData.append('files[]', f))
+            uploadFiles.forEach(f => formData.append("files[]", f))
 
-            const updated = await uploadPortfolioMediaUseCase.execute(formData)
-            setPortfolio(updated)
+            await uploadPortfolioMediaUseCase.execute(formData)
+            await fetchPortfolio()
+
             setIsUploadOpen(false)
             setUploadFiles([])
             setUploadPreviews([])
             toast.success("Mídia enviada!")
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to upload media", error)
-            toast.error("Erro ao enviar mídia")
+            const message =
+                error?.response?.data?.message ||
+                error?.response?.data?.errors?.files?.[0] ||
+                "Erro ao enviar mídia"
+            toast.error(message)
         } finally {
             setUploading(false)
         }
@@ -304,10 +308,10 @@ export default function PortfolioView() {
 
                 {portfolio?.items && portfolio.items.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {portfolio.items.map((item) => (
-                            <div key={item.id} className="group relative aspect-square bg-muted rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all">
-                                {item.file_type === 'image' ? (
-                                    <Image 
+                                {portfolio.items.map((item) => (
+                                    <div key={item.id} className="group relative aspect-square bg-muted rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all">
+                                {item.media_type === "image" ? (
+                                    <img 
                                         src={item.file_url} 
                                         alt={item.title || ""} 
                                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
@@ -492,7 +496,7 @@ export default function PortfolioView() {
                                 {uploadPreviews.map((preview, i) => (
                                     <div key={i} className="relative aspect-square bg-muted rounded-md overflow-hidden group">
                                         {preview.type === 'image' ? (
-                                            <Image src={preview.url} className="w-full h-full object-cover" alt="Preview Image" />
+                                            <img src={preview.url} className="w-full h-full object-cover" alt="Preview Image" />
                                         ) : (
                                             <video src={preview.url} className="w-full h-full object-cover" />
                                         )}

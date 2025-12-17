@@ -31,6 +31,10 @@ export class AxiosAdapter implements HttpClient {
           config.headers.Authorization = `Bearer ${token}`
         }
 
+        if (config.data instanceof FormData && config.headers) {
+          delete (config.headers as any)["Content-Type"]
+        }
+
         // Add Socket ID for broadcasting toOthers()
         if (typeof window !== "undefined" && (window as any).Echo) {
              const socketId = (window as any).Echo.socketId();

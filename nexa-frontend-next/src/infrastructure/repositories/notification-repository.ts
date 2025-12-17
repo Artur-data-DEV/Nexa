@@ -23,11 +23,11 @@ export class ApiNotificationRepository implements NotificationRepository {
     }
 
     async markAsRead(id: number): Promise<void> {
-        await this.http.put(`/notifications/${id}/read`, {})
+        await this.http.post(`/notifications/${id}/mark-read`, {})
     }
 
     async markAllAsRead(): Promise<void> {
-        await this.http.put('/notifications/read-all', {})
+        await this.http.post('/notifications/mark-all-read', {})
     }
 
     async delete(id: number): Promise<void> {

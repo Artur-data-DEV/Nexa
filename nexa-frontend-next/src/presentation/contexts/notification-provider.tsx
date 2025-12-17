@@ -8,6 +8,16 @@ import { ApiNotificationRepository } from "@/infrastructure/repositories/notific
 import { api } from "@/infrastructure/api/axios-adapter"
 import { toast } from "sonner"
 
+interface BroadcastNotificationPayload {
+    id: number
+    type: string
+    title: string
+    message: string
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    data: any
+    created_at?: string
+}
+
 interface NotificationContextType {
     notifications: Notification[]
     unreadCount: number
@@ -62,13 +72,21 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }, [user])
 
     const markAsRead = async (id: number) => {
+        const notification = notifications.find(n => n.id === id)
+        if (!notification || notification.is_read) {
+            return
+        }
+
+        setNotifications(prev => prev.map(n => (n.id === id ? { ...n, is_read: true } : n)))
+        setUnreadCount(prev => Math.max(0, prev - 1))
+
         try {
             await notificationRepository.markAsRead(id)
-            setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n))
-            setUnreadCount(prev => Math.max(0, prev - 1))
         } catch (error) {
             console.error("Failed to mark notification as read", error)
             toast.error("Erro ao marcar notificação como lida")
+            await fetchNotifications()
+            await updateUnreadCount()
         }
     }
 
@@ -85,41 +103,43 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
 
     const deleteNotification = async (id: number) => {
+        const notification = notifications.find(n => n.id === id)
+        if (!notification) {
+            return
+        }
+
+        setNotifications(prev => prev.filter(n => n.id !== id))
+        if (!notification.is_read) {
+            setUnreadCount(c => Math.max(0, c - 1))
+        }
+
         try {
             await notificationRepository.delete(id)
-            setNotifications(prev => {
-                const notification = prev.find(n => n.id === id)
-                if (notification && !notification.is_read) {
-                    setUnreadCount(c => Math.max(0, c - 1))
-                }
-                return prev.filter(n => n.id !== id)
-            })
             toast.success("Notificação removida")
         } catch (error) {
             console.error("Failed to delete notification", error)
             toast.error("Erro ao remover notificação")
+            await fetchNotifications()
+            await updateUnreadCount()
         }
     }
 
-    // Initial load
     useEffect(() => {
         if (user) {
             updateUnreadCount()
         }
     }, [user, updateUnreadCount])
 
-    // WebSocket Listener
     useEffect(() => {
         if (echo && user?.id) {
             const channelName = `App.Models.User.${user.id}`
             const channel = echo.private(channelName)
-            
+
             console.log(`[NotificationProvider] Listening on ${channelName}`)
 
-            channel.listen('.new_notification', (e: any) => {
-                console.log('[NotificationProvider] New notification received:', e)
-                
-                // Format incoming notification to match entity
+            channel.listen(".new_notification", (e: BroadcastNotificationPayload) => {
+                console.log("[NotificationProvider] New notification received:", e)
+
                 const newNotification: Notification = {
                     id: e.id,
                     type: e.type,
@@ -127,68 +147,46 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                     message: e.message,
                     data: e.data,
                     is_read: false,
-                    created_at: e.created_at || new Date().toISOString()
+                    created_at: e.created_at || new Date().toISOString(),
                 }
 
                 setNotifications(prev => [newNotification, ...prev])
                 setUnreadCount(prev => prev + 1)
-                
-                // Show toast
+
                 toast(e.title, {
                     description: e.message,
                     action: {
                         label: "Ver",
                         onClick: () => {
-                            // Logic to navigate based on type could go here
-                            // For now just close
-                        }
-                    }
+                        },
+                    },
                 })
             })
 
             return () => {
                 console.log(`[NotificationProvider] Stop listening on ${channelName}`)
-                channel.stopListening('.new_notification')
+                channel.stopListening(".new_notification")
             }
         }
     }, [echo, user?.id])
 
     return (
-        <NotificationContext.Provider value={{
-            notifications,
-            unreadCount,
-            isLoading,
-            fetchNotifications,
-            markAsRead,
-            markAllAsRead,
-            deleteNotification,
-            hasMore
-        }}>
+        <NotificationContext.Provider
+            value={{
+                notifications,
+                unreadCount,
+                isLoading,
+                fetchNotifications,
+                markAsRead,
+                markAllAsRead,
+                deleteNotification,
+                hasMore,
+            }}
+        >
             {children}
         </NotificationContext.Provider>
     )
-}## Error Type
-Runtime Error
-
-## Error Message
-useNotifications must be used within a NotificationProvider
-
-
-    at useNotifications (src/presentation/contexts/notification-provider.tsx:175:15)
-    at NotificationBell (src/presentation/components/notification-bell.tsx:31:23)
-    at DashboardLayout (src/app/(dashboard)/layout.tsx:160:13)
-
-## Code Frame
-  173 |     const context = useContext(NotificationContext)
-  174 |     if (!context) {
-> 175 |         throw new Error("useNotifications must be used within a NotificationProvider")
-      |               ^
-  176 |     }
-  177 |     return context
-  178 | }
-
-Next.js version: 16.0.10 (Turbopack)
-
+}
 
 export const useNotifications = () => {
     const context = useContext(NotificationContext)

@@ -36,7 +36,7 @@ export const Hero = () => {
                     <div className="relative order-first lg:order-last">
                         <div className="w-[280px] h-64 sm:w-96 sm:h-96 lg:w-[550px] lg:h-[550px] mx-auto flex items-center justify-center relative">
                             <Image 
-                                src="/assets/landing/hero-Image.png" 
+                                src="/assets/landing/hero-img.png" 
                                 alt="Hero-Image" 
                                 fill
                                 className="object-contain" 

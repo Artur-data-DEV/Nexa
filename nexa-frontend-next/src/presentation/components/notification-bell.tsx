@@ -18,6 +18,7 @@ import { ScrollArea } from "@/presentation/components/ui/scroll-area"
 import { useNotifications } from "@/presentation/contexts/notification-provider"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/presentation/components/ui/badge"
+import { useRouter } from "next/navigation"
 
 export function NotificationBell() {
   const { 
@@ -31,6 +32,7 @@ export function NotificationBell() {
   } = useNotifications()
   
   const [isOpen, setIsOpen] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     if (isOpen) {
@@ -42,10 +44,25 @@ export function NotificationBell() {
   }, [isOpen, notifications.length, fetchNotifications])
 
   const handleNotificationClick = (id: number, isRead: boolean) => {
-    if (!isRead) {
-        markAsRead(id)
+    const notification = notifications.find(n => n.id === id)
+    if (!notification) return
+
+    const data = notification.data || {}
+    const roomId =
+      (typeof data.chat_room_id === "string" && data.chat_room_id) ||
+      (typeof data.roomId === "string" && data.roomId)
+
+    if (roomId) {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("last_selected_room_id", roomId)
+      }
+      router.push("/dashboard/messages")
+      setIsOpen(false)
     }
-    // Add navigation logic here if needed
+
+    if (!isRead) {
+      markAsRead(id)
+    }
   }
 
   return (

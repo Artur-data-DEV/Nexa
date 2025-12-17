@@ -73,6 +73,17 @@ export default function CampaignDetailsPage() {
     )
   }
 
+  const rawRequirements = campaign.requirements as unknown as string[] | string | undefined
+
+  const requirements = Array.isArray(rawRequirements)
+    ? rawRequirements
+    : typeof rawRequirements === "string"
+      ? rawRequirements
+          .split(",")
+          .map((req: string) => req.trim())
+          .filter(Boolean)
+      : []
+
   return (
     <div className="flex flex-col gap-6 max-w-5xl mx-auto w-full">
       <div className="flex items-center gap-2">
@@ -128,9 +139,9 @@ export default function CampaignDetailsPage() {
                         {campaign.description}
                     </p>
                     
-                    {campaign.requirements && (
+                    {requirements.length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-4">
-                            {campaign.requirements.map((req, i) => (
+                            {requirements.map((req: string, i: number) => (
                                 <Badge key={i} variant="outline">{req}</Badge>
                             ))}
                         </div>

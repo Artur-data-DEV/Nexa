@@ -6,8 +6,43 @@ export class ApiPortfolioRepository implements PortfolioRepository {
   constructor(private http: HttpClient) {}
 
   async getPortfolio(): Promise<Portfolio> {
-    const response = await this.http.get<{ data: Portfolio }>("/portfolio")
-    return response.data
+    const response = await this.http.get<{
+      data: {
+        portfolio: {
+          user_id: number
+          id: number
+          title: string
+          bio: string
+          profile_picture: string | null
+          project_links: { title: string; url: string }[]
+          items: {
+            id: number
+            title: string | null
+            file_url: string
+            media_type: "image" | "video"
+            order?: number
+          }[]
+        }
+      }
+    }>("/portfolio")
+
+    const apiPortfolio = response.data.portfolio
+
+    return {
+      user_id: apiPortfolio.user_id,
+      id: apiPortfolio.id,
+      title: apiPortfolio.title || "",
+      bio: apiPortfolio.bio || "",
+      profile_picture_url: apiPortfolio.profile_picture || undefined,
+      project_links: apiPortfolio.project_links || [],
+      items: apiPortfolio.items.map((item) => ({
+        id: item.id,
+        file_url: item.file_url,
+        media_type: item.media_type,
+        title: item.title || undefined,
+        order: item.order,
+      })),
+    }
   }
 
   async updateProfile(data: FormData): Promise<Portfolio> {

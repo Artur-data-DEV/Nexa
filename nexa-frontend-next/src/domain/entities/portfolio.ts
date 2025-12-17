@@ -1,7 +1,7 @@
 export interface PortfolioItem {
   id: number
   file_url: string
-  file_type: 'image' | 'video'
+  media_type: "image" | "video"
   title?: string
   description?: string
   order?: number
