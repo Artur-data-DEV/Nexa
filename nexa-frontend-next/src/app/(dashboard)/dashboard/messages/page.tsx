@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useCallback, useLayoutEffect, useEffect } from "react"
+import { useState, useRef, useCallback, useLayoutEffect, useEffect, FormEvent } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useAuth } from "@/presentation/contexts/auth-provider"
 import { useEcho } from "@/presentation/contexts/echo-provider"
@@ -12,9 +12,13 @@ import { Button } from "@/presentation/components/ui/button"
 import { Input } from "@/presentation/components/ui/input"
 import { ScrollArea } from "@/presentation/components/ui/scroll-area"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/presentation/components/ui/sheet"
-import { Menu, Wifi, WifiOff, MoreVertical, Send, Check, CheckCheck } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/presentation/components/ui/dialog"
+import { Badge } from "@/presentation/components/ui/badge"
+import { Label } from "@/presentation/components/ui/label"
+import { Menu, Wifi, WifiOff, MoreVertical, Send, Check, CheckCheck, Briefcase, DollarSign, Calendar, Clock, X, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useChat } from "@/presentation/contexts/chat-provider"
+import { toast } from "sonner"
 
 const chatRepository = new ApiChatRepository(api)
 
@@ -42,6 +46,10 @@ export default function MessagesPage() {
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const messagesContainerRef = useRef<HTMLDivElement | null>(null)
     const [shouldAutoScroll, setShouldAutoScroll] = useState(true)
+    const [isOfferDialogOpen, setIsOfferDialogOpen] = useState(false)
+    const [offerBudget, setOfferBudget] = useState("")
+    const [offerEstimatedDays, setOfferEstimatedDays] = useState("")
+    const [isSubmittingOffer, setIsSubmittingOffer] = useState(false)
 
     const scrollToBottom = useCallback(
         (force = false) => {
@@ -112,6 +120,131 @@ export default function MessagesPage() {
         if (!targetChat) return
         selectChat(targetChat)
     }, [searchParams, chats, selectedChat, selectChat, router])
+
+    const handleAcceptOffer = async (offerId: number) => {
+        if (!offerId || offerId <= 0 || Number.isNaN(offerId)) {
+            toast.error("ID da oferta inválido")
+            return
+        }
+
+        try {
+            const response: any = await api.post(`/offers/${offerId}/accept`)
+            if (response.success) {
+                toast.success("Oferta aceita com sucesso! Contrato criado.")
+            } else {
+                throw new Error(response.message || "Erro ao aceitar oferta")
+            }
+        } catch (error: any) {
+            toast.error(error?.response?.data?.message || "Erro ao aceitar oferta")
+        }
+    }
+
+    const handleRejectOffer = async (offerId: number) => {
+        if (!offerId || offerId <= 0 || Number.isNaN(offerId)) {
+            toast.error("ID da oferta inválido")
+            return
+        }
+
+        try {
+            const response: any = await api.post(`/offers/${offerId}/reject`)
+            if (response.success) {
+                toast.success("Oferta rejeitada com sucesso")
+            } else {
+                throw new Error(response.message || "Erro ao rejeitar oferta")
+            }
+        } catch (error: any) {
+            toast.error(error?.response?.data?.message || "Erro ao rejeitar oferta")
+        }
+    }
+
+    const handleCancelOffer = async (offerId: number) => {
+        if (!offerId || offerId <= 0 || Number.isNaN(offerId)) {
+            toast.error("ID da oferta inválido")
+            return
+        }
+
+        try {
+            const response: any = await api.delete(`/offers/${offerId}`)
+            if (response.success) {
+                toast.success("Oferta cancelada com sucesso")
+            } else {
+                throw new Error(response.message || "Erro ao cancelar oferta")
+            }
+        } catch (error: any) {
+            toast.error(error?.response?.data?.message || "Erro ao cancelar oferta")
+        }
+    }
+
+    const handleSubmitOffer = async (event: FormEvent) => {
+        event.preventDefault()
+        if (!selectedChat || user?.role !== "brand") return
+
+        const budgetValue = parseFloat(offerBudget)
+        const daysValue = parseInt(offerEstimatedDays, 10)
+
+        if (!budgetValue || Number.isNaN(budgetValue) || budgetValue < 10) {
+            toast.error("Orçamento deve ser pelo menos R$ 10,00")
+            return
+        }
+
+        if (!daysValue || Number.isNaN(daysValue) || daysValue < 1) {
+            toast.error("Prazo estimado deve ser pelo menos 1 dia")
+            return
+        }
+
+        try {
+            setIsSubmittingOffer(true)
+            const payload = {
+                creator_id: selectedChat.other_user.id,
+                chat_room_id: selectedChat.room_id,
+                budget: budgetValue,
+                estimated_days: daysValue,
+            }
+
+            const response: any = await api.post("/offers", payload)
+
+            if (response.success) {
+                toast.success("Oferta enviada com sucesso!")
+                setIsOfferDialogOpen(false)
+                setOfferBudget("")
+                setOfferEstimatedDays("")
+            } else {
+                throw new Error(response.message || "Erro ao enviar oferta")
+            }
+        } catch (error: any) {
+            if (error?.response?.status === 402 && error?.response?.data?.requires_funding) {
+                const redirectUrl = error.response?.data?.redirect_url
+                const message =
+                    error.response?.data?.message ||
+                    "Você precisa configurar um método de pagamento antes de enviar ofertas."
+
+                if (typeof window !== "undefined") {
+                    const pendingOffer = {
+                        creator_id: selectedChat.other_user.id,
+                        creator_name: selectedChat.other_user.name,
+                        chat_room_id: selectedChat.room_id,
+                        budget: budgetValue,
+                        estimated_days: daysValue,
+                    }
+                    window.sessionStorage.setItem("pending_offer", JSON.stringify(pendingOffer))
+                }
+
+                toast(message)
+
+                if (typeof window !== "undefined" && redirectUrl) {
+                    window.location.href = redirectUrl
+                }
+            } else {
+                const message =
+                    error?.response?.data?.message ||
+                    error?.message ||
+                    "Erro ao enviar oferta"
+                toast.error(message)
+            }
+        } finally {
+            setIsSubmittingOffer(false)
+        }
+    }
 
     const handleSelectChat = (chat: Chat) => {
         if (typeof window !== "undefined") {
@@ -331,14 +464,24 @@ export default function MessagesPage() {
                                     </div>
                                 </div>
                             </div>
-
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => selectChat(selectedChat)}
-                            >
-                                <MoreVertical className="h-5 w-5" />
-                            </Button>
+                            <div className="flex items-center gap-2">
+                                {user?.role === "brand" && (
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setIsOfferDialogOpen(true)}
+                                    >
+                                        Nova oferta
+                                    </Button>
+                                )}
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => selectChat(selectedChat)}
+                                >
+                                    <MoreVertical className="h-5 w-5" />
+                                </Button>
+                            </div>
                         </div>
 
                         <div
@@ -356,6 +499,173 @@ export default function MessagesPage() {
                                     <>
                                         {messages.map((msg, index) => {
                                             const isMe = msg.sender_id === user?.id
+                                            const isOffer =
+                                                msg.message_type === "offer" &&
+                                                msg.offer_data
+
+                                            if (isOffer) {
+                                                const offer: any = msg.offer_data
+                                                const status: string = offer.status || "pending"
+                                                const isCreatorUser = user?.role === "creator"
+                                                const canAccept =
+                                                    status === "pending" &&
+                                                    isCreatorUser &&
+                                                    offer.id &&
+                                                    !Number.isNaN(offer.id)
+                                                const canReject =
+                                                    status === "pending" &&
+                                                    isCreatorUser &&
+                                                    offer.id &&
+                                                    !Number.isNaN(offer.id)
+                                                const canCancel =
+                                                    status === "pending" &&
+                                                    user?.role === "brand" &&
+                                                    offer.id &&
+                                                    !Number.isNaN(offer.id)
+
+                                                return (
+                                                    <div
+                                                        key={index}
+                                                        className={cn(
+                                                            "flex w-max max-w-[75%] flex-col gap-1",
+                                                            isMe ? "ml-auto items-end" : "items-start"
+                                                        )}
+                                                    >
+                                                        <div
+                                                            className={cn(
+                                                                "w-full rounded-lg border px-3 py-2 text-sm",
+                                                                isMe
+                                                                    ? "bg-gradient-to-r from-blue-50 to-indigo-50"
+                                                                    : "bg-muted"
+                                                            )}
+                                                        >
+                                                            <div className="flex items-center justify-between mb-1">
+                                                                <div className="flex items-center gap-2">
+                                                                    <Briefcase className="h-4 w-4 text-primary" />
+                                                                    <span className="font-semibold text-xs">
+                                                                        {offer.title || "Oferta"}
+                                                                    </span>
+                                                                </div>
+                                                                <Badge
+                                                                    variant="outline"
+                                                                    className="text-[10px] capitalize"
+                                                                >
+                                                                    {status}
+                                                                </Badge>
+                                                            </div>
+                                                            {offer.description && (
+                                                                <p className="text-xs text-muted-foreground mb-2">
+                                                                    {offer.description}
+                                                                </p>
+                                                            )}
+                                                            <div className="flex flex-wrap items-center gap-3 text-[11px] mb-2">
+                                                                {(offer.formatted_budget ||
+                                                                    offer.budget) && (
+                                                                    <div className="flex items-center gap-1">
+                                                                        <DollarSign className="h-3 w-3 text-green-600" />
+                                                                        <span>
+                                                                            {offer.formatted_budget ||
+                                                                                offer.budget}
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+                                                                {typeof offer.estimated_days ===
+                                                                    "number" && (
+                                                                    <div className="flex items-center gap-1">
+                                                                        <Calendar className="h-3 w-3 text-purple-600" />
+                                                                        <span>
+                                                                            {offer.estimated_days}{" "}
+                                                                            {offer.estimated_days === 1
+                                                                                ? "dia"
+                                                                                : "dias"}
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+                                                                {typeof offer.days_until_expiry ===
+                                                                    "number" && (
+                                                                    <div className="flex items-center gap-1">
+                                                                        <Clock className="h-3 w-3 text-amber-600" />
+                                                                        <span>
+                                                                            expira em{" "}
+                                                                            {offer.days_until_expiry}{" "}
+                                                                            {offer.days_until_expiry === 1
+                                                                                ? "dia"
+                                                                                : "dias"}
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            {(canAccept ||
+                                                                canReject ||
+                                                                canCancel) && (
+                                                                <div className="flex gap-2 justify-end">
+                                                                    {canAccept && (
+                                                                        <Button
+                                                                            size="sm"
+                                                                            onClick={() =>
+                                                                                handleAcceptOffer(
+                                                                                    offer.id
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            Aceitar
+                                                                        </Button>
+                                                                    )}
+                                                                    {canReject && (
+                                                                        <Button
+                                                                            size="sm"
+                                                                            variant="outline"
+                                                                            onClick={() =>
+                                                                                handleRejectOffer(
+                                                                                    offer.id
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            Rejeitar
+                                                                        </Button>
+                                                                    )}
+                                                                    {canCancel && (
+                                                                        <Button
+                                                                            size="sm"
+                                                                            variant="outline"
+                                                                            onClick={() =>
+                                                                                handleCancelOffer(
+                                                                                    offer.id
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            Cancelar
+                                                                        </Button>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <span
+                                                            className={cn(
+                                                                "text-[10px] flex items-center gap-1",
+                                                                isMe
+                                                                    ? "text-primary-foreground/70"
+                                                                    : "text-muted-foreground"
+                                                            )}
+                                                        >
+                                                            {new Date(
+                                                                msg.created_at
+                                                            ).toLocaleTimeString([], {
+                                                                hour: "2-digit",
+                                                                minute: "2-digit",
+                                                            })}
+                                                            {isMe && (
+                                                                msg.is_read ? (
+                                                                    <CheckCheck className="h-3 w-3" />
+                                                                ) : (
+                                                                    <Check className="h-3 w-3" />
+                                                                )
+                                                            )}
+                                                        </span>
+                                                    </div>
+                                                )
+                                            }
+
                                             return (
                                                 <div
                                                     key={index}
@@ -408,6 +718,70 @@ export default function MessagesPage() {
                                 <Send className="h-4 w-4" />
                             </Button>
                         </div>
+                        <Dialog open={isOfferDialogOpen} onOpenChange={setIsOfferDialogOpen}>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Nova oferta</DialogTitle>
+                                    <DialogDescription>
+                                        Defina o orçamento e prazo estimado para esta oferta.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <form onSubmit={handleSubmitOffer} className="space-y-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="offer_budget">
+                                                Orçamento (R$)
+                                            </Label>
+                                            <Input
+                                                id="offer_budget"
+                                                type="number"
+                                                min={10}
+                                                step="0.01"
+                                                value={offerBudget}
+                                                onChange={(e) =>
+                                                    setOfferBudget(e.target.value)
+                                                }
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="offer_days">
+                                                Prazo estimado (dias)
+                                            </Label>
+                                            <Input
+                                                id="offer_days"
+                                                type="number"
+                                                min={1}
+                                                max={365}
+                                                value={offerEstimatedDays}
+                                                onChange={(e) =>
+                                                    setOfferEstimatedDays(
+                                                        e.target.value
+                                                    )
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+                                    <DialogFooter className="mt-4">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onClick={() => setIsOfferDialogOpen(false)}
+                                            disabled={isSubmittingOffer}
+                                        >
+                                            Cancelar
+                                        </Button>
+                                        <Button
+                                            type="submit"
+                                            disabled={isSubmittingOffer}
+                                        >
+                                            {isSubmittingOffer
+                                                ? "Enviando..."
+                                                : "Enviar oferta"}
+                                        </Button>
+                                    </DialogFooter>
+                                </form>
+                            </DialogContent>
+                        </Dialog>
                     </>
                 ) : (
                     <div className="flex-1 flex flex-col items-center justify-center gap-4 text-muted-foreground">

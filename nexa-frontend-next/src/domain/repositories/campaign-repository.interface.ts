@@ -10,4 +10,5 @@ export interface CampaignRepository {
   apply(id: number, data: Record<string, any>): Promise<Application>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getStats?(): Promise<any>
+  getPending?(filters?: Record<string, any>): Promise<Campaign[]>
 }

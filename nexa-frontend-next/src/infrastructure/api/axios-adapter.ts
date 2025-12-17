@@ -4,6 +4,7 @@ export interface HttpClient {
   get<T>(url: string, config?: AxiosRequestConfig): Promise<T>
   post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T>
   put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T>
+  patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T>
   delete<T>(url: string, config?: AxiosRequestConfig): Promise<T>
 }
 
@@ -75,6 +76,11 @@ export class AxiosAdapter implements HttpClient {
 
   async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
     const response: AxiosResponse<T> = await this.api.put(url, data, config)
+    return response.data
+  }
+
+  async patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+    const response: AxiosResponse<T> = await this.api.patch(url, data, config)
     return response.data
   }
 

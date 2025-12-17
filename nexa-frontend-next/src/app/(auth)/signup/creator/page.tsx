@@ -366,7 +366,21 @@ export default function CreatorSignUpPage() {
                           Aceito os termos e condições
                         </FormLabel>
                         <FormDescription>
-                          Você concorda com nossa Política de Privacidade e Termos de Uso.
+                          Você concorda com nossa{" "}
+                          <Link
+                            href="/privacy-policy"
+                            className="underline text-primary hover:text-primary/80"
+                          >
+                            Política de Privacidade
+                          </Link>{" "}
+                          e{" "}
+                          <Link
+                            href="/terms-of-use"
+                            className="underline text-primary hover:text-primary/80"
+                          >
+                            Termos de Uso
+                          </Link>
+                          .
                         </FormDescription>
                       </div>
                     </FormItem>

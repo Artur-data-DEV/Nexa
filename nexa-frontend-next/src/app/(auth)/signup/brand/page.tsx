@@ -368,7 +368,21 @@ export default function BrandSignUpPage() {
                           Aceito os termos e condições
                         </FormLabel>
                         <FormDescription>
-                          Você concorda com nossa Política de Privacidade e Termos de Uso.
+                          Você concorda com nossa{" "}
+                          <Link
+                            href="/privacy-policy"
+                            className="underline text-purple-600 hover:text-purple-700"
+                          >
+                            Política de Privacidade
+                          </Link>{" "}
+                          e{" "}
+                          <Link
+                            href="/terms-of-use"
+                            className="underline text-purple-600 hover:text-purple-700"
+                          >
+                            Termos de Uso
+                          </Link>
+                          .
                         </FormDescription>
                       </div>
                     </FormItem>

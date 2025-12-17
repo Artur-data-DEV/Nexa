@@ -90,17 +90,67 @@ export default function AdminPage() {
 
               <Card className="border-dashed">
                 <CardHeader>
-                  <CardTitle>Área administrativa</CardTitle>
+                  <CardTitle>Campanhas</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <p className="text-sm text-muted-foreground">
-                    Outras ferramentas administrativas do painel original serão migradas
-                    gradualmente para esta seção do Next.js.
+                    Gerencie o funil de campanhas da plataforma: aprove ou rejeite campanhas
+                    pendentes e acompanhe o desempenho das campanhas ativas.
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Enquanto isso, você já pode utilizar a verificação de saques para
-                    auditar pagamentos e movimentações financeiras.
+                    A moderação completa de campanhas ainda está sendo migrada para o Next.
+                    Utilize o painel administrativo clássico para operações avançadas.
                   </p>
+                  <Button asChild variant="outline" className="mt-2">
+                    <Link href="/admin/campaigns/pending">
+                      Aprovar campanhas pendentes
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="border-dashed">
+                <CardHeader>
+                  <CardTitle>Usuários</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Visualize e gerencie criadores, marcas e estudantes, incluindo status
+                    de conta, verificação de e-mail e atividade recente.
+                  </p>
+                  <Button variant="outline" disabled className="mt-2">
+                    Gestão de usuários em breve
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="border-dashed">
+                <CardHeader>
+                  <CardTitle>Verificação de Alunos</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Aprove ou rejeite solicitações de verificação estudantil e acompanhe o
+                    uso do plano especial para estudantes.
+                  </p>
+                    <Button variant="outline" disabled className="mt-2">
+                      Verificação de alunos em breve
+                    </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="border-dashed">
+                <CardHeader>
+                  <CardTitle>Rankings e Guias</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Acompanhe rankings de marcas, materiais educativos e notificações
+                    importantes sobre a saúde da plataforma.
+                  </p>
+                  <Button variant="outline" disabled className="mt-2">
+                    Ferramentas de analytics em breve
+                  </Button>
                 </CardContent>
               </Card>
             </div>
@@ -110,4 +160,3 @@ export default function AdminPage() {
     </AuthGuard>
   )
 }
-

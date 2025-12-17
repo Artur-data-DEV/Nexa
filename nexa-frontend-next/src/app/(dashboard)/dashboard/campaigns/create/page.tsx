@@ -186,22 +186,53 @@ export default function CreateCampaignPage() {
         const formData = new FormData()
         formData.append("title", title.trim())
         formData.append("description", description.trim())
-        formData.append("budget", budget.trim())
-        formData.append("remunerationType", remunerationType)
-        formData.append("deadline", deadline!.toISOString())
-        formData.append("type", campaignType)
-        
+
+        if (remunerationType === "paga") {
+          const budgetValue = parseFloat(budget)
+          if (isNaN(budgetValue) || budgetValue <= 0) {
+            toast.error("Orçamento deve ser um número válido e positivo para campanhas pagas.")
+            setIsCreating(false)
+            return
+          }
+          formData.append("budget", budgetValue.toString())
+        } else {
+          const trimmedBudget = budget.trim()
+          if (trimmedBudget) {
+            const budgetValue = parseFloat(trimmedBudget)
+            if (!isNaN(budgetValue) && budgetValue >= 0) {
+              formData.append("budget", budgetValue.toString())
+            } else {
+              formData.append("budget", "0")
+            }
+          } else {
+            formData.append("budget", "0")
+          }
+        }
+
+        formData.append("remuneration_type", remunerationType)
+
+        const year = deadline!.getFullYear()
+        const month = String(deadline!.getMonth() + 1).padStart(2, "0")
+        const day = String(deadline!.getDate()).padStart(2, "0")
+        formData.append("deadline", `${year}-${month}-${day}`)
+
         selectedStates.forEach(state => formData.append("target_states[]", state))
-        targetCreatorTypes.forEach(type => formData.append("targetCreatorTypes[]", type))
-        targetGenders.forEach(gender => formData.append("targetGenders[]", gender))
-        
-        if (minAge) formData.append("minAge", minAge.toString())
-        if (maxAge) formData.append("maxAge", maxAge.toString())
-        
+
+        if (campaignType.trim()) {
+          formData.append("campaign_type", campaignType.trim())
+          formData.append("category", campaignType.trim())
+        }
+
+        if (minAge !== undefined) formData.append("min_age", minAge.toString())
+        if (maxAge !== undefined) formData.append("max_age", maxAge.toString())
+
+        targetGenders.forEach(gender => formData.append("target_genders[]", gender))
+        targetCreatorTypes.forEach(type => formData.append("target_creator_types[]", type))
+
         if (file) formData.append("logo", file)
-        
-        attachments.forEach((att, index) => {
-            formData.append(`attachments[${index}]`, att)
+
+        attachments.forEach(att => {
+          formData.append("attach_file[]", att)
         })
 
         await createCampaignUseCase.execute(formData)

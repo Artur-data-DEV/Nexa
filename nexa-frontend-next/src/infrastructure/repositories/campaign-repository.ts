@@ -47,4 +47,16 @@ export class ApiCampaignRepository implements CampaignRepository {
   async apply(id: number, data: Record<string, any>): Promise<Application> {
     return this.http.post<Application>(`/campaigns/${id}/apply`, data)
   }
+
+  async getPending(filters?: Record<string, any>): Promise<Campaign[]> {
+    const params = new URLSearchParams(filters).toString()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const response: any = await this.http.get<any>(`/campaigns/pending?${params}`)
+
+    if (response && Array.isArray(response.data)) {
+      return response.data
+    }
+
+    return Array.isArray(response) ? response : []
+  }
 }
