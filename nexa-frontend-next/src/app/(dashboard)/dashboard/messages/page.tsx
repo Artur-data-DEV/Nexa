@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useCallback, useLayoutEffect, useEffect, FormEvent } from "react"
+import { useState, useRef, useCallback, useLayoutEffect, useEffect, FormEvent, ChangeEvent } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useAuth } from "@/presentation/contexts/auth-provider"
 import { useEcho } from "@/presentation/contexts/echo-provider"
@@ -15,7 +15,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/presentation/components/ui/dialog"
 import { Badge } from "@/presentation/components/ui/badge"
 import { Label } from "@/presentation/components/ui/label"
-import { Menu, Wifi, WifiOff, MoreVertical, Send, Check, CheckCheck, Briefcase, DollarSign, Calendar, Clock, X, AlertCircle } from "lucide-react"
+import { MessageCircle, Wifi, WifiOff, MoreVertical, Send, Check, CheckCheck, Briefcase, DollarSign, Calendar, Clock, X, AlertCircle, Paperclip, FileText } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useChat } from "@/presentation/contexts/chat-provider"
 import { toast } from "sonner"
@@ -50,6 +50,8 @@ export default function MessagesPage() {
     const [offerBudget, setOfferBudget] = useState("")
     const [offerEstimatedDays, setOfferEstimatedDays] = useState("")
     const [isSubmittingOffer, setIsSubmittingOffer] = useState(false)
+    const [selectedFile, setSelectedFile] = useState<File | null>(null)
+    const fileInputRef = useRef<HTMLInputElement | null>(null)
 
     const scrollToBottom = useCallback(
         (force = false) => {
@@ -65,8 +67,9 @@ export default function MessagesPage() {
     }, [messages, scrollToBottom])
 
     useEffect(() => {
-        scrollToBottom(true)
-    }, [selectedChat?.room_id, scrollToBottom])
+        if (!messagesEndRef.current) return
+        messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
+    }, [selectedChat?.room_id])
 
     const handleScroll = () => {
         const container = messagesContainerRef.current
@@ -95,12 +98,27 @@ export default function MessagesPage() {
     }
 
     const handleSendMessage = async () => {
-        if (!selectedChat || !newMessage.trim()) return
+        if (!selectedChat) return
+
+        const hasText = newMessage.trim().length > 0
+        const hasFile = !!selectedFile
+
+        if (!hasText && !hasFile) return
 
         const content = newMessage
-        setNewMessage("")
-        await sendMessage(selectedChat.room_id, content)
+        const fileToSend = selectedFile
 
+        setNewMessage("")
+        setSelectedFile(null)
+
+        await sendMessage(selectedChat.room_id, content, fileToSend || undefined)
+    }
+
+    const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0]
+        if (file) {
+            setSelectedFile(file)
+        }
     }
 
     useEffect(() => {
@@ -364,14 +382,32 @@ export default function MessagesPage() {
                         </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col w-full overflow-hidden">
-                        <div className="flex items-center justify-between">
-                            <span className="font-semibold">{chat.other_user.name}</span>
+                        <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                                <span className="font-semibold">{chat.other_user.name}</span>
+                                <span
+                                    className={cn(
+                                        "inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium",
+                                        chat.other_user.online
+                                            ? "bg-green-500/10 text-green-500 border-green-500/40"
+                                            : "bg-muted text-muted-foreground border-transparent"
+                                    )}
+                                >
+                                    <span
+                                        className={cn(
+                                            "h-1.5 w-1.5 rounded-full",
+                                            chat.other_user.online ? "bg-green-500" : "bg-muted-foreground/50"
+                                        )}
+                                    />
+                                    {chat.other_user.online ? "Online" : "Offline"}
+                                </span>
+                            </div>
                             <span className="text-xs text-muted-foreground">
                                 {chat.last_message?.created_at
                                     ? new Date(chat.last_message.created_at).toLocaleTimeString([], {
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                    })
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                      })
                                     : ""}
                             </span>
                         </div>
@@ -409,8 +445,13 @@ export default function MessagesPage() {
                                 <div className="md:hidden">
                                     <Sheet open={isListOpen} onOpenChange={setIsListOpen}>
                                         <SheetTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="-ml-2">
-                                                <Menu className="h-5 w-5" />
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="-ml-2"
+                                                aria-label="Abrir conversas"
+                                            >
+                                                <MessageCircle className="h-5 w-5" />
                                             </Button>
                                         </SheetTrigger>
                                         <SheetContent side="left" className="w-80 p-0">
@@ -435,13 +476,12 @@ export default function MessagesPage() {
                                 <div>
                                     <div className="font-semibold flex items-center gap-2">
                                         {selectedChat.other_user.name}
-                                        {isConnected ? (
-                                            <div className="flex items-center gap-1 bg-green-800/70 text-green-400 px-1 py-0.5 rounded-full text-[10px] font-medium border ">
+                                        {selectedChat.other_user.online ? (
+                                            <div className="flex items-center gap-1 bg-green-800/70 text-green-400 px-1 py-0.5 rounded-full text-[10px] font-medium border">
                                                 <Wifi className="h-3 w-3" />
-
                                             </div>
                                         ) : (
-                                            <div className="flex items-center gap-1 bg-red-100 text-red-700 px-1 py-0.5 rounded-full text-[10px] font-medium border">
+                                            <div className="flex items-center gap-1 bg-muted text-muted-foreground px-1 py-0.5 rounded-full text-[10px] font-medium border">
                                                 <WifiOff className="h-3 w-3" />
                                             </div>
                                         )}
@@ -457,8 +497,16 @@ export default function MessagesPage() {
                                                 </div>
                                             </div>
                                         ) : (
-                                            <span className={isConnected ? "text-green-600" : "text-muted-foreground"}>
-                                                {isConnected ? "Online agora" : "Aguardando conexão..."}
+                                            <span
+                                                className={
+                                                    selectedChat.other_user.online
+                                                        ? "text-green-600"
+                                                        : "text-muted-foreground"
+                                                }
+                                            >
+                                                {selectedChat.other_user.online
+                                                    ? "Online agora"
+                                                    : "Offline"}
                                             </span>
                                         )}
                                     </div>
@@ -666,6 +714,9 @@ export default function MessagesPage() {
                                                 )
                                             }
 
+                                            const isFileMessage = msg.message_type === "file"
+                                            const isImageMessage = msg.message_type === "image"
+
                                             return (
                                                 <div
                                                     key={index}
@@ -676,9 +727,53 @@ export default function MessagesPage() {
                                                             : "bg-muted"
                                                     )}
                                                 >
-                                                    {msg.message}
+                                                    {isImageMessage && msg.file_url ? (
+                                                        <div className="space-y-1">
+                                                            <img
+                                                                src={msg.file_url}
+                                                                alt={msg.file_name || "Imagem"}
+                                                                className="max-w-xs rounded-md"
+                                                            />
+                                                            {msg.message && msg.message !== msg.file_name && (
+                                                                <p className="text-xs">
+                                                                    {msg.message}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    ) : isFileMessage ? (
+                                                        <div className="space-y-1">
+                                                            <div className="flex items-center gap-2">
+                                                                <FileText className="h-4 w-4" />
+                                                                <span className="text-sm font-medium truncate max-w-[180px]">
+                                                                    {msg.file_name || "Arquivo"}
+                                                                </span>
+                                                                {msg.formatted_file_size && (
+                                                                    <span className="text-[11px] text-muted-foreground">
+                                                                        {msg.formatted_file_size}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            {msg.file_url && (
+                                                                <a
+                                                                    href={msg.file_url}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="text-[11px] underline"
+                                                                >
+                                                                    Baixar arquivo
+                                                                </a>
+                                                            )}
+                                                            {msg.message && msg.message !== msg.file_name && (
+                                                                <p className="text-xs">
+                                                                    {msg.message}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <>{msg.message}</>
+                                                    )}
                                                     <span className={cn("text-[10px] self-end flex items-center gap-1", isMe ? "text-primary-foreground/70" : "text-muted-foreground")}>
-                                                        {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                                                         {isMe && (
                                                             msg.is_read ? <CheckCheck className="h-3 w-3" /> : <Check className="h-3 w-3" />
                                                         )}
@@ -702,22 +797,56 @@ export default function MessagesPage() {
                         </div>
 
                         <div className="p-4 border-t flex gap-2 flex-none bg-background z-10">
-                            <Input
-                                placeholder="Digite sua mensagem..."
-                                value={newMessage}
-                                onChange={(e) => {
-                                    setNewMessage(e.target.value)
-                                    handleTyping()
-                                }}
-                                onFocus={() => {
-                                    setTimeout(() => scrollToBottom(true), 100)
-                                }}
-                                onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                            />
+                            <div className="flex items-center gap-2 flex-1">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => fileInputRef.current?.click()}
+                                >
+                                    <Paperclip className="h-4 w-4" />
+                                </Button>
+                                <Input
+                                    placeholder="Digite sua mensagem..."
+                                    value={newMessage}
+                                    onChange={(e) => {
+                                        setNewMessage(e.target.value)
+                                        handleTyping()
+                                    }}
+                                    onFocus={() => {
+                                        setTimeout(() => scrollToBottom(true), 100)
+                                    }}
+                                    onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+                                />
+                            </div>
                             <Button size="icon" onClick={handleSendMessage}>
                                 <Send className="h-4 w-4" />
                             </Button>
                         </div>
+                        {selectedFile && (
+                            <div className="px-4 pb-4 flex items-center justify-between text-xs text-muted-foreground gap-2">
+                                <div className="inline-flex items-center gap-2">
+                                    <FileText className="h-3 w-3" />
+                                    <span className="max-w-[200px] truncate">
+                                        {selectedFile.name}
+                                    </span>
+                                </div>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={() => setSelectedFile(null)}
+                                >
+                                    <X className="h-3 w-3" />
+                                </Button>
+                            </div>
+                        )}
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            className="hidden"
+                            onChange={handleFileChange}
+                        />
                         <Dialog open={isOfferDialogOpen} onOpenChange={setIsOfferDialogOpen}>
                             <DialogContent>
                                 <DialogHeader>

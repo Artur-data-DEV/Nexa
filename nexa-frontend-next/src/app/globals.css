@@ -4,6 +4,66 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@font-face {
+  font-family: "Geomatrix";
+  src:
+    url("/fonts/geomatrix/Geomatrix.ttf") format("truetype"),
+    url("/fonts/geomatrix/Geomatrix.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Geomatrix";
+  src:
+    url("/fonts/geomatrix/Geomatrix Thin.ttf") format("truetype"),
+    url("/fonts/geomatrix/Geomatrix Thin.otf") format("opentype");
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Geomatrix";
+  src:
+    url("/fonts/geomatrix/Geomatrix Light.ttf") format("truetype"),
+    url("/fonts/geomatrix/Geomatrix Light.otf") format("opentype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Geomatrix";
+  src:
+    url("/fonts/geomatrix/Geomatrix Medium.ttf") format("truetype"),
+    url("/fonts/geomatrix/Geomatrix Medium.otf") format("opentype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Geomatrix";
+  src:
+    url("/fonts/geomatrix/Geomatrix Bold.ttf") format("truetype"),
+    url("/fonts/geomatrix/Geomatrix Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Geomatrix";
+  src:
+    url("/fonts/geomatrix/Geomatrix Black.ttf") format("truetype"),
+    url("/fonts/geomatrix/Geomatrix Black.otf") format("opentype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --background: 0 0% 100%;
   --foreground: 222.2 84% 4.9%;
@@ -109,5 +169,25 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: "Geomatrix", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+      sans-serif;
+  }
+  h1 {
+    @apply text-4xl md:text-5xl font-bold tracking-tight;
+  }
+  h2 {
+    @apply text-3xl md:text-4xl font-semibold tracking-tight;
+  }
+  h3 {
+    @apply text-2xl md:text-3xl font-semibold tracking-tight;
+  }
+  h4 {
+    @apply text-xl md:text-2xl font-medium;
+  }
+  h5 {
+    @apply text-lg md:text-xl font-medium;
+  }
+  h6 {
+    @apply text-base md:text-lg font-medium;
   }
 }

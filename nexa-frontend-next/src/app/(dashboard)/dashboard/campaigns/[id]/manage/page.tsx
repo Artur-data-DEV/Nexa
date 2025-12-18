@@ -100,9 +100,30 @@ export default function ManageCandidatesPage() {
             if (status !== 'approved') {
                 toast.success(`Candidato ${status === 'rejected' ? 'rejeitado' : 'atualizado'} com sucesso!`)
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to update status", error)
-            toast.error("Erro ao atualizar status")
+            const statusCode = error?.response?.status
+            const data = error?.response?.data
+
+            if (statusCode === 402 && data) {
+                const message =
+                    data.message ||
+                    (data.requires_stripe_account
+                        ? "Você precisa configurar sua conta Stripe antes de aprovar propostas."
+                        : data.requires_funding
+                        ? "Você precisa configurar um método de pagamento antes de aprovar propostas."
+                        : "Não foi possível aprovar a candidatura. Verifique suas configurações de pagamento.")
+
+                toast.error(message)
+
+                if (data.requires_stripe_account) {
+                    router.push("/dashboard/payment-methods")
+                } else if (data.requires_funding && data.redirect_url && typeof window !== "undefined") {
+                    window.location.href = data.redirect_url
+                }
+            } else {
+                toast.error("Erro ao atualizar status")
+            }
         } finally {
             setProcessingId(null)
         }

@@ -35,6 +35,7 @@ import { ApiAuthRepository } from "@/infrastructure/repositories/auth-repository
 import { api } from "@/infrastructure/api/axios-adapter"
 import { useAuth } from "@/presentation/contexts/auth-provider"
 import { Logo } from "@/presentation/components/logo"
+import { GoogleOAuthButton } from "@/presentation/components/auth/google-oauth-button"
 
 // Dependency Injection
 const authRepository = new ApiAuthRepository(api)
@@ -101,7 +102,7 @@ export default function LoginPage() {
             Entre na sua conta para acessar o painel.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
@@ -178,6 +179,12 @@ export default function LoginPage() {
               </Button>
             </form>
           </Form>
+          <div className="flex items-center w-full gap-2">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-muted-foreground text-sm">ou</span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+          <GoogleOAuthButton className="rounded-md" />
         </CardContent>
         <CardFooter className="flex flex-col gap-2 justify-center text-center">
           <p className="text-sm text-muted-foreground">

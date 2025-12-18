@@ -32,6 +32,7 @@ import {
 import { PhoneInput } from "@/presentation/components/ui/phone-input"
 import { Alert, AlertDescription, AlertTitle } from "@/presentation/components/ui/alert"
 import { Logo } from "@/presentation/components/logo"
+import { GoogleOAuthButton } from "@/presentation/components/auth/google-oauth-button"
 
 import { RegisterBrandUseCase } from "@/application/use-cases/register-brand.use-case"
 import { ApiAuthRepository } from "@/infrastructure/repositories/auth-repository"
@@ -409,6 +410,14 @@ export default function BrandSignUpPage() {
               </div>
             </form>
           </Form>
+          <div className="mt-4 space-y-3">
+            <div className="flex items-center w-full gap-2">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-muted-foreground text-sm">ou</span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
+            <GoogleOAuthButton role="brand" className="rounded-md" />
+          </div>
         </CardContent>
         <CardFooter className="justify-center">
           <p className="text-sm text-muted-foreground">

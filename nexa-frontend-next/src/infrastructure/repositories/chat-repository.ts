@@ -53,6 +53,25 @@ export class ApiChatRepository implements ChatRepository {
     return response as Message
   }
 
+  async sendFileMessage(roomId: string, file: File, message?: string): Promise<Message> {
+    const formData = new FormData()
+    formData.append("room_id", roomId)
+    formData.append("file", file)
+
+    if (message && message.trim()) {
+      formData.append("message", message.trim())
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const response: any = await this.http.post<any>("/chat/messages", formData)
+
+    if (response && response.data) {
+      return response.data as Message
+    }
+
+    return response as Message
+  }
+
   async markAsRead(roomId: string, messageIds: number[]): Promise<void> {
     await this.http.post("/chat/mark-read", {
       room_id: roomId,

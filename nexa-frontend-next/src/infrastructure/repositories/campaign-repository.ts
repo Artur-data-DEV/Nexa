@@ -45,7 +45,14 @@ export class ApiCampaignRepository implements CampaignRepository {
   }
 
   async apply(id: number, data: Record<string, any>): Promise<Application> {
-    return this.http.post<Application>(`/campaigns/${id}/apply`, data)
+    const payload = {
+      proposal: data.proposal,
+      portfolio_links: data.portfolio_links,
+      estimated_delivery_days: data.delivery_days ?? data.estimated_delivery_days,
+      proposed_budget: data.budget ?? data.proposed_budget,
+    }
+
+    return this.http.post<Application>(`/campaigns/${id}/applications`, payload)
   }
 
   async getPending(filters?: Record<string, any>): Promise<Campaign[]> {

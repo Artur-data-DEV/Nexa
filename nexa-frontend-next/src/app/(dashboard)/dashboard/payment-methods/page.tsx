@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/presentation/components/ui/card";
 import { Alert, AlertDescription } from "@/presentation/components/ui/alert";
 import { Button } from "@/presentation/components/ui/button";
@@ -14,6 +15,16 @@ const stripeRepository = new ApiStripeRepository(api);
 
 export default function PaymentMethodsPage() {
   const [isLoadingPaymentMethod, setIsLoadingPaymentMethod] = useState(false);
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const status = searchParams.get("payment_method");
+    if (status === "cancelled") {
+      router.replace("/dashboard/payment-methods");
+    }
+  }, [searchParams, router]);
 
   const handleConnectPaymentMethod = async () => {
     setIsLoadingPaymentMethod(true);

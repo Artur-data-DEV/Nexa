@@ -25,7 +25,7 @@ interface ChatContextType {
   isInitialLoading: boolean
   isChatLoading: boolean
   selectChat: (chat: Chat) => Promise<void>
-  sendMessage: (roomId: string, content: string) => Promise<void>
+  sendMessage: (roomId: string, content: string, file?: File | null) => Promise<void>
   deleteMessage: (messageId: number) => void
 }
 
@@ -132,31 +132,58 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   )
 
   const sendMessage = useCallback(
-    async (roomId: string, content: string) => {
+    async (roomId: string, content: string, file?: File | null) => {
       if (!user?.id) return
 
       const trimmed = content.trim()
-      if (!trimmed) return
+      if (!trimmed && !file) return
 
       const tempId = Date.now()
 
-      const tempMessage: Message = {
-        id: tempId,
-        message: trimmed,
-        message_type: "text",
-        sender_id: user.id,
-        sender_name: user.name,
-        sender_avatar: user.avatar ?? null,
-        is_sender: true,
-        is_read: true,
-        created_at: new Date().toISOString(),
+      let tempMessage: Message
+
+      if (file) {
+        tempMessage = {
+          id: tempId,
+          message: trimmed || file.name,
+          message_type: "file",
+          sender_id: user.id,
+          sender_name: user.name,
+          sender_avatar: user.avatar ?? null,
+          is_sender: true,
+          is_read: true,
+          created_at: new Date().toISOString(),
+          file_name: file.name,
+        }
+      } else {
+        tempMessage = {
+          id: tempId,
+          message: trimmed,
+          message_type: "text",
+          sender_id: user.id,
+          sender_name: user.name,
+          sender_avatar: user.avatar ?? null,
+          is_sender: true,
+          is_read: true,
+          created_at: new Date().toISOString(),
+        }
       }
 
       setMessages(prev => [...prev, tempMessage])
       updateChatList(roomId, tempMessage)
 
       try {
-        const sentMessage = await chatRepository.sendMessage(roomId, trimmed)
+        let sentMessage: Message
+
+        if (file) {
+          sentMessage = await chatRepository.sendFileMessage(
+            roomId,
+            file,
+            trimmed || undefined
+          )
+        } else {
+          sentMessage = await chatRepository.sendMessage(roomId, trimmed)
+        }
 
         setMessages(prev => prev.map(msg => (msg.id === tempId ? sentMessage : msg)))
         updateChatList(roomId, sentMessage)

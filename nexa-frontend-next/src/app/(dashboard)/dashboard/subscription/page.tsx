@@ -329,14 +329,105 @@ export default function SubscriptionPage() {
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardContent className="pt-6">
-            <p className="text-center text-muted-foreground mb-4">
-              Plano não encontrado
-            </p>
+            <p className="text-center text-muted-foreground mb-4">Plano não encontrado</p>
             <Button onClick={() => router.back()} className="w-full">
               Voltar
             </Button>
           </CardContent>
         </Card>
+      </div>
+    );
+  }
+
+  if (subscriptionStatus?.is_premium_active) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-0 pb-12">
+          <div className="mb-6 pt-4">
+            <Button variant="ghost" onClick={() => router.back()} className="mb-4">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar
+            </Button>
+            <div className="mt-2 rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 via-purple-700/10 to-background px-4 py-5 sm:px-6 sm:py-6 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-yellow-500/10 border border-yellow-500/40">
+                    <Crown className="w-7 h-7 text-yellow-400" />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+                      Você já é Premium
+                    </h1>
+                    <p className="text-sm sm:text-base text-muted-foreground mt-1">
+                      Obrigado por apoiar a Nexa! <br/> Sua assinatura premium está ativa e você já pode
+                      aproveitar todos os recursos.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-col items-start sm:items-end gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-green-500/40 bg-green-500/10 px-3 py-1 text-xs font-semibold text-green-300">
+                    <Crown className="w-3 h-3" />
+                    Premium
+                  </span>
+                  {subscriptionStatus.premium_expires_at && (
+                    <span className="text-xs text-muted-foreground">
+                      Válido até{" "}
+                      <span className="font-medium text-foreground">
+                        {formatDate(subscriptionStatus.premium_expires_at)}
+                      </span>
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Conheça seus benefícios Premium</CardTitle>
+              <CardDescription>
+                Veja alguns dos recursos que você tem acesso como assinante premium.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-start gap-3 rounded-lg bg-muted/10 px-3 py-2">
+                <Star className="w-5 h-5 text-yellow-500 mt-0.5" />
+                <div>
+                  <p className="font-medium text-foreground">Acesso prioritário a campanhas</p>
+                  <p className="text-sm text-muted-foreground">
+                    Visualize e se candidate primeiro às campanhas exclusivas para criadores premium.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 rounded-lg bg-muted/10 px-3 py-2">
+                <Shield className="w-5 h-5 text-blue-500 mt-0.5" />
+                <div>
+                  <p className="font-medium text-foreground">Mais credibilidade para seu perfil</p>
+                  <p className="text-sm text-muted-foreground">
+                    Destaque-se para as marcas com o selo premium no seu dashboard.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 rounded-lg bg-muted/10 px-3 py-2">
+                <CheckCircle2 className="w-5 h-5 text-emerald-500 mt-0.5" />
+                <div>
+                  <p className="font-medium text-foreground">Ferramentas avançadas</p>
+                  <p className="text-sm text-muted-foreground">
+                    Tenha acesso às principais funcionalidades pensadas para acelerar seus resultados.
+                  </p>
+                </div>
+              </div>
+              <div className="pt-2">
+                <Button
+                  onClick={() => router.push("/dashboard")}
+                  className="w-full sm:w-auto"
+                  size="lg"
+                >
+                  Explorar recursos Premium
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -364,48 +455,7 @@ export default function SubscriptionPage() {
             <div className="rounded-full bg-purple-100 dark:bg-purple-900/40 p-3 flex items-center justify-center">
               <Calendar className="w-6 h-6 text-purple-500 dark:text-purple-200" />
             </div>
-            <div className="flex-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-              <div>
-                <div className="font-semibold text-base text-foreground flex items-center gap-2">
-                  Status da Assinatura
-                  {loadingStatus ? (
-                    <div className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-xs font-medium rounded-full">
-                      Carregando...
-                    </div>
-                  ) : subscriptionStatus?.is_premium_active ? (
-                    <div className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 text-xs font-medium rounded-full">
-                      <Crown className="w-3 h-3" />
-                      Premium ativo
-                    </div>
-                  ) : subscriptionStatus?.has_premium && subscriptionStatus.days_remaining <= 0 ? (
-                    <div className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 text-xs font-medium rounded-full">
-                      <AlertCircle className="w-3 h-3" />
-                      Expirado
-                    </div>
-                  ) : (
-                    <div className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-xs font-medium rounded-full">
-                      Gratuito
-                    </div>
-                  )}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {loadingStatus
-                    ? "Carregando status da assinatura..."
-                    : subscriptionStatus?.is_premium_active
-                    ? "Sua assinatura premium é válida até:"
-                    : subscriptionStatus?.has_premium && subscriptionStatus.days_remaining <= 0
-                    ? "Sua assinatura premium expirou em:"
-                    : "Você está usando o plano gratuito"}
-                </div>
-              </div>
-              <div className="text-base text-foreground font-medium sm:text-right">
-                {loadingStatus
-                  ? "..."
-                  : subscriptionStatus?.premium_expires_at
-                  ? formatDate(subscriptionStatus.premium_expires_at)
-                  : "Não disponível"}
-              </div>
-            </div>
+          
           </CardContent>
         </Card>
 

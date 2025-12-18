@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNotifications } from '@/presentation/contexts/notification-provider';
 import { Button } from '@/presentation/components/ui/button';
 import { Card, CardContent } from '@/presentation/components/ui/card';
@@ -13,12 +13,18 @@ export default function NotificationsPage() {
     const { 
         notifications, 
         unreadCount, 
+        isLoading,
+        fetchNotifications,
         markAsRead, 
         markAllAsRead, 
         deleteNotification 
     } = useNotifications();
     
     const [filter, setFilter] = useState<'all' | 'unread'>('all');
+
+    useEffect(() => {
+        fetchNotifications(1);
+    }, [fetchNotifications]);
 
     const filteredNotifications = filter === 'unread' 
         ? notifications.filter(n => !n.is_read)
@@ -180,7 +186,19 @@ export default function NotificationsPage() {
 
                 {/* Notifications List */}
                 <div className="space-y-4">
-                    {filteredNotifications.length === 0 ? (
+                    {isLoading && notifications.length === 0 ? (
+                        <Card>
+                            <CardContent className="p-12 text-center">
+                                <Bell className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                                <h3 className="text-lg font-semibold mb-2">
+                                    Carregando notificações...
+                                </h3>
+                                <p className="text-muted-foreground">
+                                    Buscando suas notificações recentes.
+                                </p>
+                            </CardContent>
+                        </Card>
+                    ) : filteredNotifications.length === 0 ? (
                         <Card>
                             <CardContent className="p-12 text-center">
                                 <Bell className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />

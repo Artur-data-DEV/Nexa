@@ -119,7 +119,10 @@ export default function BrandDashboard() {
                                         <div className="flex items-center justify-between text-sm">
                                             <div className="flex items-center gap-1 text-muted-foreground">
                                                 <Users className="h-4 w-4" />
-                                                <span>0 candidatos</span>
+                                                <span>
+                                                    {campaign.applications_count ?? 0} candidato
+                                                    {(campaign.applications_count ?? 0) === 1 ? "" : "s"}
+                                                </span>
                                             </div>
                                             <div className="font-semibold">
                                                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(campaign.budget)}

@@ -58,7 +58,7 @@ export default function DashboardLayout({
   const creatorNavItems = [
     { name: "Início", href: "/dashboard", icon: Home },
     { name: "Campanhas", href: "/dashboard/campaigns", icon: Package },
-    // { name: "Minhas Aplicações", href: "/dashboard/applications", icon: FileText },
+    { name: "Minhas Aplicações", href: "/dashboard/applications", icon: FileText },
     { name: "Conversas", href: "/dashboard/messages", icon: MessageCircle },
     { name: "Meu Portfólio", href: "/dashboard/portfolio", icon: Briefcase },
     { name: "Financeiro", href: "/dashboard/financial", icon: Wallet },
@@ -88,9 +88,9 @@ export default function DashboardLayout({
       <EchoProvider>
         <NotificationProvider>
           <ChatProvider>
-            <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+            <div className="grid h-screen w-full overflow-hidden md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
               <div className="hidden border-r bg-muted/40 md:block">
-                <div className="flex h-full max-h-screen flex-col gap-2">
+                <div className="flex h-screen flex-col gap-2">
                   <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
                     <Link href="/" className="flex items-center gap-2 font-semibold">
                       <Logo
@@ -105,14 +105,19 @@ export default function DashboardLayout({
                     <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
                       {navItems.map((item) => {
                         const Icon = item.icon
+                        const hrefPath = item.href.split("?")[0]
+                        const isRootDashboard = hrefPath === "/dashboard"
+                        const isActive =
+                          isRootDashboard
+                            ? pathname === hrefPath
+                            : pathname === hrefPath || pathname.startsWith(`${hrefPath}/`)
+
                         return (
                           <Link
                             key={item.href}
                             href={item.href}
                             className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
-                              pathname === item.href
-                                ? "bg-muted text-primary"
-                                : "text-muted-foreground"
+                              isActive ? "bg-muted text-primary" : "text-muted-foreground"
                             }`}
                           >
                             <Icon className="h-4 w-4" />
@@ -122,9 +127,17 @@ export default function DashboardLayout({
                       })}
                     </nav>
                   </div>
+                  {user?.role !== "brand" && (
+                    <div className="px-4 pb-4">
+                      <div className="text-xs rounded-md bg-pink-50 dark:bg-pink-900/40 text-pink-700 dark:text-pink-200 p-3">
+                        Dica: Cuide do seu portfólio para aumentar suas chances{" "}
+                        <span role="img" aria-label="rocket">🚀</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-              <div className="flex flex-col">
+              <div className="flex min-h-0 flex-col">
                 <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
                   <div className="w-full flex-1 flex items-center gap-3">
                     <div className="md:hidden">
@@ -135,20 +148,30 @@ export default function DashboardLayout({
                           </Button>
                         </SheetTrigger>
                         <SheetContent side="left" className="w-72 p-0">
-                          <SheetHeader className="p-4 border-b">
-                            <SheetTitle>Navegação</SheetTitle>
+                          <SheetHeader className="m-auto p-5 border-b flex items-left justify-center align-middle  ">
+                            <Logo
+                              width={90}
+                              height={30}
+                              className="w-20"
+                            />
+                            <SheetTitle className="sr-only">Navegação</SheetTitle>
                           </SheetHeader>
                           <nav className="grid gap-1 p-2 text-sm font-medium">
                             {navItems.map((item) => {
                               const Icon = item.icon
+                              const hrefPath = item.href.split("?")[0]
+                              const isRootDashboard = hrefPath === "/dashboard"
+                              const isActive =
+                                isRootDashboard
+                                  ? pathname === hrefPath
+                                  : pathname === hrefPath || pathname.startsWith(`${hrefPath}/`)
+
                               return (
                                 <SheetClose asChild key={item.href}>
                                   <Link
                                     href={item.href}
                                     className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
-                                      pathname === item.href
-                                        ? "bg-muted text-primary"
-                                        : "text-muted-foreground"
+                                      isActive ? "bg-muted text-primary" : "text-muted-foreground"
                                     }`}
                                   >
                                     <Icon className="h-4 w-4" />
@@ -161,7 +184,16 @@ export default function DashboardLayout({
                         </SheetContent>
                       </Sheet>
                     </div>
-                    <h1 className="font-semibold text-lg">Dashboard</h1>
+                    <div className="md:hidden">
+                      <Logo
+                        width={90}
+                        height={30}
+                        className="w-20"
+                      />
+                    </div>
+                    <h1 className="hidden md:block font-semibold text-lg">
+                      Dashboard
+                    </h1>
                   </div>
                   <NotificationBell />
                   <DropdownMenu>
@@ -193,7 +225,7 @@ export default function DashboardLayout({
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </header>
-                <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+                <main className="flex flex-1 min-h-0 flex-col gap-4 overflow-y-auto p-4 lg:gap-6 lg:p-6">
                   {children}
                 </main>
               </div>

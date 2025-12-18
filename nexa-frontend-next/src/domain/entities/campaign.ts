@@ -24,6 +24,7 @@ export interface Campaign {
   status: 'pending' | 'active' | 'approved' | 'rejected' | 'archived'
   created_at: string
   approved_creators?: number
+  applications_count?: number
   attachments?: string[]
   is_featured?: boolean
   is_favorited?: boolean

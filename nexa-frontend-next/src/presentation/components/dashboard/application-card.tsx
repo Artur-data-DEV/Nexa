@@ -29,9 +29,11 @@ export function ApplicationCard({ application }: ApplicationCardProps) {
                     {application.campaign?.title || "Campanha #" + application.campaign_id}
                 </CardTitle>
                 <Badge className={statusColors[application.status] || "bg-gray-500"}>
-                    {application.status === 'approved' ? 'Aprovado' : 
-                     application.status === 'rejected' ? 'Rejeitado' : 
-                     'Pendente'}
+                    {application.status === 'approved'
+                        ? 'Aprovado'
+                        : application.status === 'rejected'
+                        ? 'Rejeitado'
+                        : 'Aplicado'}
                 </Badge>
             </CardHeader>
             <CardContent>

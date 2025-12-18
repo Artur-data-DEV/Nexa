@@ -7,31 +7,53 @@ import { Button } from "@/presentation/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/presentation/components/ui/avatar"
 import Image from "next/image"
 
+const fallbackImages = [
+  "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=800&q=80",
+  "https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=800&q=80",
+]
+
+function getCampaignImage(campaign: Campaign) {
+  if (campaign.image_url) {
+    return campaign.image_url
+  }
+
+  if (campaign.brand?.avatar) {
+    return campaign.brand.avatar
+  }
+
+  const index = campaign.id % fallbackImages.length
+  return fallbackImages[index]
+}
+
 interface CampaignCardProps {
   campaign: Campaign
 }
 
 export function CampaignCard({ campaign }: CampaignCardProps) {
+  const imageSrc = getCampaignImage(campaign)
+
   return (
     <Card className="flex flex-col h-full overflow-hidden hover:shadow-md transition-shadow">
       <CardHeader className="p-0">
         <div className="relative h-32 bg-muted w-full">
-           {campaign.image_url ? (
-             <Image 
-               src={campaign.image_url} 
-               alt={campaign.title} 
-               fill
-               className="object-cover"
-             />
-           ) : (
-             <div className="w-full h-full bg-gradient-to-r from-pink-500 to-purple-600 opacity-20" />
-           )}
-           <div className="absolute -bottom-6 left-4">
-              <Avatar className="h-12 w-12 border-2 border-background">
-                <AvatarImage src={campaign.brand?.avatar} />
-                <AvatarFallback>{campaign.brand?.name?.substring(0,2).toUpperCase() || "B"}</AvatarFallback>
-              </Avatar>
-           </div>
+          {imageSrc ? (
+            <Image
+              src={imageSrc}
+              alt={campaign.title}
+              fill
+              className="object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-r from-pink-500 to-purple-600 opacity-20" />
+          )}
+          <div className="absolute -bottom-6 left-4">
+            <Avatar className="h-12 w-12 border-2 border-background">
+              <AvatarImage src={campaign.brand?.avatar} />
+              <AvatarFallback>{campaign.brand?.name?.substring(0, 2).toUpperCase() || "B"}</AvatarFallback>
+            </Avatar>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="flex-1 p-4 pt-8 space-y-3">

@@ -11,7 +11,21 @@ const nextConfig: NextConfig = {
         port: "8000",
         pathname: "/storage/**",
       },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+        pathname: "/**",
+      },
     ],
+  },
+  async redirects() {
+    return [
+      {
+        source: "/creator/payment-method",
+        destination: "/dashboard/payment-methods",
+        permanent: false,
+      },
+    ];
   },
 };
 

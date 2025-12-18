@@ -63,7 +63,7 @@ export default function CampaignsPage() {
       </div>
 
       {loading ? (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
           {[1, 2, 3, 4].map((i) => (
              <div key={i} className="flex flex-col space-y-3">
                 <Skeleton className="h-[125px] w-full rounded-xl" />
@@ -75,7 +75,7 @@ export default function CampaignsPage() {
           ))}
         </div>
       ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
           {filteredCampaigns.map((campaign) => (
             <CampaignCard key={campaign.id} campaign={campaign} />
           ))}
