@@ -10,13 +10,13 @@ import { Navbar } from "@/presentation/components/landing/navbar";
 import { ApiGuideRepository } from "@/infrastructure/repositories/guide-repository";
 import { api } from "@/infrastructure/api/axios-adapter";
 import { Guide } from "@/domain/entities/guide";
-import { 
-  BookOpen, 
-  Users, 
-  Target, 
-  MessageSquare, 
-  UserPlus, 
-  PlusCircle, 
+import {
+  BookOpen,
+  Users,
+  Target,
+  MessageSquare,
+  UserPlus,
+  PlusCircle,
   CheckCircle,
   ChevronRight,
   Home,
@@ -46,7 +46,7 @@ function DocumentationSidebar({ sections, activeSection, onSectionChange }: {
           <BookOpen className="h-5 w-5" />
           Documentação
         </h2>
-        
+
         <nav className="space-y-2">
           <Button
             variant={activeSection === 'overview' ? 'secondary' : 'ghost'}
@@ -56,7 +56,7 @@ function DocumentationSidebar({ sections, activeSection, onSectionChange }: {
             <Home className="h-4 w-4 mr-2" />
             Visão Geral
           </Button>
-          
+
           {sections.map((section) => (
             <div key={section.id}>
               <Button
@@ -67,7 +67,7 @@ function DocumentationSidebar({ sections, activeSection, onSectionChange }: {
                 {section.icon}
                 {section.title}
               </Button>
-              
+
               {activeSection === section.id && section.guides.length > 0 && (
                 <div className="ml-6 mt-2 space-y-1">
                   {section.guides.map((guide) => (
@@ -230,7 +230,8 @@ function OverviewContent() {
 }
 
 function GuideContent({ guide }: { guide: Guide }) {
-  const [currentScreenshot, setCurrentScreenshot] = useState<{[stepId: number]: number}>({});
+  const [currentScreenshot, setCurrentScreenshot] = useState<{ [stepId: number]: number }>({});
+  const steps = [...(guide.steps ?? [])];
 
   const nextScreenshot = (stepId: number, maxIndex: number) => {
     setCurrentScreenshot(prev => ({
@@ -258,16 +259,16 @@ function GuideContent({ guide }: { guide: Guide }) {
 
       <Separator />
 
-      {guide.steps && guide.steps.length > 0 && (
+      {steps.length > 0 && (
         <div className="space-y-8">
           <h2 className="text-2xl font-semibold">Passos</h2>
-          
-          {guide.steps
+
+          {steps
             .sort((a, b) => a.order - b.order)
             .map((step, idx) => (
               <div key={step.id} className="space-y-6">
                 <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-semibold">
+                  <div className="shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-semibold">
                     {idx + 1}
                   </div>
                   <div className="flex-1 space-y-4">
@@ -292,7 +293,7 @@ function GuideContent({ guide }: { guide: Guide }) {
                               alt={`${step.title} - Screenshot ${(currentScreenshot[step.id] || 0) + 1}`}
                               className="w-full md:max-w-2xl rounded-lg border shadow-sm"
                             />
-                            
+
                             {step.screenshot_urls.length > 1 && (
                               <div className="flex items-center justify-between mt-2">
                                 <Button
@@ -339,8 +340,8 @@ function GuideContent({ guide }: { guide: Guide }) {
                     </div>
                   </div>
                 </div>
-                
-                {idx < guide.steps.length - 1 && <Separator className="my-8" />}
+
+                {idx < steps.length - 1 && <Separator className="my-8" />}
               </div>
             ))}
         </div>
@@ -353,7 +354,7 @@ export default function Documentation() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sectionParam = searchParams.get('section');
-  
+
   const [guides, setGuides] = useState<Guide[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -493,7 +494,7 @@ export default function Documentation() {
           <div className="space-y-6">
             {section.guides.map((guide) => (
               <Card key={guide.id} className="cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => handleSectionChange(`guide-${guide.id}`)}>
+                onClick={() => handleSectionChange(`guide-${guide.id}`)}>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     {guide.title}
@@ -531,10 +532,10 @@ export default function Documentation() {
       <Navbar />
       <MobileSidebar sections={sections} activeSection={activeSection} onSectionChange={handleSectionChange} />
       <div className="flex min-h-screen pt-[80px]">
-        <DocumentationSidebar 
-          sections={sections} 
-          activeSection={activeSection} 
-          onSectionChange={handleSectionChange} 
+        <DocumentationSidebar
+          sections={sections}
+          activeSection={activeSection}
+          onSectionChange={handleSectionChange}
         />
         <main className="flex-1 p-4 md:p-8 overflow-y-auto md:ml-80">
           {renderContent()}

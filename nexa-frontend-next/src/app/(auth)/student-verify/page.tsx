@@ -10,6 +10,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/presentation/components/u
 import { ApiAuthRepository } from "@/infrastructure/repositories/auth-repository"
 import { api } from "@/infrastructure/api/axios-adapter"
 import { toast } from "sonner"
+import { Info } from "lucide-react"
 
 const authRepository = new ApiAuthRepository(api)
 
@@ -23,7 +24,7 @@ export default function StudentVerifyPage() {
   const { user } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
-  
+
   const isInsideCreatorDashboard = searchParams.get("embedded") === "true"
 
   useEffect(() => {
@@ -56,23 +57,23 @@ export default function StudentVerifyPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (isSubmitting) return
-    
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if ((user as any)?.student_verified) {
       toast.info("Você já está verificado como aluno!")
       router.push("/dashboard")
       return
     }
-    
+
     setIsSubmitting(true)
     setError(null)
 
     try {
       const requiredFields = ["username", "email"]
       const missingFields = requiredFields.filter(field => !form[field as keyof typeof form].trim())
-      
+
       if (missingFields.length > 0) {
         setError("Por favor, preencha todos os campos obrigatórios.")
         return
@@ -87,16 +88,16 @@ export default function StudentVerifyPage() {
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const res: any = await authRepository.verifyStudent({
-            email: form.email,
-            username: form.username,
-            courseName: "Build Creators"
+          email: form.email,
+          username: form.username,
+          courseName: "Build Creators"
         })
-        
+
         const data = res?.data || res || {}
-        
+
         if (data?.success) {
           toast.success(data?.message || "Solicitação registrada com sucesso! Aguarde a aprovação do administrador.")
-          
+
           setTimeout(() => {
             router.push("/dashboard")
           }, 1500)
@@ -105,7 +106,7 @@ export default function StudentVerifyPage() {
         }
       } catch (e: any) {
         const errorMessage = e?.response?.data?.message || "Erro ao verificar. Tente novamente."
-        
+
         if (e?.response?.status === 422) {
           setError(errorMessage)
         } else {
@@ -114,7 +115,7 @@ export default function StudentVerifyPage() {
       }
     } catch (err: any) {
       console.error("Student verification error:", err)
-      
+
       if (err.response) {
         const errorMessage = err.response.data?.message || err.response.data?.error || "Erro do servidor"
         setError(errorMessage)
@@ -149,7 +150,9 @@ export default function StudentVerifyPage() {
         <Alert className="mb-8 flex flex-col md:flex-row items-start md:items-center gap-2 bg-[#FAF5FF] dark:bg-[#30253d]">
           <div className="flex-1">
             <AlertTitle className="font-semibold text-primary text-sm md:text-base">
-              <span className="mr-2 text-[#A873E9]">ⓘ</span>Os alunos do curso recebem acesso 100% gratuito!
+              <span className="mr-2 text-primary">
+                <Info size={12} />
+              </span>Os alunos do curso recebem acesso 100% gratuito!
             </AlertTitle>
           </div>
           <AlertDescription className="text-xs md:text-sm text-muted-foreground">
@@ -202,10 +205,10 @@ export default function StudentVerifyPage() {
               disabled={isSubmitting}
             />
           </div>
-          
+
           <div className="md:col-span-2 mt-4 flex flex-col sm:flex-row gap-3">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full sm:w-auto bg-[#E91E63] text-white font-semibold px-6 py-2 rounded-lg shadow hover:bg-pink-600 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isSubmitting}
             >
@@ -218,8 +221,8 @@ export default function StudentVerifyPage() {
                 "Enviar para verificação"
               )}
             </Button>
-            <Button 
-              type="button" 
+            <Button
+              type="button"
               variant="outline"
               onClick={handleSkip}
               className="w-full sm:w-auto font-semibold px-6 py-2 rounded-lg border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"

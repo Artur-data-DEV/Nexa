@@ -75,13 +75,24 @@ export default function DashboardLayout({
     { name: "Minhas Campanhas", href: "/dashboard/campaigns", icon: Package },
     { name: "Nova Campanha", href: "/dashboard/campaigns/create", icon: PlusCircle },
     { name: "Conversas", href: "/dashboard/messages", icon: MessageCircle },
-    { name: "Financeiro", href: "/dashboard/financial", icon: Wallet },
+    { name: "Dados Financeiros", href: "/dashboard/financial", icon: Wallet },
+    { name: "Configurar Pagamentos", href: "/dashboard/payment-methods", icon: BanknoteIcon },
     { name: "Notificações", href: "/dashboard/notifications", icon: Bell },
     { name: "Meu Perfil", href: "/dashboard/profile", icon: User },
     // { name: "Guia da Plataforma", href: "/dashboard/guide", icon: BookOpen },
   ]
 
   const navItems = user?.role === 'brand' ? brandNavItems : creatorNavItems
+  const basePathname = pathname.split("?")[0]
+  const activeItemHref = (() => {
+    const candidates = navItems.map((item) => item.href.split("?")[0]).filter((hrefPath) => {
+      const isRoot = hrefPath === "/dashboard"
+      if (isRoot) return basePathname === hrefPath
+      return basePathname === hrefPath || basePathname.startsWith(`${hrefPath}/`)
+    })
+    if (candidates.length === 0) return "/dashboard"
+    return candidates.sort((a, b) => b.length - a.length)[0]
+  })()
 
   return (
     <AuthGuard>
@@ -106,12 +117,7 @@ export default function DashboardLayout({
                       {navItems.map((item) => {
                         const Icon = item.icon
                         const hrefPath = item.href.split("?")[0]
-                        const isRootDashboard = hrefPath === "/dashboard"
-                        const isActive =
-                          isRootDashboard
-                            ? pathname === hrefPath
-                            : pathname === hrefPath || pathname.startsWith(`${hrefPath}/`)
-
+                        const isActive = hrefPath === activeItemHref
                         return (
                           <Link
                             key={item.href}
@@ -160,12 +166,7 @@ export default function DashboardLayout({
                             {navItems.map((item) => {
                               const Icon = item.icon
                               const hrefPath = item.href.split("?")[0]
-                              const isRootDashboard = hrefPath === "/dashboard"
-                              const isActive =
-                                isRootDashboard
-                                  ? pathname === hrefPath
-                                  : pathname === hrefPath || pathname.startsWith(`${hrefPath}/`)
-
+                              const isActive = hrefPath === activeItemHref
                               return (
                                 <SheetClose asChild key={item.href}>
                                   <Link

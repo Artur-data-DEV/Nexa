@@ -4,9 +4,10 @@ import React, { createContext, useContext, useEffect, useState, useRef } from "r
 import { createEcho } from "@/infrastructure/services/echo-service"
 import { useAuth } from "./auth-provider"
 
+type EchoInstance = ReturnType<typeof createEcho>
+
 interface EchoContextType {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  echo: any
+  echo: EchoInstance | null
   isConnected: boolean
 }
 
@@ -14,10 +15,9 @@ const EchoContext = createContext<EchoContextType | undefined>(undefined)
 
 export function EchoProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [echo, setEcho] = useState<any>(null)
+  const [echo, setEcho] = useState<EchoInstance | null>(null)
   const [isConnected, setIsConnected] = useState(false)
-  const echoInstanceRef = useRef<any>(null)
+  const echoInstanceRef = useRef<EchoInstance | null>(null)
 
   useEffect(() => {
     const token = localStorage.getItem("auth_token")
@@ -36,16 +36,10 @@ export function EchoProvider({ children }: { children: React.ReactNode }) {
             echoInstance.connector.pusher.connection.bind('error', () => {
                 setIsConnected(false)
             })
-            
-            // Check initial state
-            if (echoInstance.connector.pusher.connection.state === 'connected') {
-                setIsConnected(true)
-            }
           }
 
-          // Expose Echo globally for Axios interceptor
           if (typeof window !== 'undefined') {
-             (window as any).Echo = echoInstance;
+             ;(window as Window & { Echo?: EchoInstance }).Echo = echoInstance
           }
 
           echoInstanceRef.current = echoInstance

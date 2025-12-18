@@ -41,7 +41,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     const [notifications, setNotifications] = useState<Notification[]>([])
     const [unreadCount, setUnreadCount] = useState(0)
     const [isLoading, setIsLoading] = useState(false)
-    const [page, setPage] = useState(1)
     const [hasMore, setHasMore] = useState(true)
 
     const fetchNotifications = useCallback(async (pageNum = 1) => {
@@ -55,7 +54,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                 setNotifications(prev => [...prev, ...data])
             }
             setHasMore(pageNum < last_page)
-            setPage(pageNum)
         } catch (error) {
             console.error("Failed to fetch notifications", error)
         } finally {
@@ -210,7 +208,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                 channel.stopListening(".new_notification")
             }
         }
-    }, [echo, user?.id])
+    }, [echo, user?.id, router])
 
     return (
         <NotificationContext.Provider

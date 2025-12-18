@@ -255,18 +255,56 @@ function CandidateCard({
                 </div>
             </CardHeader>
             <CardContent className="space-y-4">
-                <div>
-                    <h4 className="text-sm font-medium mb-1">Proposta</h4>
-                    <p className="text-sm text-muted-foreground line-clamp-3">
+                <div className="space-y-2">
+                    <h4 className="text-sm font-medium">Proposta do criador</h4>
+                    <p className="text-sm text-muted-foreground whitespace-pre-line">
                         {application.proposal}
                     </p>
                 </div>
-                {application.budget && (
-                    <div className="flex justify-between items-center text-sm bg-muted p-2 rounded">
-                        <span>Orçamento proposto:</span>
-                        <span className="font-semibold">
-                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(application.budget)}
-                        </span>
+                <div className="grid gap-2 text-sm">
+                    {typeof (application as any).proposed_budget === "number" || (application as any).proposed_budget ? (
+                        <div className="flex justify-between items-center bg-muted p-2 rounded">
+                            <span>Orçamento proposto</span>
+                            <span className="font-semibold">
+                                {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
+                                    Number((application as any).proposed_budget ?? application.budget ?? 0)
+                                )}
+                            </span>
+                        </div>
+                    ) : application.budget ? (
+                        <div className="flex justify-between items-center bg-muted p-2 rounded">
+                            <span>Orçamento proposto</span>
+                            <span className="font-semibold">
+                                {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(application.budget)}
+                            </span>
+                        </div>
+                    ) : null}
+                    {((application as any).estimated_delivery_days || application.delivery_days) && (
+                        <div className="flex justify-between items-center bg-muted p-2 rounded">
+                            <span>Prazo estimado</span>
+                            <span className="font-semibold">
+                                {((application as any).estimated_delivery_days ?? application.delivery_days) + " dias"}
+                            </span>
+                        </div>
+                    )}
+                </div>
+                {Array.isArray((application as any).portfolio_links) && (application as any).portfolio_links.length > 0 && (
+                    <div className="space-y-1">
+                        <h4 className="text-sm font-medium">Portfólio</h4>
+                        <ul className="space-y-1">
+                            {(application as any).portfolio_links.map((link: string, index: number) => (
+                                <li key={index}>
+                                    <a
+                                        href={link}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-xs text-primary underline break-all"
+                                    >
+                                        {link}
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
                     </div>
                 )}
             </CardContent>
