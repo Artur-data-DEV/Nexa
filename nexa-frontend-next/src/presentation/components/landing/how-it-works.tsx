@@ -33,7 +33,7 @@ export const HowItWorks = () => {
   ]
 
   return (
-    <section className="py-12 md:py-20 bg-muted/30">
+    <section id="how-it-works" className="py-12 md:py-20 bg-muted/30">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         <div className="text-center mb-12 md:mb-16">
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-4">

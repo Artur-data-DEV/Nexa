@@ -11,47 +11,114 @@ import { Logo } from "@/presentation/components/logo"
 const MobileMenu = () => (
     <Sheet>
         <SheetTrigger asChild>
-            <Button 
-                variant="ghost" 
-                size="sm" 
+            <Button
+                variant="ghost"
+                size="sm"
                 className="md:hidden p-2 h-10 w-10 flex items-center justify-center"
-                aria-label="Open mobile menu"
+                aria-label="Abrir menu de navegação"
             >
                 <Menu className="h-5 w-5" />
             </Button>
         </SheetTrigger>
         <SheetContent side="right" className="w-80">
             <VisuallyHidden>
-                <SheetTitle>Mobile Navigation Menu</SheetTitle>
-                <SheetDescription>Navigation options for mobile users</SheetDescription>
+                <SheetTitle>Menu de navegação</SheetTitle>
+                <SheetDescription>Opções de navegação para dispositivos móveis</SheetDescription>
             </VisuallyHidden>
-            <div className="flex flex-col gap-6 mt-8">
-                <Button className="bg-pink-500 hover:bg-pink-600 text-white" asChild>
-                    <Link href="/login">
-                        Acessar a plataforma
+            <div className="flex flex-col gap-4 mt-8">
+                <nav className="flex flex-col gap-3 text-sm">
+                    <Link href="/#how-it-works" className="text-foreground hover:text-primary transition-colors">
+                        Como funciona
                     </Link>
-                </Button>
+                    <Link href="/#benefits" className="text-foreground hover:text-primary transition-colors">
+                        Benefícios
+                    </Link>
+                    <Link href="/#pricing" className="text-foreground hover:text-primary transition-colors">
+                        Planos
+                    </Link>
+                    <Link href="/docs" className="text-foreground hover:text-primary transition-colors">
+                        Documentação
+                    </Link>
+                </nav>
+                <div className="flex flex-col gap-3 pt-2">
+                    <Button variant="outline" className="w-full" asChild>
+                        <Link href="/login">
+                            Entrar
+                        </Link>
+                    </Button>
+                    <Button className="w-full bg-pink-500 hover:bg-pink-600 text-white" asChild>
+                        <Link href="/signup/creator?redirectTo=/dashboard">
+                            Criar conta
+                        </Link>
+                    </Button>
+                </div>
             </div>
         </SheetContent>
     </Sheet>
 )
 
 export const Navbar = () => {
+    const handleScrollTo = (id: string) => {
+        if (typeof window === "undefined") return
+        const element = document.getElementById(id)
+        if (!element) return
+        element.scrollIntoView({ behavior: "smooth", block: "start" })
+    }
+
     return (
         <header className="w-full top-0 z-50 p-4 md:p-6 bg-background/95 backdrop-blur fixed supports-[backdrop-filter]:bg-background/60 border-b border-border/40">
-            <div className="max-w-7xl mx-auto flex justify-between items-center">
+            <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
                 <Link href="/" className="text-xl md:text-2xl font-bold text-foreground">
-                     <Logo 
-                        width={90} 
+                    <Logo
+                        width={90}
                         height={30}
-                        className="w-30 cursor-pointer" 
-                     />
-                 </Link>
+                        className="w-30 cursor-pointer"
+                    />
+                </Link>
 
-                <div className="hidden md:flex items-center gap-4">
-                    <Button size="sm" className="bg-pink-500 hover:bg-pink-600 text-white" asChild>
+                <nav className="hidden md:flex items-center gap-6 text-sm">
+                    <button
+                        type="button"
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                        onClick={() => handleScrollTo("how-it-works")}
+                    >
+                        Como funciona
+                    </button>
+                    <button
+                        type="button"
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                        onClick={() => handleScrollTo("benefits")}
+                    >
+                        Benefícios
+                    </button>
+                    <button
+                        type="button"
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                        onClick={() => handleScrollTo("pricing")}
+                    >
+                        Planos
+                    </button>
+                    <Link
+                        href="/docs"
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                        Documentação
+                    </Link>
+                </nav>
+
+                <div className="hidden md:flex items-center gap-3">
+                    <Button variant="ghost" size="sm" asChild>
                         <Link href="/login">
-                            Acessar a plataforma
+                            Entrar
+                        </Link>
+                    </Button>
+                    <Button
+                        size="sm"
+                        className="bg-pink-500 hover:bg-pink-600 text-white"
+                        asChild
+                    >
+                        <Link href="/signup/creator?redirectTo=/dashboard">
+                            Criar conta
                         </Link>
                     </Button>
                     <ThemeToggle />

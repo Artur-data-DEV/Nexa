@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/presentation/components/ui/card";
 import { Badge } from "@/presentation/components/ui/badge";
@@ -231,7 +231,11 @@ function OverviewContent() {
 
 function GuideContent({ guide }: { guide: Guide }) {
   const [currentScreenshot, setCurrentScreenshot] = useState<{ [stepId: number]: number }>({});
-  const steps = [...(guide.steps ?? [])];
+  const steps = guide.steps ?? [];
+  const sortedSteps = useMemo(
+    () => [...steps].sort((a, b) => a.order - b.order),
+    [steps]
+  );
 
   const nextScreenshot = (stepId: number, maxIndex: number) => {
     setCurrentScreenshot(prev => ({
@@ -259,13 +263,11 @@ function GuideContent({ guide }: { guide: Guide }) {
 
       <Separator />
 
-      {steps.length > 0 && (
+      {sortedSteps.length > 0 && (
         <div className="space-y-8">
           <h2 className="text-2xl font-semibold">Passos</h2>
 
-          {steps
-            .sort((a, b) => a.order - b.order)
-            .map((step, idx) => (
+          {sortedSteps.map((step, idx) => (
               <div key={step.id} className="space-y-6">
                 <div className="flex items-start gap-4">
                   <div className="shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-semibold">
@@ -341,7 +343,7 @@ function GuideContent({ guide }: { guide: Guide }) {
                   </div>
                 </div>
 
-                {idx < steps.length - 1 && <Separator className="my-8" />}
+                {idx < sortedSteps.length - 1 && <Separator className="my-8" />}
               </div>
             ))}
         </div>

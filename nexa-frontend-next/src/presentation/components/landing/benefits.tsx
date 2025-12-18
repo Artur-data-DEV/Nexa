@@ -45,7 +45,7 @@ export const Benefits = () => {
   ];
 
   return (
-    <section className="py-12 md:py-20 bg-muted/30">
+    <section id="benefits" className="py-12 md:py-20 bg-muted/30">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-foreground mb-12 md:mb-16">
           Benefícios Exclusivos da Plataforma
