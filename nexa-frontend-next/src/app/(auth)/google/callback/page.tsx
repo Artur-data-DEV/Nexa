@@ -32,7 +32,13 @@ export default function GoogleOAuthCallbackPage() {
         const oauthError = searchParams.get("error")
 
         if (oauthError) {
-          throw new Error(`OAuth error: ${oauthError}`)
+          const known =
+            oauthError === "access_denied"
+              ? "Acesso negado pelo Google"
+              : oauthError === "invalid_request"
+              ? "Requisição inválida (verifique client_id e escopos)"
+              : `Erro OAuth: ${oauthError}`
+          throw new Error(known)
         }
 
         if (!code) {
@@ -48,11 +54,14 @@ export default function GoogleOAuthCallbackPage() {
         sessionStorage.removeItem("google_oauth_role")
         sessionStorage.removeItem("google_oauth_is_student")
 
+        if (!response?.token || !response?.user) {
+          throw new Error("Resposta inválida do servidor")
+        }
         login(response.token, response.user)
 
         setStatus("success")
 
-        if (response.user.role === "student") {
+        if ((response.user.role as string) === "student") {
           toast.success("Conta de aluno criada! Complete a verificação para obter acesso gratuito.")
           router.push("/dashboard/student-verify")
           return
@@ -71,6 +80,7 @@ export default function GoogleOAuthCallbackPage() {
         const message = err?.message || "Falha na autenticação Google OAuth"
         setError(message)
         setStatus("error")
+        toast.error(message)
       } finally {
         sessionStorage.removeItem("google_oauth_processing")
       }
@@ -140,4 +150,3 @@ export default function GoogleOAuthCallbackPage() {
     </div>
   )
 }
-

@@ -4,7 +4,6 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/presentation/components/ui/button"
 import { Card, CardContent } from "@/presentation/components/ui/card"
-import { Badge } from "@/presentation/components/ui/badge"
 import { useAuth } from "@/presentation/contexts/auth-provider"
 import { SubscriptionPlan } from "@/domain/repositories/payment-repository.interface"
 import { ApiPaymentRepository } from "@/infrastructure/repositories/payment-repository"
@@ -25,21 +24,6 @@ const getMonthlyPrice = (plan: SubscriptionPlan): number => {
 
 const formatCurrency = (value: number): string => {
   return value.toFixed(2).replace(".", ",")
-}
-
-const getOriginalMonthlyPrice = (plan: SubscriptionPlan): number => {
-  const currentMonthly = getMonthlyPrice(plan)
-
-  if (
-    typeof plan.savings_percentage === "number" &&
-    plan.savings_percentage > 0 &&
-    plan.savings_percentage < 100
-  ) {
-    const factor = 1 - plan.savings_percentage / 100
-    return currentMonthly / factor
-  }
-
-  return currentMonthly
 }
 
 const fallbackPlans: SubscriptionPlan[] = [
@@ -115,23 +99,22 @@ export const Pricing = () => {
 
   return (
     <section id="pricing" className="py-12 md:py-20">
-      <div className="max-w-4xl w-full mx-auto px-4 md:px-6">
-        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">
+      <div className="max-w-6xl w-full mx-auto px-4 md:px-6">
+        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-center tracking-tight mb-6">
           Planos de Acesso NEXA UGC
         </h2>
-        <p className="text-center text-sm md:text-base text-muted-foreground mb-10 md:mb-12 max-w-3xl mx-auto">
-          Escolha o plano que faz sentido para o seu momento e altere quando quiser, direto
-          pelo painel de assinatura dentro da plataforma.
+        <p className="text-center text-sm md:text-base text-muted-foreground mb-12 max-w-3xl mx-auto">
+          Escolha o plano ideal e altere quando quiser, diretamente pelo painel de assinatura.
         </p>
 
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="h-32 rounded-xl bg-muted/40 animate-pulse" />
-            <div className="h-32 rounded-xl bg-muted/40 animate-pulse hidden sm:block" />
-            <div className="h-32 rounded-xl bg-muted/40 animate-pulse hidden sm:block" />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className="h-44 rounded-2xl bg-muted/40 animate-pulse" />
+            <div className="h-44 rounded-2xl bg-muted/40 animate-pulse hidden sm:block" />
+            <div className="h-44 rounded-2xl bg-muted/40 animate-pulse hidden sm:block" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {effectivePlans.map((plan) => {
               const monthly = getMonthlyPrice(plan)
               const isHighlighted =
@@ -140,37 +123,41 @@ export const Pricing = () => {
                 plan.duration_months > 1
 
               return (
-                <button
+                <Card
                   key={plan.id}
-                  type="button"
-                  onClick={() => handleSelectPlan(plan)}
-                  className={`rounded-xl border p-4 text-left transition hover:shadow-lg ${
-                    isHighlighted
-                      ? "border-pink-500 bg-pink-500/10"
-                      : "border-border bg-background"
+                  className={`relative overflow-hidden transition hover:shadow-xl ${
+                    isHighlighted ? "border-pink-500" : ""
                   }`}
                 >
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-semibold text-sm text-foreground">
-                      {plan.name}
-                    </span>
-                    <span className="text-lg font-bold text-pink-500">
-                      R$ {formatCurrency(monthly)}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {plan.duration_months === 1
-                      ? "por mês"
-                      : `por ${plan.duration_months} meses`}
-                  </p>
-                  {isHighlighted && (
-                    <div className="mt-2 inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-500">
-                      <Badge className="mr-1 h-3 w-3 bg-transparent px-0 py-0 text-current">
-                        {plan.savings_percentage}% OFF
-                      </Badge>
+                  <CardContent className="p-6">
+                    {isHighlighted && (
+                      <div className="absolute right-4 top-4">
+                        <span className="rounded-full bg-emerald-500/15 text-emerald-600 text-xs font-semibold px-2 py-1">
+                          {plan.savings_percentage}% OFF
+                        </span>
+                      </div>
+                    )}
+                    <div className="mb-4">
+                      <div className="text-sm font-semibold text-foreground">{plan.name}</div>
+                      <div className="mt-2 text-4xl font-extrabold">
+                        <span className={isHighlighted ? "text-pink-500" : "text-foreground"}>
+                          R$ {formatCurrency(monthly)}
+                        </span>
+                        <span className="ml-2 text-sm text-muted-foreground">
+                          {plan.duration_months === 1 ? "por mês" : `por ${plan.duration_months} meses`}
+                        </span>
+                      </div>
                     </div>
-                  )}
-                </button>
+                    <div className="mt-4">
+                      <Button
+                        className={`w-full ${isHighlighted ? "bg-pink-500 hover:bg-pink-600 text-white" : ""}`}
+                        onClick={() => handleSelectPlan(plan)}
+                      >
+                        Assinar agora
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
               )
             })}
           </div>

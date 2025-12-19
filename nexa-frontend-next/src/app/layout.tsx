@@ -41,9 +41,6 @@ export default function RootLayout({
           <AuthProvider>
             {children}
             <Toaster />
-            <div className="fixed bottom-4 right-4 z-50 opacity-80 hover:opacity-100 transition">
-              <ThemeToggle />
-            </div>
           </AuthProvider>
         </ThemeProvider>
       </body>

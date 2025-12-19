@@ -47,12 +47,18 @@ export const HowItWorks = () => {
           {steps.map((step, index) => {
             const IconComponent = step.icon
             return (
-              <div key={index} className="text-center bg-background py-8 px-2 rounded-lg">
-                <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <IconComponent className="w-8 h-8 text-white" />
+              <div key={index} className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 to-purple-600/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="relative z-10 text-center bg-background border border-border p-6 rounded-xl hover:border-pink-500/50 transition-colors h-full flex flex-col items-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-purple-600 rounded-2xl rotate-3 group-hover:rotate-6 transition-transform duration-300 flex items-center justify-center mb-6 shadow-md">
+                    <IconComponent className="w-8 h-8 text-white -rotate-3 group-hover:-rotate-6 transition-transform duration-300" />
+                  </div>
+                  <div className="inline-block px-3 py-1 bg-muted rounded-full text-xs font-semibold mb-4">
+                    PASSO {step.step}
+                  </div>
+                  <h3 className="text-lg font-bold text-foreground mb-3">{step.title}</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">{step.description}</p>
                 </div>
-                <h3 className="text-lg font-semibold text-foreground mb-3">{step.step}. {step.title}</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">{step.description}</p>
               </div>
             )
           })}

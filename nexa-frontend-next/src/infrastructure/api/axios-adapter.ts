@@ -19,6 +19,7 @@ export class AxiosAdapter implements HttpClient {
         "Accept": "application/json",
       },
       withCredentials: true, // Necessary for Laravel Sanctum
+      timeout: 12000,
     })
 
     this.setupInterceptors()

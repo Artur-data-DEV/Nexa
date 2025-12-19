@@ -54,14 +54,15 @@ export const Benefits = () => {
           {benefits.map((benefit, index) => {
             const IconComponent = benefit.icon;
             return (
-              <div key={index} className="bg-background rounded-lg p-6 hover:shadow-lg transition-shadow">
-                <div className="w-full flex justify-start items-center gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-purple-600 rounded-lg flex items-center justify-center mb-4">
+              <div key={index} className="group relative overflow-hidden rounded-xl border border-border bg-background p-6 hover:shadow-md transition-all hover:border-pink-500/50">
+                <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 to-purple-600/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="relative z-10">
+                  <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-purple-600 rounded-lg flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform duration-300">
                     <IconComponent className="w-6 h-6 text-white" />
                   </div>
-                  <h3 className="w-60 text-lg font-semibold text-foreground mb-3">{benefit.title}</h3>
+                  <h3 className="text-xl font-bold text-foreground mb-3">{benefit.title}</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">{benefit.description}</p>
                 </div>
-                <p className="text-muted-foreground text-sm leading-relaxed">{benefit.description}</p>
               </div>
             );
           })}

@@ -185,7 +185,7 @@ export default function CreatorSignUpPage() {
             <Logo width={80} height={80} />
           </div>
           <CardDescription>
-            Junte-se à comunidade de criadores e conecte-se com grandes marcas.
+            Junte-se à uma comunidade de influencers. Conecte-se com parceiros e grandes marcas. 
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Loader2 } from "lucide-react"
 
@@ -51,6 +51,7 @@ export type LoginFormValues = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { login } = useAuth()
   const [loading, setLoading] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
@@ -67,6 +68,13 @@ export default function LoginPage() {
   useEffect(() => {
     // Clear any stale state on mount
     localStorage.removeItem("auth_token")
+    const hasSensitiveQuery =
+      typeof searchParams.get("password") === "string" ||
+      typeof searchParams.get("email") === "string"
+    if (hasSensitiveQuery) {
+      setServerError("Por segurança, não aceitamos credenciais na URL. Digite seu email e senha no formulário.")
+      router.replace("/login")
+    }
   }, [])
 
   const onSubmit = async (data: LoginFormValues) => {
@@ -79,9 +87,17 @@ export default function LoginPage() {
 
       router.push("/dashboard")
     } catch (error: any) {
-      console.error(error)
-      // Generic error message or specific from backend
-      const message = error.response?.data?.message || "Credenciais inválidas. Verifique seu email e senha."
+      const status = error?.response?.status
+      const code = error?.code
+      const isNetworkError = !error?.response || error?.message === "Network Error" || code === "ECONNABORTED"
+      const message =
+        isNetworkError
+          ? "Não foi possível conectar ao servidor. Tente novamente em alguns minutos."
+          : status >= 500
+          ? "Servidor indisponível no momento. Tente novamente em instantes."
+          : status === 429
+          ? "Muitas tentativas. Aguarde um pouco e tente novamente."
+          : error?.response?.data?.message || "Credenciais inválidas. Verifique seu email e senha."
       setServerError(message)
     } finally {
       setLoading(false)
