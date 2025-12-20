@@ -125,7 +125,8 @@ export default function MessagesPage() {
         const roomId = searchParams.get("roomId")
         if (!roomId) {
             if (typeof window !== "undefined") {
-                const lastRoomId = window.localStorage.getItem("last_selected_room_id")
+                const userId = user?.id ? String(user.id) : "anon"
+                const lastRoomId = window.localStorage.getItem(`last_selected_room_id_user_${userId}`)
                 if (lastRoomId) {
                     router.replace(`/dashboard/messages?roomId=${lastRoomId}`)
                 }
@@ -266,7 +267,8 @@ export default function MessagesPage() {
 
     const handleSelectChat = (chat: Chat) => {
         if (typeof window !== "undefined") {
-            window.localStorage.setItem("last_selected_room_id", chat.room_id)
+            const userId = user?.id ? String(user.id) : "anon"
+            window.localStorage.setItem(`last_selected_room_id_user_${userId}`, chat.room_id)
         }
         router.push(`/dashboard/messages?roomId=${chat.room_id}`)
         setIsListOpen(false)

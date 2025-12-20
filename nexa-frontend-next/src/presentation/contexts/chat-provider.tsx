@@ -89,8 +89,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       setMessages([])
 
       if (typeof window !== "undefined") {
+        const userId = user?.id ? String(user.id) : "anon"
         const cachedMessages = localStorage.getItem(
-          `chat_messages_cache_v1_${chat.room_id}`
+          `chat_messages_cache_v1_${userId}_${chat.room_id}`
         )
 
         if (cachedMessages) {
@@ -112,8 +113,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         setMessages(msgs)
 
         if (typeof window !== "undefined") {
+          const userId = user?.id ? String(user.id) : "anon"
           localStorage.setItem(
-            `chat_messages_cache_v1_${chat.room_id}`,
+            `chat_messages_cache_v1_${userId}_${chat.room_id}`,
             JSON.stringify(msgs)
           )
         }
@@ -128,7 +130,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         }
       }
     },
-    [selectedChat?.room_id]
+    [selectedChat?.room_id, user?.id]
   )
 
   const sendMessage = useCallback(
@@ -248,7 +250,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     if (!user?.id) return
 
     if (typeof window !== "undefined") {
-      const cachedChats = localStorage.getItem("chat_list_cache_v1")
+      const userId = String(user.id)
+      const cachedChats = localStorage.getItem(`chat_list_cache_v1_user_${userId}`)
       if (cachedChats) {
         try {
           const parsedChats: Chat[] = JSON.parse(cachedChats)
@@ -278,18 +281,20 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (typeof window === "undefined") return
     if (chats.length === 0) return
-    localStorage.setItem("chat_list_cache_v1", JSON.stringify(chats))
+    const userId = user?.id ? String(user.id) : "anon"
+    localStorage.setItem(`chat_list_cache_v1_user_${userId}`, JSON.stringify(chats))
   }, [chats])
 
   useEffect(() => {
     if (!selectedChat) return
     if (typeof window === "undefined") return
     if (messages.length === 0) return
+    const userId = user?.id ? String(user.id) : "anon"
     localStorage.setItem(
-      `chat_messages_cache_v1_${selectedChat.room_id}`,
+      `chat_messages_cache_v1_${userId}_${selectedChat.room_id}`,
       JSON.stringify(messages)
     )
-  }, [messages, selectedChat])
+  }, [messages, selectedChat, user?.id])
 
   return (
     <ChatContext.Provider

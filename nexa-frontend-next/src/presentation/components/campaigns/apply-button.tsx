@@ -33,6 +33,7 @@ import { api } from "@/infrastructure/api/axios-adapter"
 import { Campaign } from "@/domain/entities/campaign"
 import { Alert, AlertDescription, AlertTitle } from "@/presentation/components/ui/alert"
 import { toast } from "sonner"
+import { useAuth } from "@/presentation/contexts/auth-provider"
 
 const campaignRepository = new ApiCampaignRepository(api)
 const applyToCampaignUseCase = new ApplyToCampaignUseCase(campaignRepository)
@@ -51,9 +52,14 @@ interface ApplyButtonProps {
 }
 
 export function ApplyButton({ campaign, onSuccess }: ApplyButtonProps) {
+  const { user } = useAuth()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  if (!user || user.role !== "creator") {
+    return null
+  }
 
   const form = useForm<ApplicationFormValues>({
     resolver: zodResolver(applicationSchema),

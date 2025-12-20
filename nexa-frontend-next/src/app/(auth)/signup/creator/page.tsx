@@ -1,10 +1,10 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Check, Loader2, ArrowRight, ArrowLeft, Smartphone, Mail } from "lucide-react"
 import { toast } from "sonner"
@@ -37,6 +37,7 @@ import { GoogleOAuthButton } from "@/presentation/components/auth/google-oauth-b
 import { RegisterCreatorUseCase } from "@/application/use-cases/register-creator.use-case"
 import { ApiAuthRepository } from "@/infrastructure/repositories/auth-repository"
 import { api } from "@/infrastructure/api/axios-adapter"
+import { useAuth } from "@/presentation/contexts/auth-provider"
 
 const authRepository = new ApiAuthRepository(api)
 const registerCreatorUseCase = new RegisterCreatorUseCase(authRepository)
@@ -44,7 +45,7 @@ const registerCreatorUseCase = new RegisterCreatorUseCase(authRepository)
 // Schema Validation
 const signUpSchema = z.object({
   nome: z.string().min(3, "Nome deve ter no mínimo 3 caracteres"),
-  email: z.string().email("Email inválido"),
+  email: z.email("Email inválido"),
   whatsapp: z.string().min(10, "WhatsApp inválido"),
   password: z.string().min(8, "Senha deve ter no mínimo 8 caracteres"),
   confirmPassword: z.string(),
@@ -59,14 +60,23 @@ type SignUpFormValues = z.infer<typeof signUpSchema>
 
 export default function CreatorSignUpPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const { isAuthenticated, loading: authLoading } = useAuth()
   const [step, setStep] = useState<1 | 2 | 3>(1)
-  const [loading, setLoading] = useState(false)
+  const [formLoading, setFormLoading] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
   
   // Verification State
   const [verificationSent, setVerificationSent] = useState(false)
   const [isVerified, setIsVerified] = useState(false)
   const [code, setCode] = useState("")
+
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      const redirectTo = searchParams.get("redirectTo")
+      router.replace(redirectTo || "/dashboard")
+    }
+  }, [isAuthenticated, authLoading, router, searchParams])
 
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
@@ -88,7 +98,7 @@ export default function CreatorSignUpPage() {
         return
     }
 
-    setLoading(true)
+    setFormLoading(true)
     setServerError(null)
 
     try {
@@ -109,7 +119,7 @@ export default function CreatorSignUpPage() {
       const message = error.response?.data?.message || "Ocorreu um erro ao criar sua conta. Tente novamente."
       setServerError(message)
     } finally {
-      setLoading(false)
+      setFormLoading(false)
     }
   }
 
@@ -122,7 +132,7 @@ export default function CreatorSignUpPage() {
         return
     }
     
-    setLoading(true)
+    setFormLoading(true)
     try {
         await authRepository.sendOtp(email, 'email')
         // await authRepository.sendOtp(whatsapp, 'whatsapp') // Uncomment to send via WhatsApp too if needed
@@ -132,7 +142,7 @@ export default function CreatorSignUpPage() {
         toast.error("Erro ao enviar código. Tente novamente.")
         console.error(error)
     } finally {
-        setLoading(false)
+        setFormLoading(false)
     }
   }
 
@@ -143,7 +153,7 @@ export default function CreatorSignUpPage() {
     }
 
     const email = form.getValues("email")
-    setLoading(true)
+    setFormLoading(true)
     try {
         const isValid = await authRepository.verifyOtp(email, 'email', code)
         if (isValid) {
@@ -157,7 +167,7 @@ export default function CreatorSignUpPage() {
         toast.error("Erro ao verificar código.")
         console.error(error)
     } finally {
-        setLoading(false)
+        setFormLoading(false)
     }
   }
 
@@ -278,8 +288,8 @@ export default function CreatorSignUpPage() {
                                  <span>{form.getValues("whatsapp")}</span>
                              </div>
                          </div>
-                         <Button type="button" onClick={sendVerificationCode} className="w-full" disabled={loading}>
-                             {loading ? <Loader2 className="animate-spin h-4 w-4" /> : "Enviar Código de Verificação"}
+                         <Button type="button" onClick={sendVerificationCode} className="w-full" disabled={formLoading}>
+                             {formLoading ? <Loader2 className="animate-spin h-4 w-4" /> : "Enviar Código de Verificação"}
                          </Button>
                          <Button variant="ghost" type="button" onClick={() => setStep(1)} className="w-full">
                              Corrigir dados
@@ -299,8 +309,8 @@ export default function CreatorSignUpPage() {
                                  />
                              </FormControl>
                          </FormItem>
-                         <Button type="button" onClick={verifyCode} className="w-full bg-green-600 hover:bg-green-700" disabled={loading}>
-                             {loading ? <Loader2 className="animate-spin h-4 w-4" /> : "Verificar Código"}
+                         <Button type="button" onClick={verifyCode} className="w-full bg-green-600 hover:bg-green-700" disabled={formLoading}>
+                             {formLoading ? <Loader2 className="animate-spin h-4 w-4" /> : "Verificar Código"}
                          </Button>
                          <Button variant="ghost" type="button" onClick={() => setVerificationSent(false)} className="w-full text-sm">
                              Reenviar código
@@ -395,8 +405,8 @@ export default function CreatorSignUpPage() {
                     </Alert>
                 )}
 
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? (
+                <Button type="submit" className="w-full" disabled={formLoading}>
+                  {formLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Criando conta...

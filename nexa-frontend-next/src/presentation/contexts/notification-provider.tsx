@@ -166,7 +166,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                 if (typeof window !== "undefined") {
                     const pathname = window.location.pathname
                     const isOnMessagesPage = pathname.startsWith("/dashboard/messages")
-                    const lastRoomId = localStorage.getItem("last_selected_room_id")
+                    const userId = user?.id ? String(user.id) : "anon"
+                    const lastRoomId = localStorage.getItem(`last_selected_room_id_user_${userId}`)
 
                     if (
                         isOnMessagesPage &&
@@ -186,8 +187,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                             onClick: () => {
                                 if (roomIdFromNotification) {
                                     if (typeof window !== "undefined") {
+                                        const userId = user?.id ? String(user.id) : "anon"
                                         localStorage.setItem(
-                                            "last_selected_room_id",
+                                            `last_selected_room_id_user_${userId}`,
                                             String(roomIdFromNotification)
                                         )
                                     }
