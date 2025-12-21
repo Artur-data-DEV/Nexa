@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { Suspense, useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -62,6 +62,20 @@ const signUpSchema = z.object({
 type SignUpFormValues = z.infer<typeof signUpSchema>
 
 export default function CreatorSignUpPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-[#171717]">
+          Carregando...
+        </div>
+      }
+    >
+      <CreatorSignUpInner />
+    </Suspense>
+  )
+}
+
+function CreatorSignUpInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { isAuthenticated, loading: authLoading, login } = useAuth()

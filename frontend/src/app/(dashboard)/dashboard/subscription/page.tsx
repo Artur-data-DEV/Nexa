@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/presentation/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/presentation/components/ui/card";
@@ -242,6 +242,20 @@ function SubscriptionForm({ plan }: { plan: SubscriptionPlan }) {
 }
 
 export default function SubscriptionPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-[#171717]">
+          Carregando...
+        </div>
+      }
+    >
+      <SubscriptionInner />
+    </Suspense>
+  );
+}
+
+function SubscriptionInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();

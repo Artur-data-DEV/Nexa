@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useAuth } from "@/presentation/contexts/auth-provider"
 import { ThemeToggle } from "@/presentation/components/theme-toggle"
@@ -15,6 +15,20 @@ import { Info } from "lucide-react"
 const authRepository = new ApiAuthRepository(api)
 
 export default function StudentVerifyPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-[#171717]">
+          Carregando...
+        </div>
+      }
+    >
+      <StudentVerifyInner />
+    </Suspense>
+  )
+}
+
+function StudentVerifyInner() {
   const [form, setForm] = useState({
     username: "",
     email: "",

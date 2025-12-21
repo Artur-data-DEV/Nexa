@@ -5,6 +5,7 @@ services:
     profiles:
       - local
       - homolog
+      - prod
     environment:
       POSTGRES_DB: nexa
       POSTGRES_USER: nexa
@@ -20,6 +21,7 @@ services:
     profiles:
       - local
       - homolog
+      - prod
     command: ["redis-server", "--appendonly", "yes"]
     ports:
       - "6379:6379"
@@ -41,6 +43,8 @@ services:
     env_file:
       - ./backend/.env
     environment:
+      APP_ENV: local
+      APP_DEBUG: true
       CACHE_DRIVER: redis
       QUEUE_CONNECTION: sync
       SESSION_DRIVER: file
@@ -104,7 +108,7 @@ services:
       - backend
     environment:
       NEXT_PUBLIC_BACKEND_URL: http://localhost:8000/api
-      NEXT_PUBLIC_REVERB_HOST: chat
+      NEXT_PUBLIC_REVERB_HOST: localhost
       NEXT_PUBLIC_REVERB_PORT: 8080
       NEXT_PUBLIC_REVERB_SCHEME: http
       NEXT_PUBLIC_REVERB_APP_KEY: local_key

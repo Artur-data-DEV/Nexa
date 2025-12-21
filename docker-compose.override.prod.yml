@@ -1,0 +1,134 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nexa
+      POSTGRES_USER: nexa
+      POSTGRES_PASSWORD: nexa_password
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - ./backend/.env
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      QUEUE_CONNECTION: redis
+      CACHE_DRIVER: redis
+      SESSION_DRIVER: file
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      APP_URL: https://${API_DOMAIN:-api.example.com}
+      FRONTEND_URL: https://${APP_DOMAIN:-app.example.com}
+      APP_FRONTEND_URL: https://${APP_DOMAIN:-app.example.com}
+      SANCTUM_STATEFUL_DOMAINS: ${APP_DOMAIN:-app.example.com}
+      GOOGLE_REDIRECT_URI: https://${APP_DOMAIN:-app.example.com}/google/callback
+      REVERB_HOST: chat
+      REVERB_PORT: 8080
+    volumes:
+      - ./backend:/var/www/html
+    working_dir: /var/www/html
+    command: ["php-fpm", "-F"]
+    expose:
+      - "9000"
+
+  chat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - redis
+    env_file:
+      - ./backend/.env
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      CACHE_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      SESSION_DRIVER: file
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REVERB_HOST: "0.0.0.0"
+      REVERB_PORT: 8080
+    volumes:
+      - ./backend:/var/www/html
+    working_dir: /var/www/html
+    command: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
+    expose:
+      - "8080"
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - ./backend/.env
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      QUEUE_CONNECTION: redis
+      CACHE_DRIVER: redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    volumes:
+      - ./backend:/var/www/html
+    working_dir: /var/www/html
+    command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--timeout=90"]
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_BACKEND_URL: https://${API_DOMAIN:-api.example.com}/api
+      NEXT_PUBLIC_REVERB_HOST: ${WS_DOMAIN:-ws.example.com}
+      NEXT_PUBLIC_REVERB_PORT: 443
+      NEXT_PUBLIC_REVERB_SCHEME: https
+      NEXT_PUBLIC_REVERB_APP_KEY: ${REVERB_APP_KEY:-local_key}
+    expose:
+      - "3000"
+
+  nginx:
+    build:
+      context: ./infra/nginx
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - frontend
+      - chat
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./backend:/var/www/html:ro
+      - nginx_certs:/etc/nginx/certs
+
+volumes:
+  db_data:
+  redis_data:
+  nginx_certs:

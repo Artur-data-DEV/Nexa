@@ -12,7 +12,7 @@ import {
 import { NICHES } from "@/lib/niches"
 import { Calendar as CalendarIcon } from "lucide-react"
 import ReactDatePicker, { registerLocale } from "react-datepicker"
-import ptBR from "date-fns/locale/pt-BR"
+import { ptBR } from "date-fns/locale"
 import "react-datepicker/dist/react-datepicker.css"
 import { cn } from "@/lib/utils"
 registerLocale("pt-BR", ptBR)

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { Suspense, useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -50,6 +50,20 @@ export const loginSchema = z.object({
 export type LoginFormValues = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-[#171717]">
+          Carregando...
+        </div>
+      }
+    >
+      <LoginInner />
+    </Suspense>
+  )
+}
+
+function LoginInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { login } = useAuth()

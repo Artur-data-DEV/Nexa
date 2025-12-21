@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/presentation/components/ui/card";
 import { Alert, AlertDescription } from "@/presentation/components/ui/alert";
@@ -15,6 +15,20 @@ import { useAuth } from "@/presentation/contexts/auth-provider";
 const stripeRepository = new ApiStripeRepository(api);
 
 export default function PaymentMethodsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-[#171717]">
+          Carregando...
+        </div>
+      }
+    >
+      <PaymentMethodsInner />
+    </Suspense>
+  );
+}
+
+function PaymentMethodsInner() {
   const [isLoadingPaymentMethod, setIsLoadingPaymentMethod] = useState(false);
 
   const router = useRouter();

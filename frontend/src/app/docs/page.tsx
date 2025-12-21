@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/presentation/components/ui/card";
 import { Badge } from "@/presentation/components/ui/badge";
@@ -456,6 +456,20 @@ function GuideContent({ guide }: { guide: Guide }) {
 }
 
 export default function Documentation() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-[#171717]">
+          Carregando...
+        </div>
+      }
+    >
+      <DocumentationInner />
+    </Suspense>
+  );
+}
+
+function DocumentationInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sectionParam = searchParams.get('section');
