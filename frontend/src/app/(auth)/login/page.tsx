@@ -104,6 +104,13 @@ function LoginInner() {
       const status = error?.response?.status
       const code = error?.code
       const isNetworkError = !error?.response || error?.message === "Network Error" || code === "ECONNABORTED"
+      const validationErrors = error?.response?.data?.errors
+      const validationMessage =
+        status === 422
+          ? (validationErrors?.email?.[0] ||
+             validationErrors?.password?.[0] ||
+             error?.response?.data?.message)
+          : null
       const message =
         isNetworkError
           ? "Não foi possível conectar ao servidor. Tente novamente em alguns minutos."
@@ -111,7 +118,7 @@ function LoginInner() {
           ? "Servidor indisponível no momento. Tente novamente em instantes."
           : status === 429
           ? "Muitas tentativas. Aguarde um pouco e tente novamente."
-          : error?.response?.data?.message || "Credenciais inválidas. Verifique seu email e senha."
+          : validationMessage || error?.response?.data?.message || "Credenciais inválidas. Verifique seu email e senha."
       setServerError(message)
     } finally {
       setLoading(false)

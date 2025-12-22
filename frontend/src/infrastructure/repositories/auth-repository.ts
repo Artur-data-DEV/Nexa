@@ -8,7 +8,10 @@ export class ApiAuthRepository implements AuthRepository {
   async csrf(): Promise<void> {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000/api"
     const rootUrl = backendUrl.replace(/\/api\/?$/, "")
-    await this.http.get(`${rootUrl}/sanctum/csrf-cookie`)
+    await this.http.get(`${rootUrl}/sanctum/csrf-cookie`, {
+      baseURL: rootUrl,
+      headers: { "X-Skip-Auth": "true" },
+    })
   }
 
   async login(credentials: Record<string, any>): Promise<AuthResponse> {
@@ -40,11 +43,13 @@ export class ApiAuthRepository implements AuthRepository {
   }
 
   async sendOtp(contact: string, type: 'email' | 'whatsapp'): Promise<void> {
+    await this.csrf()
     await this.http.post("/otp/send", { contact, type })
   }
 
   async verifyOtp(contact: string, type: 'email' | 'whatsapp', code: string): Promise<boolean> {
     try {
+        await this.csrf()
         const response: any = await this.http.post("/otp/verify", { contact, type, code })
         return response.verified === true
     } catch (error) {

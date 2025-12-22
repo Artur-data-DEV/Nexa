@@ -40,8 +40,6 @@ services:
     depends_on:
       - db
       - redis
-    env_file:
-      - ./backend/.env
     environment:
       APP_ENV: local
       APP_DEBUG: true
@@ -50,6 +48,12 @@ services:
       SESSION_DRIVER: file
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: nexa
+      DB_USERNAME: nexa
+      DB_PASSWORD: nexa_password
       REVERB_HOST: "chat"
       REVERB_PORT: 8080
       APP_URL: http://localhost:8000
@@ -62,8 +66,10 @@ services:
     working_dir:
       /var/www/html
     command: >
-      sh -c "php artisan migrate --force &&
-             php artisan serve --host=0.0.0.0 --port=8000"
+      sh -c "mkdir -p bootstrap/cache storage/logs &&
+             chmod -R 777 bootstrap/cache storage &&
+             php artisan key:generate &&
+             php -S 0.0.0.0:8000 -t public"
     ports:
       - "8000:8000"
 
@@ -93,7 +99,12 @@ services:
     working_dir:
       /var/www/html
     command: >
-      sh -c "php artisan reverb:start --host=0.0.0.0 --port=8080"
+      sh -c "mkdir -p bootstrap/cache storage/logs &&
+             chmod -R 777 bootstrap/cache storage &&
+             composer install &&
+             composer require laravel/reverb:^1.1 --no-interaction --no-dev &&
+             php artisan reverb:install &&
+             php artisan reverb:start --host=0.0.0.0 --port=8080"
     ports:
       - "8080:8080"
 
@@ -141,8 +152,6 @@ services:
     image: prom/prometheus:v2.55.1
     restart: unless-stopped
     profiles:
-      - local
-      - homolog
       - prod
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml

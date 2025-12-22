@@ -172,6 +172,7 @@ function BrandSignUpInner() {
     
     setLoading(true)
     try {
+        setCode("")
         await authRepository.sendOtp(email, 'email')
         setVerificationSent(true)
         toast.success(`Código de verificação enviado para ${email}`)

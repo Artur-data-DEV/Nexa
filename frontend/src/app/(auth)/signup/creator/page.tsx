@@ -179,6 +179,7 @@ function CreatorSignUpInner() {
     
     setFormLoading(true)
     try {
+        setCode("")
         await authRepository.sendOtp(email, 'email')
         // await authRepository.sendOtp(whatsapp, 'whatsapp') // Uncomment to send via WhatsApp too if needed
         setVerificationSent(true)
