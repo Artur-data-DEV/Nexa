@@ -32,6 +32,8 @@ services:
       QUEUE_CONNECTION: redis
       CACHE_DRIVER: redis
       SESSION_DRIVER: file
+      SESSION_DOMAIN: .${BASE_DOMAIN:-example.com}
+      SESSION_SECURE_COOKIE: "true"
       REDIS_HOST: redis
       REDIS_PORT: 6379
       APP_URL: https://${API_DOMAIN:-api.example.com}
