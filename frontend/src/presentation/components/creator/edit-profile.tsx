@@ -53,7 +53,7 @@ interface EditProfileProps {
 }
 
 export const EditProfile: React.FC<EditProfileProps> = ({ initialProfile, onCancel, onSave, isLoading = false }) => {
-  const [profile, setProfile] = useState<any>({ ...initialProfile })
+  const [profile, setProfile] = useState<User & { image?: File | null }>({ ...initialProfile, image: null })
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [error, setError] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -108,12 +108,12 @@ export const EditProfile: React.FC<EditProfileProps> = ({ initialProfile, onCanc
     }
     reader.readAsDataURL(file)
 
-    setProfile((p: any) => ({ ...p, image: file }))
+    setProfile((p) => ({ ...p, image: file }))
     setError("")
   }
 
   const handleRemoveImage = () => {
-    setProfile((p: any) => ({ ...p, image: null }))
+    setProfile((p) => ({ ...p, image: null }))
     setImagePreview(null)
     if (fileInputRef.current) fileInputRef.current.value = ""
   }
@@ -122,12 +122,12 @@ export const EditProfile: React.FC<EditProfileProps> = ({ initialProfile, onCanc
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target
-    setProfile((p: any) => ({ ...p, [name]: value }))
+    setProfile((p) => ({ ...p, [name]: value }))
   }
 
   const handleLanguageToggle = (language: string) => {
     const currentLanguages = profile.languages || []
-    setProfile((p: any) => ({
+    setProfile((p) => ({
       ...p,
       languages: currentLanguages.includes(language)
         ? currentLanguages.filter((l: string) => l !== language)
@@ -303,7 +303,7 @@ export const EditProfile: React.FC<EditProfileProps> = ({ initialProfile, onCanc
             <label className="text-sm font-medium">Tipo de Criador</label>
             <Select
               value={profile.creator_type}
-              onValueChange={(val) => setProfile((p: any) => ({ ...p, creator_type: val }))}
+              onValueChange={(val) => setProfile((p) => ({ ...p, creator_type: val }))}
               disabled={isLoading}
             >
               <SelectTrigger>
@@ -321,7 +321,7 @@ export const EditProfile: React.FC<EditProfileProps> = ({ initialProfile, onCanc
             <label className="text-sm font-medium">Nicho *</label>
             <Select
               value={profile.niche}
-              onValueChange={(val) => setProfile((p: any) => ({ ...p, niche: val }))}
+              onValueChange={(val) => setProfile((p) => ({ ...p, niche: val }))}
               disabled={isLoading}
             >
               <SelectTrigger>

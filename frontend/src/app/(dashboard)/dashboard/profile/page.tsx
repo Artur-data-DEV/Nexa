@@ -30,16 +30,38 @@ export default function ProfilePage() {
         setIsLoading(true)
         try {
             const form = new FormData()
+            
+            // Handle avatar image separately
+            if (updatedProfile.image instanceof Blob) {
+                form.append('avatar', updatedProfile.image)
+            }
+
+            // Exclude fields that should not be sent or are handled separately
+            const excludedFields = ['id', 'created_at', 'updated_at', 'email_verified_at', 'avatar', 'avatar_url', 'image', 'balance', 'role', 'has_premium']
+
             Object.keys(updatedProfile || {}).forEach((key) => {
+                if (excludedFields.includes(key)) return
+
                 const val = updatedProfile[key]
-                if (key === 'image' && val instanceof Blob) {
-                    form.append('avatar', val)
-                } else if (key === 'languages' && Array.isArray(val)) {
+                
+                if (key === 'languages' && Array.isArray(val)) {
                     form.append('languages', JSON.stringify(val))
                 } else if (val !== undefined && val !== null) {
+                    // Only append non-empty strings for optional fields to avoid 422 errors
+                    // unless it's a field that needs to be explicitly cleared (which backend supports via nullable)
+                    if (typeof val === 'string' && val.trim() === '') {
+                        // Backend now supports nullable, so we can send empty string if we want to clear it,
+                        // but generally empty string -> null in Laravel middleware.
+                        // However, to be safe against 'required' rules if any remain (like instagram for influencers),
+                        // we should only send if it has value OR if we intend to clear.
+                        // For 'required' fields, sending empty string will fail validation.
+                        // So let's skip empty strings.
+                        return 
+                    }
                     form.append(key, String(val as unknown as string))
                 }
             })
+            
             const newUser = await updateProfileUseCase.execute(form)
             const bust = typeof window !== "undefined" ? `?t=${Date.now()}` : ""
             const nextUser = {
