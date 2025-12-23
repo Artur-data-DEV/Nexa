@@ -374,7 +374,7 @@ export default function PortfolioView() {
 
             {/* Edit Profile Dialog */}
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-                <DialogContent className="sm:max-w-[500px]">
+                <DialogContent className="sm:max-w-125">
                     <DialogHeader>
                         <DialogTitle>Editar Perfil</DialogTitle>
                         <DialogDescription>Atualize suas informações públicas do portfólio.</DialogDescription>
@@ -458,7 +458,7 @@ export default function PortfolioView() {
 
             {/* Upload Dialog */}
             <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
-                <DialogContent className="sm:max-w-[500px]">
+                <DialogContent className="sm:max-w-125">
                     <DialogHeader>
                         <DialogTitle>Adicionar Mídia</DialogTitle>
                         <DialogDescription>Carregue fotos ou vídeos para seu portfólio.</DialogDescription>

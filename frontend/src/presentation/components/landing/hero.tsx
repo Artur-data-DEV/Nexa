@@ -18,7 +18,7 @@ export const Hero = () => {
                         <div className="space-y-6">
                             <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold text-foreground tracking-tight leading-[1.1]">
                                 A nova era das colaborações entre {''}
-                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600">
+                                <span className="text-transparent bg-clip-text bg-linear-to-r from-pink-500 to-purple-600">
                                     influenciadores e marcas
                                 </span>
                             </h1>
@@ -78,8 +78,8 @@ export const Hero = () => {
                         </div>
                     </div>
 
-                    <div className="w-full relative lg:h-[650px] md:pt-12 flex items-center justify-center">
-                        <div className="relative w-full max-w-[550px] aspect-square lg:aspect-auto lg:h-full">
+                    <div className="w-full relative lg:h-162.5 md:pt-12 flex items-center justify-center">
+                        <div className="relative w-full max-w-137.5 aspect-square lg:aspect-auto lg:h-full">
                             <div className="absolute -top-10 -left-10 h-48 w-48 rounded-full bg-pink-500/20 blur-3xl animate-pulse" />
                             <div className="absolute -bottom-10 -right-8 h-56 w-56 rounded-full bg-purple-500/20 blur-3xl animate-pulse" />
                             <div className="absolute inset-0 " />

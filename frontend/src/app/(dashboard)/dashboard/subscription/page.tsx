@@ -166,7 +166,7 @@ function SubscriptionForm({ plan }: { plan: SubscriptionPlan }) {
                   <ul className="space-y-2">
                     {plan.features.map((feature: string, index: number) => (
                       <li key={index} className="flex items-start gap-2 text-sm text-muted-foreground">
-                        <CheckCircle2 className="w-4 h-4 text-pink-500 mt-0.5 flex-shrink-0" />
+                        <CheckCircle2 className="w-4 h-4 text-pink-500 mt-0.5 shrink-0" />
                         <span>{feature}</span>
                       </li>
                     ))}
@@ -384,7 +384,7 @@ function SubscriptionInner() {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Voltar
             </Button>
-            <div className="mt-2 rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 via-purple-700/10 to-background px-4 py-5 sm:px-6 sm:py-6 space-y-4">
+            <div className="mt-2 rounded-2xl border border-primary/20 bg-linear-to-r from-primary/10 via-purple-700/10 to-background px-4 py-5 sm:px-6 sm:py-6 space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-yellow-500/10 border border-yellow-500/40">

@@ -89,7 +89,7 @@ export default function ProfilePage() {
             {user.role === 'brand' ? 'Marca' : 'Criador'}
           </Badge>
           {user.has_premium && (
-            <Badge className="mt-1 bg-gradient-to-r from-yellow-400 to-orange-500">PRO</Badge>
+            <Badge className="mt-1 bg-linear-to-r from-yellow-400 to-orange-500">PRO</Badge>
           )}
           {!user.has_premium && (
             <div className="mt-3 w-full px-4">
