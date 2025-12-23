@@ -109,7 +109,7 @@ services:
       - "8080:8080"
 
   frontend:
-    image: node:20-alpine
+    image: node:24-alpine
     restart: unless-stopped
     profiles:
       - local
@@ -125,10 +125,11 @@ services:
       NEXT_PUBLIC_REVERB_APP_KEY: local_key
     volumes:
       - ./frontend:/usr/src/app
+      - frontend_node_modules:/usr/src/app/node_modules
     working_dir:
       /usr/src/app
     command: >
-      sh -c "npm install &&
+      sh -c "if [ ! -f node_modules/.bin/next ]; then npm ci; fi &&
              npm run dev -- -p 3000 -H 0.0.0.0"
     ports:
       - "3000:3000"
@@ -173,4 +174,5 @@ services:
 volumes:
   db_data:
   redis_data:
+  frontend_node_modules:
   portainer_data:

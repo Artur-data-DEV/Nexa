@@ -11,13 +11,14 @@ import {
 } from "@/presentation/components/ui/select"
 import { NICHES } from "@/lib/niches"
 import { Calendar as CalendarIcon } from "lucide-react"
-import ReactDatePicker, { registerLocale } from "react-datepicker"
 import { ptBR } from "date-fns/locale"
-import "react-datepicker/dist/react-datepicker.css"
 import { cn } from "@/lib/utils"
-registerLocale("pt-BR", ptBR)
 import { UploadIcon, XIcon } from "lucide-react"
 import { Button } from "@/presentation/components/ui/button"
+import DatePicker, { registerLocale } from "react-datepicker"
+import "react-datepicker/dist/react-datepicker.css"
+// Turbopack/SSR-safe: avoid ReferenceError if tree-shaken
+typeof registerLocale === "function" && registerLocale("pt-BR", ptBR)
 import { User } from "@/domain/entities/user"
 import Image from "next/image"
 import { format } from "date-fns"
@@ -252,20 +253,23 @@ export const EditProfile: React.FC<EditProfileProps> = ({ initialProfile, onCanc
           <div className="space-y-2">
             <label className="text-sm font-medium">Data de Nascimento *</label>
             <div className="w-full">
-              <ReactDatePicker
+              <DatePicker
                 selected={profile.birth_date ? new Date(`${profile.birth_date}T00:00:00`) : null}
-                onChange={(date: Date | null) =>
+                onChange={(date: Date | null) => {
                   setProfile((p: any) => ({
                     ...p,
                     birth_date: date ? format(date, "yyyy-MM-dd") : undefined,
                   }))
-                }
-                disabled={isLoading}
+                }}
                 locale="pt-BR"
-                dateFormat="P"
-                className="w-full bg-background border rounded-md px-3 py-2"
+                dateFormat="dd/MM/yyyy"
+                maxDate={new Date()}
+                showMonthDropdown
+                showYearDropdown
+                dropdownMode="select"
+                customInput={<Input />}
                 placeholderText="Selecione uma data"
-                showPopperArrow={false}
+                disabled={isLoading}
               />
             </div>
           </div>

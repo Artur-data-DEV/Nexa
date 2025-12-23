@@ -28,8 +28,24 @@ export default function ProfilePage() {
   const handleSaveProfile = async (updatedProfile: any) => {
     setIsLoading(true)
     try {
-        const newUser = await updateProfileUseCase.execute(updatedProfile)
-        updateUser(newUser)
+        const form = new FormData()
+        Object.keys(updatedProfile || {}).forEach((key) => {
+          const val = updatedProfile[key]
+          if (key === 'image' && val) {
+            form.append('avatar', val as Blob)
+          } else if (key === 'languages' && Array.isArray(val)) {
+            form.append('languages', JSON.stringify(val))
+          } else if (val !== undefined && val !== null) {
+            form.append(key, String(val))
+          }
+        })
+        const newUser = await updateProfileUseCase.execute(form)
+        const bust = typeof window !== "undefined" ? `?t=${Date.now()}` : ""
+        const nextUser = {
+          ...newUser,
+          avatar: newUser.avatar ? `${newUser.avatar}${bust}` : newUser.avatar
+        }
+        updateUser(nextUser)
         setIsEditing(false)
         toast.success("Perfil atualizado com sucesso!")
     } catch (error) {

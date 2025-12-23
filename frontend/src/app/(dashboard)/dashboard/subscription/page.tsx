@@ -8,11 +8,13 @@ import { Loader2, ArrowLeft, CreditCard, Shield, CheckCircle2, Star, Calendar, A
 import { toast } from "sonner";
 import { useAuth } from "@/presentation/contexts/auth-provider";
 import { ApiPaymentRepository } from "@/infrastructure/repositories/payment-repository";
+import { ApiStripeRepository } from "@/infrastructure/repositories/stripe-repository";
 import { api } from "@/infrastructure/api/axios-adapter";
 import { SubscriptionPlan, SubscriptionStatus } from "@/domain/repositories/payment-repository.interface";
 import { MdOutlineWorkspacePremium } from "react-icons/md";
 
 const paymentRepository = new ApiPaymentRepository(api);
+const stripeRepository = new ApiStripeRepository(api);
 
 const getMonthlyPrice = (plan: SubscriptionPlan): number => {
   if (typeof plan.monthly_price === "number" && plan.monthly_price > 0) {
@@ -73,6 +75,22 @@ function SubscriptionForm({ plan }: { plan: SubscriptionPlan }) {
     setIsLoading(true);
 
     try {
+      if ((plan.duration_months || 0) >= 12) {
+        const config = await stripeRepository.checkConfiguration();
+        const isConfigured =
+          !!config &&
+          !!config.success &&
+          !!config.configuration &&
+          !!config.configuration.stripe_secret_configured &&
+          !!config.configuration.stripe_publishable_configured;
+        if (!isConfigured) {
+          toast.error("Stripe não configurado", {
+            description: "Configure o Stripe antes de assinar o plano anual.",
+          });
+          router.push("/dashboard/payment-methods");
+          return;
+        }
+      }
       const checkoutUrl = await paymentRepository.getCheckoutUrl(plan.id);
 
       if (checkoutUrl && typeof window !== "undefined") {
@@ -98,6 +116,9 @@ function SubscriptionForm({ plan }: { plan: SubscriptionPlan }) {
           maybeAxiosError.response?.data?.message ??
           maybeAxiosError.message ??
           errorMessage;
+        if ((plan.duration_months || 0) >= 12) {
+          router.push("/dashboard/payment-methods");
+        }
       }
 
       toast.error("Erro ao iniciar checkout", {

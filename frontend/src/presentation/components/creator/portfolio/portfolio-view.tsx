@@ -42,7 +42,7 @@ function getFileType(file: File) {
 }
 
 export default function PortfolioView() {
-    const { user } = useAuth()
+    const { user, updateUser } = useAuth()
     const [portfolio, setPortfolio] = useState<Portfolio | null>(null)
     const [stats, setStats] = useState<PortfolioStats | null>(null)
     const [loading, setLoading] = useState(true)
@@ -147,7 +147,13 @@ export default function PortfolioView() {
             }
 
             const updated = await updatePortfolioProfileUseCase.execute(formData)
-            setPortfolio(updated)
+            const bust = typeof window !== "undefined" ? `?t=${Date.now()}` : ""
+            const updatedAvatarUrl = updated.profile_picture_url ? `${updated.profile_picture_url}${bust}` : undefined
+            setPortfolio({ ...updated, profile_picture_url: updatedAvatarUrl || updated.profile_picture_url })
+            if (user) {
+                const nextUser = { ...user, avatar: updatedAvatarUrl || user.avatar }
+                updateUser(nextUser)
+            }
             setIsEditOpen(false)
             toast.success("Perfil atualizado!")
         } catch (error) {

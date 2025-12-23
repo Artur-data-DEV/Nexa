@@ -7,6 +7,7 @@ export interface AuthRepository {
   me(): Promise<User>
   csrf(): Promise<void>
   updateProfile(data: Record<string, any> | FormData): Promise<User>
+  uploadAvatar(file: File | Blob): Promise<User>
   sendOtp(contact: string, type: 'email' | 'whatsapp'): Promise<void>
   verifyOtp(contact: string, type: 'email' | 'whatsapp', code: string): Promise<boolean>
   forgotPassword(email: string): Promise<any>

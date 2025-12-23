@@ -10,9 +10,9 @@ import { BsSendArrowUp } from "react-icons/bs";
 export const Hero = () => {
     const [hoverBrand, setHoverBrand] = useState(false)
     return (
-        <section className="relative overflow-hidden mt-26 lg:mt-4">
+        <section className="relative overflow-hidden min-h-screen">
             <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_80%_0%,var(--tw-gradient-stops))] from-pink-500/20 via-purple-500/10 to-transparent opacity-70" />
-            <div className="relative max-w-7xl mx-auto px-4 md:px-0">
+            <div className="relative max-w-7xl mx-auto mt-26 xl:mt-6 px-4 xl:px-0">
                 <div className="grid lg:grid-cols-2 items-center">
                     <div className="space-y-12 text-center lg:text-left">
                         <div className="space-y-6">
@@ -28,7 +28,7 @@ export const Hero = () => {
                         </div>
 
                         <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                            <div className="inline-flex items-center rounded-full bg-zinc-950 p-1.5 shadow-2xl ring-1 ring-zinc-800">
+                            <div className="inline-flex items-stretch sm:items-center rounded-full bg-zinc-950 p-1.5 shadow-2xl ring-1 ring-zinc-800">
                                 <Link
                                     href="/signup/creator?redirectTo=/dashboard"
                                     className={`relative group flex items-center rounded-full px-6 py-3 gap-2 text-base font-semibold transition-all cursor-pointer ${
@@ -40,7 +40,7 @@ export const Hero = () => {
                                 >
                                     <Speech size={24} />
                                     <div className="flex items-center gap-0 sm:gap-1">
-                                        <p>Gerar conteúdo</p>
+                                        <p className="text-sm sm:text-lg font-bold">Gerar conteúdo</p>   
                                         <span className="font-thin hidden sm:block ">NEXA</span>
                                     </div>
                                     <span className="pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-zinc-900 px-3 py-1.5 text-xs text-white opacity-0 group-hover:opacity-100 shadow-lg ring-1 ring-zinc-700 transition-opacity">

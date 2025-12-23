@@ -27,13 +27,19 @@ export class ApiPortfolioRepository implements PortfolioRepository {
     }>("/portfolio")
 
     const apiPortfolio = response.data.portfolio
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000/api"
+    const rootUrl = backendUrl.replace(/\/api\/?$/, "")
+    const resolveUrl = (path?: string | null) => {
+      if (!path) return undefined
+      return path.startsWith("/") ? `${rootUrl}${path}` : path || undefined
+    }
 
     return {
       user_id: apiPortfolio.user_id,
       id: apiPortfolio.id,
       title: apiPortfolio.title || "",
       bio: apiPortfolio.bio || "",
-      profile_picture_url: apiPortfolio.profile_picture || undefined,
+      profile_picture_url: resolveUrl(apiPortfolio.profile_picture),
       project_links: apiPortfolio.project_links || [],
       items: apiPortfolio.items.map((item) => ({
         id: item.id,
@@ -47,7 +53,17 @@ export class ApiPortfolioRepository implements PortfolioRepository {
 
   async updateProfile(data: FormData): Promise<Portfolio> {
     const response = await this.http.post<{ data: Portfolio }>("/portfolio/profile", data)
-    return response.data
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000/api"
+    const rootUrl = backendUrl.replace(/\/api\/?$/, "")
+    const resolveUrl = (path?: string | null) => {
+      if (!path) return undefined
+      return path.startsWith("/") ? `${rootUrl}${path}` : path || undefined
+    }
+    const updated = response.data
+    return {
+      ...updated,
+      profile_picture_url: resolveUrl((updated as any).profile_picture || updated.profile_picture_url),
+    }
   }
 
   async uploadMedia(data: FormData): Promise<{ items: PortfolioItem[]; total_items: number }> {

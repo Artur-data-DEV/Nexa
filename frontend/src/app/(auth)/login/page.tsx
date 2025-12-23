@@ -92,6 +92,7 @@ function LoginInner() {
   }, [])
 
   const onSubmit = async (data: LoginFormValues) => {
+    if (loading) return
     setLoading(true)
     setServerError(null)
 
@@ -149,7 +150,7 @@ function LoginInner() {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="seu@email.com" type="email" {...field} />
+                      <Input placeholder="seu@email.com" type="email" disabled={loading} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -162,7 +163,7 @@ function LoginInner() {
                   <FormItem>
                     <FormLabel>Senha</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="******" {...field} />
+                      <Input type="password" placeholder="******" disabled={loading} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -179,6 +180,7 @@ function LoginInner() {
                         id="remember"
                         checked={field.value}
                         onCheckedChange={field.onChange}
+                        disabled={loading}
                       />
                       <label
                         htmlFor="remember"
@@ -221,7 +223,9 @@ function LoginInner() {
             <span className="text-muted-foreground text-sm">ou</span>
             <div className="flex-1 h-px bg-border" />
           </div>
-          <GoogleOAuthButton className="rounded-md" />
+          <div className={loading ? "pointer-events-none opacity-60" : ""}>
+            <GoogleOAuthButton className="rounded-md" />
+          </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-2 justify-center text-center">
           <p className="text-sm text-muted-foreground">
