@@ -12,9 +12,9 @@ export const Hero = () => {
     return (
         <section className="relative overflow-hidden min-h-screen">
             <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_80%_0%,var(--tw-gradient-stops))] from-pink-500/20 via-purple-500/10 to-transparent opacity-70" />
-            <div className="relative max-w-7xl mx-auto mt-26 xl:mt-6 px-4 xl:px-0">
+            <div className="relative max-w-7xl mx-auto mt-18 sm:mt-26 xl:mt-6 px-4 xl:px-0">
                 <div className="grid lg:grid-cols-2 items-center">
-                    <div className="space-y-12 text-center lg:text-left">
+                    <div className="order-2 lg:order-1 space-y-12 text-center lg:text-left">
                         <div className="space-y-6">
                             <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold text-foreground tracking-tight leading-[1.1]">
                                 A nova era das colaborações entre {''}
@@ -78,7 +78,7 @@ export const Hero = () => {
                         </div>
                     </div>
 
-                    <div className="w-full relative lg:h-162.5 md:pt-12 flex items-center justify-center">
+                    <div className="order-1 lg:order-2 w-full relative lg:h-162.5 md:pt-12 flex items-center justify-center">
                         <div className="relative w-full max-w-137.5 aspect-square lg:aspect-auto lg:h-full">
                             <div className="absolute -top-10 -left-10 h-48 w-48 rounded-full bg-pink-500/20 blur-3xl animate-pulse" />
                             <div className="absolute -bottom-10 -right-8 h-56 w-56 rounded-full bg-purple-500/20 blur-3xl animate-pulse" />
