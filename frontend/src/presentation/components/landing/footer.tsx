@@ -68,7 +68,12 @@ export const Footer = () => {
             <h4 className="font-semibold mb-4">Compliance e Segurança</h4>
             <ul className="space-y-2 text-sm text-gray-400">
               <li className="cursor-pointer hover:text-primary transition-colors">
-                Termos de uso
+                <Link 
+                  href="/terms-of-use" 
+                  className="hover:text-primary transition-colors"
+                >
+                  Termos de uso
+                </Link>
               </li>
               <li>
                 <Link 
