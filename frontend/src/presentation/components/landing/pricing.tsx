@@ -108,13 +108,13 @@ export const Pricing = () => {
         </p>
 
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="flex flex-col-reverse sm:grid sm:grid-cols-3 gap-6">
             <div className="h-44 rounded-2xl bg-muted/40 animate-pulse" />
             <div className="h-44 rounded-2xl bg-muted/40 animate-pulse hidden sm:block" />
             <div className="h-44 rounded-2xl bg-muted/40 animate-pulse hidden sm:block" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="flex flex-col-reverse sm:grid sm:grid-cols-3 gap-6">
             {effectivePlans.map((plan) => {
               const monthly = getMonthlyPrice(plan)
               const isHighlighted =
