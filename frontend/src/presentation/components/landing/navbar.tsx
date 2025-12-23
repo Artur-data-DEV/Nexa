@@ -14,6 +14,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/presentation/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/presentation/components/ui/avatar"
+import { useAuth } from "@/presentation/contexts/auth-provider"
 
 const MobileMenu = () => (
     <Sheet>
@@ -79,6 +81,7 @@ const MobileMenu = () => (
 
 export const Navbar = () => {
     const pathname = usePathname()
+    const { isAuthenticated, user, logout } = useAuth()
     const handleScrollTo = (id: string) => {
         if (typeof window === "undefined") return
         const element = document.getElementById(id)
@@ -87,7 +90,7 @@ export const Navbar = () => {
     }
 
     return (
-        <header className="w-full top-0 z-50 p-4 md:p-6 bg-background/95 backdrop-blur fixed supports-[backdrop-filter]:bg-background/60 border-b border-border/40">
+        <header className="w-full top-0 z-50 p-4 md:p-6 bg-background/95 backdrop-blur fixed supports-backdrop-filter:bg-background/60 border-b border-border/40">
             <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
                 <Link href="/" className="text-xl md:text-2xl font-bold text-foreground cursor-pointer">
                     <Logo
@@ -143,42 +146,107 @@ export const Navbar = () => {
                 </nav>
 
                 <div className="hidden md:flex items-center gap-3">
-                    <Button variant="ghost" asChild className="cursor-pointer">
-                        <Link href="/login">
-                            Entrar
-                        </Link>
-                    </Button>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button className="bg-pink-500 hover:bg-pink-600 text-white cursor-pointer">
-                                Criar conta
+                    {!isAuthenticated ? (
+                        <>
+                            <Button variant="ghost" asChild className="cursor-pointer">
+                                <Link href="/login">
+                                    Entrar
+                                </Link>
                             </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild>
-                                <Link href="/signup/creator?redirectTo=/dashboard">
-                                    <span className="inline-flex items-center gap-2">
-                                        <UserStar className="h-4 w-4" />
-                                        Sou Criador(a)
-                                    </span>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button className="bg-pink-500 hover:bg-pink-600 text-white cursor-pointer">
+                                        Criar conta
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem asChild>
+                                        <Link href="/signup/creator?redirectTo=/dashboard">
+                                            <span className="inline-flex items-center gap-2">
+                                                <UserStar className="h-4 w-4" />
+                                                Sou Criador(a)
+                                            </span>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <Link href="/signup/brand?redirectTo=/dashboard">
+                                            <span className="inline-flex items-center gap-2">
+                                                <Building2 className="h-4 w-4" />
+                                                Sou Empresa
+                                            </span>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                            <ThemeToggle />
+                        </>
+                    ) : (
+                        <>
+                            <Button variant="outline" asChild className="cursor-pointer">
+                                <Link href="/dashboard">
+                                    Dashboard
                                 </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                                <Link href="/signup/brand?redirectTo=/dashboard">
-                                    <span className="inline-flex items-center gap-2">
-                                        <Building2 className="h-4 w-4" />
-                                        Sou Empresa
-                                    </span>
-                                </Link>
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                    <ThemeToggle />
+                            </Button>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button
+                                        className="flex items-center gap-2 rounded-full px-2 py-1 hover:bg-muted transition-colors"
+                                        aria-label="Abrir perfil"
+                                    >
+                                        <Avatar className="h-8 w-8">
+                                            <AvatarImage src={user?.avatar || ""} alt={user?.name || "Perfil"} />
+                                            <AvatarFallback>{(user?.name || "U").slice(0,1).toUpperCase()}</AvatarFallback>
+                                        </Avatar>
+                                        <span className="text-sm font-medium">{user?.name || "Perfil"}</span>
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem asChild>
+                                        <Link href="/dashboard">
+                                            Ir para o painel
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        onClick={() => logout()}
+                                    >
+                                        Sair
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                            <ThemeToggle />
+                        </>
+                    )}
                 </div>
 
                 <div className="flex md:hidden items-center gap-3">
                     <ThemeToggle />
-                    <MobileMenu />
+                            {isAuthenticated ? (
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <button
+                                            className="flex items-center gap-2 rounded-full px-2 py-1 hover:bg-muted transition-colors"
+                                            aria-label="Abrir perfil"
+                                        >
+                                            <Avatar className="h-8 w-8">
+                                                <AvatarImage src={user?.avatar || ""} alt={user?.name || "Perfil"} />
+                                                <AvatarFallback>{(user?.name || "U").slice(0,1).toUpperCase()}</AvatarFallback>
+                                            </Avatar>
+                                        </button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                <DropdownMenuItem asChild>
+                                    <Link href="/dashboard">
+                                        Ir para o painel
+                                    </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => logout()}>
+                                    Sair
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    ) : (
+                        <MobileMenu />
+                    )}
                 </div>
             </div>
         </header>

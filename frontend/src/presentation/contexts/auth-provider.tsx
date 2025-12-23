@@ -46,11 +46,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const login = (token: string, userData: User) => {
+  const login = async (token: string, userData: User) => {
     localStorage.setItem("auth_token", token)
-    setUser(userData)
-    // Optional: Redirect based on role
-    // router.push("/dashboard") 
+    try {
+      const fresh = await authRepository.me()
+      const bust = typeof window !== "undefined" ? `?t=${Date.now()}` : ""
+      const nextUser = { ...fresh, avatar: fresh.avatar ? `${fresh.avatar}${bust}` : fresh.avatar }
+      setUser(nextUser)
+    } catch {
+      const bust = typeof window !== "undefined" ? `?t=${Date.now()}` : ""
+      const nextUser = { ...userData, avatar: userData.avatar ? `${userData.avatar}${bust}` : userData.avatar }
+      setUser(nextUser)
+    }
+    // router.push("/dashboard")
   }
 
   const logout = async () => {

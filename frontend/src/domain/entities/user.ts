@@ -28,6 +28,7 @@ export interface User {
   profession?: string
   languages?: string[]
   has_premium?: boolean
+  avatar_url?: string
 }
 
 export interface AuthResponse {

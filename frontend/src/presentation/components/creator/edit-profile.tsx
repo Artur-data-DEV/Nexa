@@ -58,6 +58,31 @@ export const EditProfile: React.FC<EditProfileProps> = ({ initialProfile, onCanc
   const [error, setError] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const safeParseDate = (value: unknown): Date | null => {
+    if (!value) return null
+    if (value instanceof Date) {
+      return isNaN(value.getTime()) ? null : value
+    }
+    if (typeof value === "string") {
+      const s = value.trim()
+      const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s)
+      if (iso) {
+        const [_, y, m, d] = iso
+        const dt = new Date(Number(y), Number(m) - 1, Number(d))
+        return isNaN(dt.getTime()) ? null : dt
+      }
+      const br = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s)
+      if (br) {
+        const [_, d, m, y] = br
+        const dt = new Date(Number(y), Number(m) - 1, Number(d))
+        return isNaN(dt.getTime()) ? null : dt
+      }
+      const dt = new Date(s)
+      return isNaN(dt.getTime()) ? null : dt
+    }
+    return null
+  }
+
   useEffect(() => {
     if (initialProfile.avatar) {
       setImagePreview(initialProfile.avatar)
@@ -254,7 +279,7 @@ export const EditProfile: React.FC<EditProfileProps> = ({ initialProfile, onCanc
             <label className="text-sm font-medium">Data de Nascimento *</label>
             <div className="w-full">
               <DatePicker
-                selected={profile.birth_date ? new Date(`${profile.birth_date}T00:00:00`) : null}
+                selected={safeParseDate(profile.birth_date)}
                 onChange={(date: Date | null) => {
                   setProfile((p: any) => ({
                     ...p,

@@ -2,6 +2,36 @@ import { AuthRepository } from "@/domain/repositories/auth-repository.interface"
 import { AuthResponse, User } from "@/domain/entities/user"
 import { HttpClient } from "../api/axios-adapter"
 
+type RawProfile = {
+  id: number
+  name: string
+  email: string
+  role: User['role']
+  avatar_url?: string
+  avatar?: string
+  whatsapp?: string
+  created_at: string
+  updated_at: string
+  location?: string
+  state?: string
+  gender?: string
+  categories?: string[]
+  balance?: number
+  age?: number
+  creator_type?: string
+  birth_date?: string
+  instagram_handle?: string
+  tiktok_handle?: string
+  youtube_channel?: string
+  facebook_page?: string
+  twitter_handle?: string
+  niche?: string
+  industry?: string
+  profession?: string
+  languages?: string[]
+  has_premium?: boolean
+}
+
 export class ApiAuthRepository implements AuthRepository {
   constructor(private http: HttpClient) {}
 
@@ -12,7 +42,7 @@ export class ApiAuthRepository implements AuthRepository {
     return path.startsWith("/") ? `${rootUrl}${path}` : path
   }
 
-  private normalizeProfile(profile: any): User {
+  private normalizeProfile(profile: RawProfile): User {
     const avatar = this.resolveUrl(profile?.avatar_url || profile?.avatar)
     return {
       id: profile.id,
@@ -53,12 +83,12 @@ export class ApiAuthRepository implements AuthRepository {
     })
   }
 
-  async login(credentials: Record<string, any>): Promise<AuthResponse> {
+  async login(credentials: Record<string, unknown>): Promise<AuthResponse> {
     await this.csrf()
-    return this.http.post<AuthResponse>("/login", credentials)
+    return this.http.post<AuthResponse>("/login", credentials as Record<string, unknown>)
   }
 
-  async register(data: Record<string, any>): Promise<AuthResponse> {
+  async register(data: Record<string, unknown>): Promise<AuthResponse> {
     // In Laravel usually register returns user or token, adapting to generic response
     return this.http.post<AuthResponse>("/register", data)
   }
@@ -68,15 +98,17 @@ export class ApiAuthRepository implements AuthRepository {
   }
 
   async me(): Promise<User> {
-    const resp = await this.http.get<any>("/profile")
-    return this.normalizeProfile(resp?.profile || resp?.data?.profile || resp)
+    const resp = await this.http.get<unknown>("/profile")
+    const r = resp as { profile?: unknown; data?: { profile?: unknown } }
+    const raw = r?.profile ?? r?.data?.profile ?? resp
+    return this.normalizeProfile(raw as RawProfile)
   }
 
-  async updateProfile(data: Record<string, any> | FormData): Promise<User> {
+  async updateProfile(data: Record<string, unknown> | FormData): Promise<User> {
     if (data instanceof FormData) {
       const avatar = data.get('avatar') || data.get('image')
       const hasAvatar = avatar instanceof Blob
-      const payload: Record<string, any> = {}
+      const payload: Record<string, unknown> = {}
       data.forEach((value, key) => {
         if (key !== 'avatar' && key !== 'image') {
           payload[key] = value
@@ -95,19 +127,20 @@ export class ApiAuthRepository implements AuthRepository {
         try {
           const form = new FormData()
           form.append('avatar', avatar as Blob)
-          const avatarResp = await this.http.post<any>("/profile/avatar", form)
-          if (avatarResp?.profile) {
-            // ignore, final profile will be returned by PUT
-          }
+          await this.http.post<unknown>("/profile/avatar", form)
         } catch {
           // continue updating other fields even if avatar upload fails
         }
       }
-      const putResp = await this.http.put<any>("/profile", payload)
-      return this.normalizeProfile(putResp?.profile || putResp?.data?.profile || putResp)
+      const putResp = await this.http.put<unknown>("/profile", payload)
+      const r = putResp as { profile?: unknown; data?: { profile?: unknown } }
+      const raw = r?.profile ?? r?.data?.profile ?? putResp
+      return this.normalizeProfile(raw as RawProfile)
     }
-    const putResp = await this.http.put<any>("/profile", data)
-    return this.normalizeProfile(putResp?.profile || putResp?.data?.profile || putResp)
+    const putResp = await this.http.put<unknown>("/profile", data as Record<string, unknown>)
+    const r = putResp as { profile?: unknown; data?: { profile?: unknown } }
+    const raw = r?.profile ?? r?.data?.profile ?? putResp
+    return this.normalizeProfile(raw as RawProfile)
   }
 
   async sendOtp(contact: string, type: 'email' | 'whatsapp'): Promise<void> {
@@ -118,22 +151,25 @@ export class ApiAuthRepository implements AuthRepository {
   async verifyOtp(contact: string, type: 'email' | 'whatsapp', code: string): Promise<boolean> {
     try {
         await this.csrf()
-        const response: any = await this.http.post("/otp/verify", { contact, type, code })
-        return response.verified === true
+        const response: unknown = await this.http.post("/otp/verify", { contact, type, code })
+        if (response && typeof response === "object" && "verified" in response) {
+          return !!(response as { verified?: boolean }).verified
+        }
+        return false
     } catch (error) {
         return false
     }
   }
 
-  async forgotPassword(email: string): Promise<any> {
+  async forgotPassword(email: string): Promise<unknown> {
     return this.http.post("/forgot-password", { email })
   }
 
-  async resetPassword(data: Record<string, any>): Promise<any> {
+  async resetPassword(data: Record<string, unknown>): Promise<unknown> {
     return this.http.post("/reset-password", data)
   }
 
-  async verifyStudent(data: { email: string, username: string, courseName: string }): Promise<any> {
+  async verifyStudent(data: { email: string, username: string, courseName: string }): Promise<unknown> {
     return this.http.post("/student/verify", {
         purchase_email: data.email,
         course_name: data.courseName
@@ -143,7 +179,9 @@ export class ApiAuthRepository implements AuthRepository {
   async uploadAvatar(file: File | Blob): Promise<User> {
     const form = new FormData()
     form.append('avatar', file)
-    const resp = await this.http.post<any>("/profile/avatar", form)
-    return this.normalizeProfile(resp?.profile || resp?.data?.profile || resp)
+    const resp = await this.http.post<unknown>("/profile/avatar", form)
+    const r = resp as { profile?: unknown; data?: { profile?: unknown } }
+    const raw = r?.profile ?? r?.data?.profile ?? resp
+    return this.normalizeProfile(raw as RawProfile)
   }
 }
