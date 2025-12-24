@@ -13,7 +13,9 @@ if (typeof window !== 'undefined') {
 }
 
 export const createEcho = (token: string) => {
-  const backendApiUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000/api'
+  const backendApiUrl =
+    process.env.NEXT_PUBLIC_BACKEND_URL ||
+    'https://nexa-backend2-1044548850970.southamerica-east1.run.app/api'
   const backendRootUrl = backendApiUrl.replace(/\/api\/?$/, '')
 
   const wsHost = process.env.NEXT_PUBLIC_REVERB_HOST || 'localhost'

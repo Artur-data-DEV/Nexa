@@ -40,16 +40,15 @@ export class AxiosAdapter implements HttpClient {
 
         // Add Socket ID for broadcasting toOthers()
         if (!skipAuth && typeof window !== "undefined" && (window as any).Echo) {
-             const socketId = (window as any).Echo.socketId();
-             if (socketId) {
-                 config.headers['X-Socket-Id'] = socketId;
-             }
+          const socketId = (window as any).Echo.socketId()
+          if (socketId) {
+            config.headers["X-Socket-Id"] = socketId
+          }
         }
 
-        if (skipAuth) {
-          config.withCredentials = false
+        if (skipAuth && config.headers) {
           delete (config.headers as Record<string, string>)["X-Skip-Auth"]
-          if (config.headers && (config.headers as Record<string, string>)["Authorization"]) {
+          if ((config.headers as Record<string, string>)["Authorization"]) {
             delete (config.headers as Record<string, string>)["Authorization"]
           }
         }
@@ -100,4 +99,7 @@ export class AxiosAdapter implements HttpClient {
   }
 }
 
-export const api = new AxiosAdapter(process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000/api")
+export const api = new AxiosAdapter(
+  process.env.NEXT_PUBLIC_BACKEND_URL ||
+  "https://nexa-backend2-1044548850970.southamerica-east1.run.app/api"
+)

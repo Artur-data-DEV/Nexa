@@ -112,6 +112,18 @@ function LoginInner() {
              validationErrors?.password?.[0] ||
              error?.response?.data?.message)
           : null
+
+      if (typeof window !== "undefined") {
+        console.error("Login error", {
+          message: error?.message,
+          code,
+          status,
+          url: error?.config?.url,
+          method: error?.config?.method,
+          data: error?.response?.data,
+        })
+      }
+
       const message =
         isNetworkError
           ? "Não foi possível conectar ao servidor. Tente novamente em alguns minutos."

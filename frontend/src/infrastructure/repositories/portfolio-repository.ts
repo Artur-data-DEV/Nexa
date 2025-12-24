@@ -27,7 +27,9 @@ export class ApiPortfolioRepository implements PortfolioRepository {
     }>("/portfolio")
 
     const apiPortfolio = response.data.portfolio
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000/api"
+    const backendUrl =
+      process.env.NEXT_PUBLIC_BACKEND_URL ||
+      "https://nexa-backend2-1044548850970.southamerica-east1.run.app/api"
     const rootUrl = backendUrl.replace(/\/api\/?$/, "")
     const resolveUrl = (path?: string | null) => {
       if (!path) return undefined
@@ -53,7 +55,9 @@ export class ApiPortfolioRepository implements PortfolioRepository {
 
   async updateProfile(data: FormData): Promise<Portfolio> {
     const response = await this.http.post<{ data: Portfolio }>("/portfolio/profile", data)
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000/api"
+    const backendUrl =
+      process.env.NEXT_PUBLIC_BACKEND_URL ||
+      "https://nexa-backend2-1044548850970.southamerica-east1.run.app/api"
     const rootUrl = backendUrl.replace(/\/api\/?$/, "")
     const resolveUrl = (path?: string | null) => {
       if (!path) return undefined

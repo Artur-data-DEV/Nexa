@@ -27,42 +27,42 @@ export const Hero = () => {
                             </p>
                         </div>
 
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                        <div className="flex items-center gap-4 justify-center lg:justify-start">
                             <div className="inline-flex items-stretch sm:items-center rounded-full bg-zinc-950 p-1.5 shadow-2xl ring-1 ring-zinc-800">
                                 <Link
                                     href="/signup/creator?redirectTo=/dashboard"
-                                    className={`relative group flex items-center rounded-full px-6 py-3 gap-2 text-base font-semibold transition-all cursor-pointer ${
-                                        hoverBrand
+                                    className={`relative group flex items-center rounded-full px-4 py-2 sm:px-6 sm:py-3 gap-2 text-base font-semibold transition-all cursor-pointer ${hoverBrand
                                             ? "bg-transparent text-white"
-                                            : "bg-pink-500 text-white shadow-lg shadow-pink-500/20 hover:bg-pink-600 hover:shadow-pink-500/40"
-                                    }`}
+                                            : "bg-pink-500 text-white   shadow-lg shadow-pink-500/20 hover:bg-pink-600 hover:shadow-pink-500/40"
+                                        }`}
                                     title="Para Criadores"
                                 >
                                     <Speech size={24} />
                                     <div className="flex items-center gap-0 sm:gap-1">
-                                        <p className="text-sm sm:text-lg font-bold">Gerar conteúdo</p>   
+                                        <p className="text-sm sm:text-lg sm:font-thin">Gerar conteúdo</p>
                                         <span className="font-thin hidden sm:block ">NEXA</span>
                                     </div>
                                     <span className="pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-zinc-900 px-3 py-1.5 text-xs text-white opacity-0 group-hover:opacity-100 shadow-lg ring-1 ring-zinc-700 transition-opacity">
                                         Para Criadores
                                     </span>
                                 </Link>
-                                <div className="h-6 w-px bg-zinc-800 mx-2" />
+                                <div className="h-12 mx-2 sm:h-6 w-px bg-zinc-800 sm:mx-2" />
                                 <Link
                                     href="/signup/brand"
-                                    className={`relative group flex items-center rounded-full gap-2 px-6 py-3 text-base font-medium transition-all cursor-pointer ${
-                                        hoverBrand
+                                    className={`relative group flex items-center rounded-full gap-2 px-2.5 py-2 sm:px-6 sm:py-3 text-base font-medium transition-all cursor-pointer ${hoverBrand
                                             ? "bg-purple-600 text-white shadow-lg shadow-purple-600/20"
                                             : "text-zinc-400 hover:text-white"
-                                    }`}
+                                        }`}
                                     title="Para Empresas"
                                     onMouseEnter={() => setHoverBrand(true)}
                                     onMouseLeave={() => setHoverBrand(false)}
                                 >
 
                                     <BsSendArrowUp size={22} />
+                                    <span className="text-sm sm:font-thin sm:text-lg">
 
-                                    Engajar sua marca
+                                        Engajar sua marca
+                                    </span>
                                     <span className="pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-zinc-900 px-3 py-1.5 text-xs text-white opacity-0 group-hover:opacity-100 shadow-lg ring-1 ring-zinc-700 transition-opacity">
                                         Para Empresas
                                     </span>

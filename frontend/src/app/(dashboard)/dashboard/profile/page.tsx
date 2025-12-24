@@ -158,9 +158,9 @@ export default function ProfilePage() {
                         <CardHeader>
                             <CardTitle>Detalhes Pessoais</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-9 flex">
-                            <div className="grid gap-4 md:grid-cols-2">
-                                <div className="space-y-1">
+                        <CardContent className="space-y-8">
+                            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                                <div className="space-y-1 md:col-span-2 lg:col-span-3">
                                     <label className="text-xs font-medium text-muted-foreground uppercase">Nome Completo</label>
                                     <div className="font-medium truncate" title={user.name}>{user.name}</div>
                                 </div>
@@ -181,6 +181,14 @@ export default function ProfilePage() {
                                     <div className="font-medium">{user.profession || "Não informado"}</div>
                                 </div>
                                 <div className="space-y-1">
+                                    <label className="text-xs font-medium text-muted-foreground uppercase">Nicho</label>
+                                    <div className="font-medium">{user.niche || "Não informado"}</div>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium text-muted-foreground uppercase">Tipo de Criador</label>
+                                    <div className="font-medium capitalize">{user.creator_type || "Não informado"}</div>
+                                </div>
+                                <div className="space-y-1">
                                     <label className="text-xs font-medium text-muted-foreground uppercase">Gênero</label>
                                     <div className="font-medium capitalize">
                                         {user.gender === 'male' ? 'Masculino' : user.gender === 'female' ? 'Feminino' : user.gender || 'Não informado'}
@@ -192,29 +200,21 @@ export default function ProfilePage() {
                                         {user.birth_date ? new Date(user.birth_date).toLocaleDateString('pt-BR') : "Não informado"}
                                     </div>
                                 </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs font-medium text-muted-foreground uppercase">Tipo de Criador</label>
-                                    <div className="font-medium capitalize">{user.creator_type || "Não informado"}</div>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs font-medium text-muted-foreground uppercase">Nicho</label>
-                                    <div className="font-medium">{user.niche || "Não informado"}</div>
-                                </div>
                             </div>
 
-                            <div className="space-y-2">
-                                <label className="text-xs font-medium text-muted-foreground uppercase">Idiomas</label>
-                                <div className="flex flex-wrap gap-2">
-                                    {user.languages && user.languages.length > 0 ? (
-                                        user.languages.map(lang => (
-                                            <Badge key={lang} variant="outline">{lang}</Badge>
-                                        ))
-                                    ) : (
-                                        <span className="text-sm">Não informado</span>
-                                    )}
+                            <div className="grid gap-6 md:grid-cols-[minmax(0,2fr)_minmax(0,1.5fr)]">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-medium text-muted-foreground uppercase">Idiomas</label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {user.languages && user.languages.length > 0 ? (
+                                            user.languages.map(lang => (
+                                                <Badge key={lang} variant="outline">{lang}</Badge>
+                                            ))
+                                        ) : (
+                                            <span className="text-sm">Não informado</span>
+                                        )}
+                                    </div>
                                 </div>
-
-                                {/* Social Media Links */}
                                 <Card>
                                     <CardHeader>
                                         <CardTitle className="text-base">Redes Sociais</CardTitle>
@@ -250,8 +250,7 @@ export default function ProfilePage() {
                                                 <span>{user.facebook_page}</span>
                                             </div>
                                         )}
-
-                                        {!user.instagram_handle && !user.tiktok_handle && !user.youtube_channel && (
+                                        {!user.instagram_handle && !user.tiktok_handle && !user.youtube_channel && !user.twitter_handle && !user.facebook_page && (
                                             <span className="text-sm text-muted-foreground">Nenhuma rede social vinculada.</span>
                                         )}
                                     </CardContent>
