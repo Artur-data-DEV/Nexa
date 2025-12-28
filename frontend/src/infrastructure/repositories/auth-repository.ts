@@ -75,14 +75,7 @@ export class ApiAuthRepository implements AuthRepository {
   }
 
   async csrf(): Promise<void> {
-    const backendUrl =
-      process.env.NEXT_PUBLIC_BACKEND_URL ||
-      "https://nexa-backend2-1044548850970.southamerica-east1.run.app/api"
-    const rootUrl = backendUrl.replace(/\/api\/?$/, "")
-    await this.http.get(`${rootUrl}/sanctum/csrf-cookie`, {
-      baseURL: rootUrl,
-      headers: { "X-Skip-Auth": "true" },
-    })
+    return
   }
 
   async login(credentials: Record<string, unknown>): Promise<AuthResponse> {

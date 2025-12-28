@@ -19,32 +19,42 @@ export function EchoProvider({ children }: { children: React.ReactNode }) {
   const [isConnected, setIsConnected] = useState(false)
   const echoInstanceRef = useRef<EchoInstance | null>(null)
 
+  const initializeEcho = (token: string) => {
+    if (echoInstanceRef.current) {
+      return
+    }
+
+    const echoInstance = createEcho(token)
+    if (!echoInstance) {
+      return
+    }
+
+    const connector: any = (echoInstance as any).connector
+    const pusher = connector && (connector as any).pusher
+    if (pusher && pusher.connection) {
+      pusher.connection.bind('connected', () => {
+        setIsConnected(true)
+      })
+      pusher.connection.bind('disconnected', () => {
+        setIsConnected(false)
+      })
+      pusher.connection.bind('error', () => {
+        setIsConnected(false)
+      })
+    }
+
+    if (typeof window !== 'undefined') {
+       ;(window as Window & { Echo?: EchoInstance }).Echo = echoInstance
+    }
+
+    echoInstanceRef.current = echoInstance
+    setEcho(echoInstance)
+  }
+
   useEffect(() => {
     const token = localStorage.getItem("auth_token")
     if (user?.id && token) {
-      if (!echoInstanceRef.current) {
-          const echoInstance = createEcho(token)
-          
-          // Monitor connection status
-          if (echoInstance.connector && echoInstance.connector.pusher) {
-            echoInstance.connector.pusher.connection.bind('connected', () => {
-                setIsConnected(true)
-            })
-            echoInstance.connector.pusher.connection.bind('disconnected', () => {
-                setIsConnected(false)
-            })
-            echoInstance.connector.pusher.connection.bind('error', () => {
-                setIsConnected(false)
-            })
-          }
-
-          if (typeof window !== 'undefined') {
-             ;(window as Window & { Echo?: EchoInstance }).Echo = echoInstance
-          }
-
-          echoInstanceRef.current = echoInstance
-          setEcho(echoInstance)
-      }
+      initializeEcho(token)
     } else {
         if (echoInstanceRef.current) {
             echoInstanceRef.current.disconnect()
