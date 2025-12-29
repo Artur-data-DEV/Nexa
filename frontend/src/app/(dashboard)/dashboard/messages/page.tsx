@@ -407,9 +407,9 @@ export default function MessagesPage() {
                             <span className="text-xs text-muted-foreground">
                                 {chat.last_message?.created_at
                                     ? new Date(chat.last_message.created_at).toLocaleTimeString([], {
-                                          hour: "2-digit",
-                                          minute: "2-digit",
-                                      })
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                    })
                                     : ""}
                             </span>
                         </div>
@@ -611,84 +611,84 @@ export default function MessagesPage() {
                                                             <div className="flex flex-wrap items-center gap-3 text-[11px] mb-2">
                                                                 {(offer.formatted_budget ||
                                                                     offer.budget) && (
-                                                                    <div className="flex items-center gap-1">
-                                                                        <DollarSign className="h-3 w-3 text-green-600" />
-                                                                        <span>
-                                                                            {offer.formatted_budget ||
-                                                                                offer.budget}
-                                                                        </span>
-                                                                    </div>
-                                                                )}
+                                                                        <div className="flex items-center gap-1">
+                                                                            <DollarSign className="h-3 w-3 text-green-600" />
+                                                                            <span>
+                                                                                {offer.formatted_budget ||
+                                                                                    offer.budget}
+                                                                            </span>
+                                                                        </div>
+                                                                    )}
                                                                 {typeof offer.estimated_days ===
                                                                     "number" && (
-                                                                    <div className="flex items-center gap-1">
-                                                                        <Calendar className="h-3 w-3 text-purple-600" />
-                                                                        <span>
-                                                                            {offer.estimated_days}{" "}
-                                                                            {offer.estimated_days === 1
-                                                                                ? "dia"
-                                                                                : "dias"}
-                                                                        </span>
-                                                                    </div>
-                                                                )}
+                                                                        <div className="flex items-center gap-1">
+                                                                            <Calendar className="h-3 w-3 text-purple-600" />
+                                                                            <span>
+                                                                                {offer.estimated_days}{" "}
+                                                                                {offer.estimated_days === 1
+                                                                                    ? "dia"
+                                                                                    : "dias"}
+                                                                            </span>
+                                                                        </div>
+                                                                    )}
                                                                 {typeof offer.days_until_expiry ===
                                                                     "number" && (
-                                                                    <div className="flex items-center gap-1">
-                                                                        <Clock className="h-3 w-3 text-amber-600" />
-                                                                        <span>
-                                                                            expira em{" "}
-                                                                            {offer.days_until_expiry}{" "}
-                                                                            {offer.days_until_expiry === 1
-                                                                                ? "dia"
-                                                                                : "dias"}
-                                                                        </span>
-                                                                    </div>
-                                                                )}
+                                                                        <div className="flex items-center gap-1">
+                                                                            <Clock className="h-3 w-3 text-amber-600" />
+                                                                            <span>
+                                                                                expira em{" "}
+                                                                                {offer.days_until_expiry}{" "}
+                                                                                {offer.days_until_expiry === 1
+                                                                                    ? "dia"
+                                                                                    : "dias"}
+                                                                            </span>
+                                                                        </div>
+                                                                    )}
                                                             </div>
                                                             {(canAccept ||
                                                                 canReject ||
                                                                 canCancel) && (
-                                                                <div className="flex gap-2 justify-end">
-                                                                    {canAccept && (
-                                                                        <Button
-                                                                            size="sm"
-                                                                            onClick={() =>
-                                                                                handleAcceptOffer(
-                                                                                    offer.id
-                                                                                )
-                                                                            }
-                                                                        >
-                                                                            Aceitar
-                                                                        </Button>
-                                                                    )}
-                                                                    {canReject && (
-                                                                        <Button
-                                                                            size="sm"
-                                                                            variant="outline"
-                                                                            onClick={() =>
-                                                                                handleRejectOffer(
-                                                                                    offer.id
-                                                                                )
-                                                                            }
-                                                                        >
-                                                                            Rejeitar
-                                                                        </Button>
-                                                                    )}
-                                                                    {canCancel && (
-                                                                        <Button
-                                                                            size="sm"
-                                                                            variant="outline"
-                                                                            onClick={() =>
-                                                                                handleCancelOffer(
-                                                                                    offer.id
-                                                                                )
-                                                                            }
-                                                                        >
-                                                                            Cancelar
-                                                                        </Button>
-                                                                    )}
-                                                                </div>
-                                                            )}
+                                                                    <div className="flex gap-2 justify-end">
+                                                                        {canAccept && (
+                                                                            <Button
+                                                                                size="sm"
+                                                                                onClick={() =>
+                                                                                    handleAcceptOffer(
+                                                                                        offer.id
+                                                                                    )
+                                                                                }
+                                                                            >
+                                                                                Aceitar
+                                                                            </Button>
+                                                                        )}
+                                                                        {canReject && (
+                                                                            <Button
+                                                                                size="sm"
+                                                                                variant="outline"
+                                                                                onClick={() =>
+                                                                                    handleRejectOffer(
+                                                                                        offer.id
+                                                                                    )
+                                                                                }
+                                                                            >
+                                                                                Rejeitar
+                                                                            </Button>
+                                                                        )}
+                                                                        {canCancel && (
+                                                                            <Button
+                                                                                size="sm"
+                                                                                variant="outline"
+                                                                                onClick={() =>
+                                                                                    handleCancelOffer(
+                                                                                        offer.id
+                                                                                    )
+                                                                                }
+                                                                            >
+                                                                                Cancelar
+                                                                            </Button>
+                                                                        )}
+                                                                    </div>
+                                                                )}
                                                         </div>
                                                         <span
                                                             className={cn(
@@ -734,7 +734,8 @@ export default function MessagesPage() {
                                                             <img
                                                                 src={msg.file_url}
                                                                 alt={msg.file_name || "Imagem"}
-                                                                className="max-w-xs rounded-md"
+                                                                className="max-w-full h-auto rounded-md object-cover"
+                                                                style={{ maxHeight: '300px' }}
                                                             />
                                                             {msg.message && msg.message !== msg.file_name && (
                                                                 <p className="text-xs">

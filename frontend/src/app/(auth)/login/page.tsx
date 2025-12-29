@@ -98,7 +98,7 @@ function LoginInner() {
 
     try {
       const response = await loginUseCase.execute(data)
-      login(response.token, response.user)
+      await login(response.token, response.user) // Wait for auth state to update
 
       router.push("/dashboard")
     } catch (error: any) {
@@ -109,8 +109,8 @@ function LoginInner() {
       const validationMessage =
         status === 422
           ? (validationErrors?.email?.[0] ||
-             validationErrors?.password?.[0] ||
-             error?.response?.data?.message)
+            validationErrors?.password?.[0] ||
+            error?.response?.data?.message)
           : null
 
       if (typeof window !== "undefined") {
@@ -128,10 +128,10 @@ function LoginInner() {
         isNetworkError
           ? "Não foi possível conectar ao servidor. Tente novamente em alguns minutos."
           : status >= 500
-          ? "Servidor indisponível no momento. Tente novamente em instantes."
-          : status === 429
-          ? "Muitas tentativas. Aguarde um pouco e tente novamente."
-          : validationMessage || error?.response?.data?.message || "Credenciais inválidas. Verifique seu email e senha."
+            ? "Servidor indisponível no momento. Tente novamente em instantes."
+            : status === 429
+              ? "Muitas tentativas. Aguarde um pouco e tente novamente."
+              : validationMessage || error?.response?.data?.message || "Credenciais inválidas. Verifique seu email e senha."
       setServerError(message)
     } finally {
       setLoading(false)
@@ -144,7 +144,7 @@ function LoginInner() {
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-between gap-4">
             <CardTitle className="text-2xl font-bold">
-              Bem-vindo(a) de volta à 
+              Bem-vindo(a) de volta à
             </CardTitle>
             <Logo width={100} height={100} />
           </div>

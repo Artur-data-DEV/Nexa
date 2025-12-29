@@ -31,6 +31,11 @@ const nextConfig: NextConfig = {
         hostname: "img.icons8.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "storage.googleapis.com",
+        pathname: "/nexa-uploads-prod/**",
+      },
     ],
   },
   async redirects() {

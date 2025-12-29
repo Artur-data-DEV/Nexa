@@ -230,7 +230,7 @@ export default function CreateCampaignPage() {
       targetGenders.forEach(gender => formData.append("target_genders[]", gender))
       targetCreatorTypes.forEach(type => formData.append("target_creator_types[]", type))
 
-      if (file) formData.append("logo", file)
+      if (file) formData.append("image", file)
 
       attachments.forEach(att => {
         formData.append("attach_file[]", att)

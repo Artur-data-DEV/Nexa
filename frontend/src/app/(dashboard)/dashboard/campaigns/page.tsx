@@ -100,8 +100,8 @@ export default function CampaignsPage() {
       </div>
 
       <div className="flex flex-col gap-4">
-        <div className="flex w-full items-center gap-3">
-          <div className="relative w-full max-w-sm">
+        <div className="flex flex-col md:flex-row w-full items-start md:items-center gap-3">
+          <div className="relative w-full md:max-w-sm">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
@@ -111,7 +111,7 @@ export default function CampaignsPage() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <div className="w-52">
+          <div className="w-full md:w-52">
             <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
               <SelectTrigger>
                 <SelectValue placeholder="Ordenar" />
@@ -125,7 +125,7 @@ export default function CampaignsPage() {
             </Select>
           </div>
           {user?.role === "brand" && (
-            <Button className="ml-auto" asChild>
+            <Button className="w-full md:w-auto md:ml-auto" asChild>
               <a href="/dashboard/campaigns/create">Nova Campanha</a>
             </Button>
           )}
@@ -208,13 +208,13 @@ export default function CampaignsPage() {
       {loading ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
           {[1, 2, 3, 4].map((i) => (
-             <div key={i} className="flex flex-col space-y-3">
-                <Skeleton className="h-[125px] w-full rounded-xl" />
-                <div className="space-y-2">
-                    <Skeleton className="h-4 w-[250px]" />
-                    <Skeleton className="h-4 w-[200px]" />
-                </div>
-             </div>
+            <div key={i} className="flex flex-col space-y-3">
+              <Skeleton className="h-[125px] w-full rounded-xl" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-[250px]" />
+                <Skeleton className="h-4 w-[200px]" />
+              </div>
+            </div>
           ))}
         </div>
       ) : (

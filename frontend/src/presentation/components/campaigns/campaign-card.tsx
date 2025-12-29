@@ -15,6 +15,10 @@ const fallbackImages = [
 ]
 
 function getCampaignImage(campaign: Campaign) {
+  if (campaign.attach_file && campaign.attach_file.length > 0) {
+    return campaign.attach_file[0]
+  }
+
   if (campaign.image_url) {
     return campaign.image_url
   }
@@ -58,41 +62,41 @@ export function CampaignCard({ campaign }: CampaignCardProps) {
       </CardHeader>
       <CardContent className="flex-1 p-4 pt-8 space-y-3">
         <div className="flex justify-between items-start">
-            <div>
-                <h3 className="font-semibold text-lg line-clamp-1">{campaign.title}</h3>
-                <p className="text-sm text-muted-foreground">{campaign.brand?.name || "Marca Confidencial"}</p>
-            </div>
-            <Badge variant={campaign.status === 'approved' ? 'default' : 'secondary'}>
-                {campaign.status === 'approved' ? 'Aberta' : campaign.status}
-            </Badge>
+          <div>
+            <h3 className="font-semibold text-lg line-clamp-1">{campaign.title}</h3>
+            <p className="text-sm text-muted-foreground">{campaign.brand?.name || "Marca Confidencial"}</p>
+          </div>
+          <Badge variant={campaign.status === 'approved' ? 'default' : 'secondary'}>
+            {campaign.status === 'approved' ? 'Aberta' : campaign.status}
+          </Badge>
         </div>
-        
+
         <p className="text-sm text-muted-foreground line-clamp-2">
-            {campaign.description}
+          {campaign.description}
         </p>
 
         <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1">
+            <Calendar className="h-3 w-3" />
+            <span>{new Date(campaign.deadline).toLocaleDateString()}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <DollarSign className="h-3 w-3" />
+            <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(campaign.budget)}</span>
+          </div>
+          {campaign.target_states && campaign.target_states.length > 0 && (
             <div className="flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                <span>{new Date(campaign.deadline).toLocaleDateString()}</span>
+              <MapPin className="h-3 w-3" />
+              <span>{campaign.target_states.slice(0, 2).join(", ")}{campaign.target_states.length > 2 ? "..." : ""}</span>
             </div>
-            <div className="flex items-center gap-1">
-                <DollarSign className="h-3 w-3" />
-                <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(campaign.budget)}</span>
-            </div>
-            {campaign.target_states && campaign.target_states.length > 0 && (
-                 <div className="flex items-center gap-1">
-                    <MapPin className="h-3 w-3" />
-                    <span>{campaign.target_states.slice(0, 2).join(", ")}{campaign.target_states.length > 2 ? "..." : ""}</span>
-                </div>
-            )}
+          )}
         </div>
       </CardContent>
       <CardFooter className="p-4 pt-0">
         <Button className="w-full" asChild>
-            <Link href={`/dashboard/campaigns/${campaign.id}`}>
-                Ver Detalhes
-            </Link>
+          <Link href={`/dashboard/campaigns/${campaign.id}`}>
+            Ver Detalhes
+          </Link>
         </Button>
       </CardFooter>
     </Card>

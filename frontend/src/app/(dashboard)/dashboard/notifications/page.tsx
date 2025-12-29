@@ -10,23 +10,23 @@ import { useRouter } from 'next/navigation';
 
 export default function NotificationsPage() {
     const router = useRouter();
-    const { 
-        notifications, 
-        unreadCount, 
+    const {
+        notifications,
+        unreadCount,
         isLoading,
         fetchNotifications,
-        markAsRead, 
-        markAllAsRead, 
-        deleteNotification 
+        markAsRead,
+        markAllAsRead,
+        deleteNotification
     } = useNotifications();
-    
+
     const [filter, setFilter] = useState<'all' | 'unread'>('all');
 
     useEffect(() => {
         fetchNotifications(1);
     }, [fetchNotifications]);
 
-    const filteredNotifications = filter === 'unread' 
+    const filteredNotifications = filter === 'unread'
         ? notifications.filter(n => !n.is_read)
         : notifications;
 
@@ -75,7 +75,7 @@ export default function NotificationsPage() {
         const date = new Date(dateString);
         const now = new Date();
         const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-        
+
         if (diffInMinutes < 1) return 'Agora';
         if (diffInMinutes < 60) return `${diffInMinutes}m atrás`;
         if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h atrás`;
@@ -125,7 +125,7 @@ export default function NotificationsPage() {
         <div className="min-h-screen bg-background">
             <div className="container mx-auto px-4 py-8 max-w-4xl">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-8">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                     <div className="flex items-center gap-4">
                         <Button
                             variant="ghost"
@@ -137,19 +137,19 @@ export default function NotificationsPage() {
                             Voltar
                         </Button>
                         <div>
-                            <h1 className="text-3xl font-bold">Notificações</h1>
-                            <p className="text-muted-foreground">
+                            <h1 className="text-2xl md:text-3xl font-bold">Notificações</h1>
+                            <p className="text-sm md:text-base text-muted-foreground">
                                 {unreadCount > 0 ? `${unreadCount} não lida${unreadCount !== 1 ? 's' : ''}` : 'Todas as notificações foram lidas'}
                             </p>
                         </div>
                     </div>
-                    
-                    <div className="flex items-center gap-2">
+
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                         {unreadCount > 0 && (
                             <Button
                                 variant="outline"
                                 onClick={handleMarkAllAsRead}
-                                className="flex items-center gap-2"
+                                className="flex items-center justify-center gap-2"
                             >
                                 <Check className="w-4 h-4" />
                                 Marcar todas como lidas
@@ -159,7 +159,7 @@ export default function NotificationsPage() {
                             <Button
                                 variant="outline"
                                 onClick={handleDeleteAllNotifications}
-                                className="flex items-center gap-2 text-red-600 border-red-600 hover:bg-red-50"
+                                className="flex items-center justify-center gap-2 text-red-600 border-red-600 hover:bg-red-50"
                             >
                                 <Trash2 className="w-4 h-4" />
                                 Excluir todas
@@ -206,8 +206,8 @@ export default function NotificationsPage() {
                                     {filter === 'unread' ? 'Nenhuma notificação não lida' : 'Nenhuma notificação'}
                                 </h3>
                                 <p className="text-muted-foreground">
-                                    {filter === 'unread' 
-                                        ? 'Todas as suas notificações foram lidas.' 
+                                    {filter === 'unread'
+                                        ? 'Todas as suas notificações foram lidas.'
                                         : 'Você ainda não recebeu nenhuma notificação.'
                                     }
                                 </p>
@@ -225,7 +225,7 @@ export default function NotificationsPage() {
                                         <div className="flex-shrink-0 mt-1 text-2xl">
                                             {getNotificationIcon(notification.type)}
                                         </div>
-                                        
+
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-start justify-between gap-4 mb-2">
                                                 <div className="flex-1">
@@ -249,7 +249,7 @@ export default function NotificationsPage() {
                                                         {formatTime(notification.created_at)}
                                                     </p>
                                                 </div>
-                                                
+
                                                 <div className="flex items-center gap-2">
                                                     {!notification.is_read && (
                                                         <Button

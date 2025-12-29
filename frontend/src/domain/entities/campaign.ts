@@ -26,6 +26,7 @@ export interface Campaign {
   approved_creators?: number
   applications_count?: number
   attachments?: string[]
+  attach_file?: string[]
   is_featured?: boolean
   is_favorited?: boolean
 }

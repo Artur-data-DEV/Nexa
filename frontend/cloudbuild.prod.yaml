@@ -1,0 +1,16 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: [
+    'build',
+    '--no-cache',
+    '-t', 'gcr.io/nexa-teste-1/nexa-frontend:latest',
+    '--build-arg', 'NEXT_PUBLIC_BACKEND_URL=https://nexa-backend2-1044548850970.southamerica-east1.run.app/api',
+    '--build-arg', 'NEXT_PUBLIC_REVERB_APP_KEY=local_key',
+    '--build-arg', 'NEXT_PUBLIC_REVERB_HOST=nexa-chat-bwld7w5onq-rj.a.run.app',
+    '--build-arg', 'NEXT_PUBLIC_REVERB_PORT=443',
+    '--build-arg', 'NEXT_PUBLIC_REVERB_SCHEME=https',
+    '--build-arg', 'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_51S0Wz1PRcUVFvPMgtByCDcKqzOeGnRicbmd0SckOIFtegvqkyKlAkTVpiCMSOqzWDbmS2NtadwFF9dTxQxDZbJpo00aJN8YBC8',
+    '.'
+  ]
+images:
+- 'gcr.io/nexa-teste-1/nexa-frontend:latest'
