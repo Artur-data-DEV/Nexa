@@ -367,7 +367,7 @@ export const StripeConnectOnboarding: React.FC<StripeConnectOnboardingProps> = (
           </div>
         ) : (
           <div className="text-center space-y-4">
-            <div className="w-20 h-20 mx-auto bg-gradient-to-br from-[#635bff] to-[#7c3aed] rounded-full flex items-center justify-center shadow-lg">
+            <div className="w-20 h-20 mx-auto bg-linear-to-br from-[#635bff] to-[#7c3aed] rounded-full flex items-center justify-center shadow-lg">
               <Building2 className="w-10 h-10 text-white" />
             </div>
 

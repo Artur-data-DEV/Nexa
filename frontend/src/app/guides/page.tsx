@@ -9,10 +9,11 @@ import { Separator } from "@/presentation/components/ui/separator";
 import { Navbar } from "@/presentation/components/landing/navbar";
 import { Footer } from "@/presentation/components/landing/footer";
 import { Button } from "@/presentation/components/ui/button";
-import { Loader2, Play, AlertCircle, BookOpen, Users, Target, TrendingUp, Image as ImageIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, Play, AlertCircle, BookOpen, Users, Target, TrendingUp, Image as ImageIcon, ChevronLeft, ChevronRight, CheckCircle2 } from "lucide-react";
 import { Guide, GuideStep } from "@/domain/entities/guide";
 import { ApiGuideRepository } from "@/infrastructure/repositories/guide-repository";
 import { api } from "@/infrastructure/api/axios-adapter";
+import { cn } from "@/lib/utils";
 
 const guideRepository = new ApiGuideRepository(api);
 
@@ -121,7 +122,7 @@ const MediaSlot = ({ step, label }: { step: GuideStep; label: string }) => {
                 className="w-full h-full object-contain"
                 onError={() => setError("Failed to load screenshot")}
               />
-              
+
               {/* Navigation Arrows */}
               {step.screenshot_urls.length > 1 && (
                 <>
@@ -143,7 +144,7 @@ const MediaSlot = ({ step, label }: { step: GuideStep; label: string }) => {
                   >
                     <ChevronRight className="h-4 w-4" />
                   </Button>
-                  
+
                   {/* Counter */}
                   <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
                     {currentScreenshot + 1} / {step.screenshot_urls.length}
@@ -178,17 +179,23 @@ function StepList({ steps, role }: { steps: GuideStep[]; role: "Brand" | "Creato
           className="grid grid-cols-1 gap-4 md:grid-cols-5 md:gap-6"
         >
           <div className="md:col-span-3">
-            <Card className="h-full">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <Badge variant="secondary" className="text-sm font-medium">
-                    {`Step ${idx + 1}`}
-                  </Badge>
-                  <CardTitle className="leading-tight text-lg">{step.title}</CardTitle>
+            <Card className={cn(
+              "h-full border-2 transition-all duration-500 rounded-[2rem] overflow-hidden bg-white dark:bg-zinc-900 shadow-xl shadow-black/5",
+              role === "Brand" ? "border-zinc-200 dark:border-white/5 hover:border-purple-500/30" : "border-zinc-200 dark:border-white/5 hover:border-pink-500/30"
+            )}>
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-4">
+                  <div className={cn(
+                    "flex items-center justify-center w-12 h-12 rounded-2xl font-black text-lg shadow-inner",
+                    role === "Brand" ? "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400" : "bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400"
+                  )}>
+                    {idx + 1}
+                  </div>
+                  <CardTitle className="leading-tight text-xl font-black tracking-tight text-zinc-900 dark:text-white uppercase">{step.title}</CardTitle>
                 </div>
               </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground leading-relaxed">{step.description}</p>
+              <CardContent className="pt-2">
+                <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed font-semibold text-base">{step.description}</p>
               </CardContent>
             </Card>
           </div>
@@ -203,14 +210,19 @@ function StepList({ steps, role }: { steps: GuideStep[]; role: "Brand" | "Creato
 
 function GuideHeader({ guide, role }: { guide: Guide; role: "Brand" | "Creator" }) {
   const icon = role === "Brand" ? <Target className="h-6 w-6" /> : <Users className="h-6 w-6" />;
-  
+
   return (
-    <div className="text-center space-y-4 mb-8">
-      <div className="flex items-center justify-center gap-3">
-        {icon}
-        <h1 className="text-3xl font-bold tracking-tight">{guide.title}</h1>
+    <div className="text-center space-y-6 mb-16">
+      <div className="flex items-center justify-center gap-4">
+        <div className={cn(
+          "w-16 h-16 rounded-[1.5rem] flex items-center justify-center shadow-lg",
+          role === "Brand" ? "bg-purple-600 text-white" : "bg-pink-500 text-white"
+        )}>
+          {icon}
+        </div>
+        <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-zinc-900 dark:text-white">{guide.title}</h1>
       </div>
-      <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+      <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-3xl mx-auto leading-relaxed font-bold">
         {guide.description}
       </p>
       <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
@@ -384,7 +396,7 @@ export default function Guides() {
         </Tabs>
       </main>
 
-      <Footer/>
+      <Footer />
     </>
   );
 }

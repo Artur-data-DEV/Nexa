@@ -36,6 +36,7 @@ import { api } from "@/infrastructure/api/axios-adapter"
 import { useAuth } from "@/presentation/contexts/auth-provider"
 import { Logo } from "@/presentation/components/logo"
 import { GoogleOAuthButton } from "@/presentation/components/auth/google-oauth-button"
+import { FcBinoculars, FcBriefcase, FcBusiness, FcCamcorderPro, FcClapperboard, FcOldTimeCamera } from "react-icons/fc"
 
 // Dependency Injection
 const authRepository = new ApiAuthRepository(api)
@@ -139,20 +140,26 @@ function LoginInner() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/50 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <div className="flex items-center justify-between gap-4">
-            <CardTitle className="text-2xl font-bold">
-              Bem-vindo(a) de volta à
-            </CardTitle>
-            <Logo width={100} height={100} />
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden p-4">
+      {/* Premium Background Blobs */}
+      <div className="absolute top-0 right-0 -mr-20 -mt-20 h-96 w-96 rounded-full bg-pink-500/10 blur-3xl" />
+      <div className="absolute bottom-0 left-0 -ml-20 -mb-20 h-96 w-96 rounded-full bg-purple-600/10 blur-3xl" />
+
+      <Card className="relative w-full max-w-md bg-white dark:bg-zinc-900 border-2 border-zinc-200 dark:border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-[2.5rem] overflow-hidden">
+        <CardHeader className="space-y-4 text-center">
+          <div className="flex justify-center">
+            <Logo width={120} height={40} />
           </div>
-          <CardDescription>
-            Entre na sua conta para acessar o painel.
-          </CardDescription>
+          <div className="space-y-1">
+            <CardTitle className="text-2xl font-bold tracking-tight">
+              Bem-vindo(a) de volta
+            </CardTitle>
+            <CardDescription className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">
+              Entre na sua conta para acessar o painel.
+            </CardDescription>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
@@ -160,9 +167,15 @@ function LoginInner() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel className="text-xs font-black uppercase tracking-widest text-zinc-900 dark:text-zinc-100">Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="seu@email.com" type="email" disabled={loading} {...field} />
+                      <Input
+                        placeholder="seu@email.com"
+                        type="email"
+                        disabled={loading}
+                        className="bg-zinc-100/50 dark:bg-white/5 border-2 border-zinc-200 dark:border-white/10 focus-visible:ring-pink-500/50 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 rounded-xl"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -173,9 +186,15 @@ function LoginInner() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Senha</FormLabel>
+                    <FormLabel className="text-xs font-black uppercase tracking-widest text-zinc-900 dark:text-zinc-100">Senha</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="******" disabled={loading} {...field} />
+                      <Input
+                        type="password"
+                        placeholder="******"
+                        disabled={loading}
+                        className="bg-zinc-100/50 dark:bg-white/5 border-2 border-zinc-200 dark:border-white/10 focus-visible:ring-pink-500/50 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 rounded-xl"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -193,10 +212,11 @@ function LoginInner() {
                         checked={field.value}
                         onCheckedChange={field.onChange}
                         disabled={loading}
+                        className="border-foreground/20 data-[state=checked]:bg-pink-500 data-[state=checked]:border-pink-500"
                       />
                       <label
                         htmlFor="remember"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-zinc-700 dark:text-muted-foreground"
                       >
                         Lembrar de mim
                       </label>
@@ -205,51 +225,69 @@ function LoginInner() {
                 />
                 <Link
                   href="/forgot-password"
-                  className="text-sm font-medium text-primary hover:underline"
+                  className="text-sm font-medium text-pink-500 hover:text-pink-600 transition-colors"
                 >
                   Esqueceu a senha?
                 </Link>
               </div>
 
               {serverError && (
-                <Alert variant="destructive">
-                  <AlertTitle>Erro</AlertTitle>
+                <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive">
                   <AlertDescription>{serverError}</AlertDescription>
                 </Alert>
               )}
 
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button
+                type="submit"
+                className="w-full bg-pink-500 hover:bg-pink-600 text-white shadow-lg shadow-pink-500/25 h-11 font-bold rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+                disabled={loading}
+              >
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Entrando...
                   </>
                 ) : (
-                  "Entrar"
+                  "Entrar na plataforma"
                 )}
               </Button>
             </form>
           </Form>
-          <div className="flex items-center w-full gap-2">
-            <div className="flex-1 h-px bg-border" />
-            <span className="text-muted-foreground text-sm">ou</span>
-            <div className="flex-1 h-px bg-border" />
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-white/5" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-transparent px-2 text-muted-foreground/50">ou</span>
+            </div>
           </div>
+
           <div className={loading ? "pointer-events-none opacity-60" : ""}>
-            <GoogleOAuthButton className="rounded-md" />
+            <GoogleOAuthButton className="rounded-xl border-white/5 bg-background/40 hover:bg-background/60 transition-all font-semibold" />
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col gap-2 justify-center text-center">
+        <CardFooter className="flex flex-col gap-4 border-t border-white/5 pt-6 pb-8">
           <p className="text-sm text-muted-foreground">
-            Não tem uma conta?
+            Ainda não tem uma conta?
           </p>
-          <div className="flex gap-4 text-sm">
-            <Link href="/signup/creator" className="text-primary hover:underline">
+          <div className="flex gap-4 text-sm w-full">
+            <Link
+              href="/signup/creator"
+              className="flex-1 align-middle gap-1 flex items-center justify-center p-2 rounded-lg bg-pink-500/10 text-pink-500 border border-pink-500/20 hover:bg-pink-500/20 transition-all font-semibold"
+            >
               Sou Criador
+              <FcCamcorderPro size={20} />
+
             </Link>
-            <span className="text-muted-foreground">•</span>
-            <Link href="/signup/brand" className="text-primary hover:underline">
+            <Link
+              href="/signup/brand"
+              className="flex-1 align-middle gap-1 flex items-center justify-center p-2 rounded-lg bg-purple-600/10 text-purple-600 border border-purple-600/20 hover:bg-purple-600/20 transition-all font-semibold"
+            >
+
               Sou Marca
+              <FcBriefcase size={20} />
+
             </Link>
           </div>
         </CardFooter>

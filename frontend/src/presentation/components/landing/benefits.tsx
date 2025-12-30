@@ -1,4 +1,8 @@
-import { MessageSquare, Shield, DollarSign, Heart, Eye, Star, User, Book } from "lucide-react";
+"use client"
+
+import { MessageSquare, Shield, DollarSign, Heart, Eye, Star, User, Book, ArrowRight } from "lucide-react";
+import { motion } from "framer-motion";
+import { Badge } from "@/presentation/components/ui/badge";
 
 export const Benefits = () => {
   const benefits = [
@@ -44,29 +48,82 @@ export const Benefits = () => {
     }
   ];
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  }
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  }
+
   return (
-    <section id="benefits" className="py-12 md:py-20 bg-muted/30">
+    <section id="benefits" className="py-12 md:py-24 bg-background relative">
+      <div className="absolute top-1/2 left-0 w-full h-[500px] bg-linear-to-b from-muted/20 to-transparent -z-10" />
       <div className="max-w-7xl mx-auto px-4 md:px-6">
-        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-foreground mb-12 md:mb-16">
-          Benefícios Exclusivos da Plataforma
-        </h2>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-left mb-12 md:mb-16"
+        >
+          <Badge className="mb-4 bg-pink-500/10 text-pink-500 border-pink-500/20 px-4 py-1.5 text-xs font-bold tracking-widest uppercase">
+            Benefícios Premium
+          </Badge>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-6 tracking-tight leading-[1.1]">
+            Transforme sua {" "}
+            <span className="text-transparent bg-clip-text bg-linear-to-r from-pink-500 to-purple-600">
+              criatividade em negócio
+            </span>
+          </h2>
+          <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl leading-relaxed">
+            Oferecemos as ferramentas necessárias para você se destacar no mercado de UGC e construir uma carreira sólida e lucrativa.
+          </p>
+        </motion.div>
+
+        <motion.div
+          variants={container}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true }}
+          className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6"
+        >
           {benefits.map((benefit, index) => {
             const IconComponent = benefit.icon;
             return (
-              <div key={index} className="group relative overflow-hidden rounded-xl border border-border bg-background p-6 hover:shadow-md transition-all hover:border-pink-500/50">
-                <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 to-purple-600/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="relative z-10">
-                  <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-purple-600 rounded-lg flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform duration-300">
-                    <IconComponent className="w-6 h-6 text-white" />
+              <motion.div
+                key={index}
+                variants={item}
+                className="group relative h-full"
+              >
+                <div className="relative h-full flex flex-col p-8 rounded-[2rem] border-2 border-zinc-200 dark:border-white/5 bg-white dark:bg-zinc-900/50 hover:border-pink-500/50 hover:shadow-2xl hover:shadow-pink-500/10 transition-all duration-500 overflow-hidden" >
+                  {/* Decorative background glow on hover */}
+                  <div className="absolute -top-24 -right-24 h-48 w-48 bg-pink-500/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+
+                  <div className="relative z-10 flex flex-col h-full">
+                    <div className="w-14 h-14 bg-zinc-100 dark:bg-white/5 rounded-2xl flex items-center justify-center mb-8 ring-1 ring-zinc-200 dark:ring-white/10 group-hover:bg-linear-to-br group-hover:from-pink-500 group-hover:to-purple-600 transition-all duration-500 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-pink-500/25">
+                      <IconComponent className="w-7 h-7 text-pink-500 dark:text-pink-400 group-hover:text-white transition-colors duration-500" />
+                    </div>
+
+                    <h3 className="text-xl font-bold text-foreground mb-4 leading-tight group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors">
+                      {benefit.title}
+                    </h3>
+
+                    <p className="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed mt-auto font-medium">
+                      {benefit.description}
+                    </p>
                   </div>
-                  <h3 className="text-xl font-bold text-foreground mb-3">{benefit.title}</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">{benefit.description}</p>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       </div>
     </section>
   );
