@@ -55,14 +55,14 @@ export const StripeConnectOnboarding: React.FC<StripeConnectOnboardingProps> = (
     try {
       setIsCreatingLink(true);
       setError(null);
-      
+
       const accountLink = await stripeRepository.createAccountLink();
       console.log(accountLink);
-      
+
       const browserLang = navigator.language || navigator.languages?.[0] || 'pt-BR';
       const isPortuguese = browserLang.startsWith('pt') || document.documentElement.lang === 'pt-BR';
       const locale = isPortuguese ? 'pt-BR' : browserLang;
-      
+
       let stripeUrl = accountLink.url;
       try {
         const url = new URL(stripeUrl);
@@ -71,11 +71,11 @@ export const StripeConnectOnboarding: React.FC<StripeConnectOnboardingProps> = (
           stripeUrl = url.toString();
         }
       } catch (e) {
-        stripeUrl = stripeUrl.includes('?') 
+        stripeUrl = stripeUrl.includes('?')
           ? `${stripeUrl}&locale=${locale}`
           : `${stripeUrl}?locale=${locale}`;
       }
-      
+
       const newWindow = window.open(
         stripeUrl,
         'stripe-onboarding',
@@ -89,7 +89,7 @@ export const StripeConnectOnboarding: React.FC<StripeConnectOnboardingProps> = (
       const checkClosed = setInterval(() => {
         if (newWindow.closed) {
           clearInterval(checkClosed);
-          
+
           setTimeout(() => {
             loadAccountStatus();
             onComplete?.();
@@ -186,19 +186,19 @@ export const StripeConnectOnboarding: React.FC<StripeConnectOnboardingProps> = (
       'individual.phone': 'Telefone',
       'individual.verification.document': 'Documento de verificação',
     };
-    
+
     return translations[field] || field.replace(/_/g, ' ').replace(/\./g, ' → ');
   };
 
   const getRequirementsText = (): React.ReactNode => {
     if (!accountStatus?.requirements) return null;
-    
+
     const { currently_due, eventually_due, past_due, pending_verification } = accountStatus.requirements;
-    
+
     const formatRequirements = (fields: string[]): string[] => {
       return fields.map(field => translateRequirementField(field));
     };
-    
+
     if (past_due.length > 0) {
       const translatedFields = formatRequirements(past_due);
       return (
@@ -215,7 +215,7 @@ export const StripeConnectOnboarding: React.FC<StripeConnectOnboardingProps> = (
         </div>
       );
     }
-    
+
     if (currently_due.length > 0) {
       const translatedFields = formatRequirements(currently_due);
       return (
@@ -229,7 +229,7 @@ export const StripeConnectOnboarding: React.FC<StripeConnectOnboardingProps> = (
         </div>
       );
     }
-    
+
     if (pending_verification.length > 0) {
       const translatedFields = formatRequirements(pending_verification);
       return (
@@ -246,7 +246,7 @@ export const StripeConnectOnboarding: React.FC<StripeConnectOnboardingProps> = (
         </div>
       );
     }
-    
+
     if (eventually_due.length > 0) {
       const translatedFields = formatRequirements(eventually_due);
       return (
@@ -260,7 +260,7 @@ export const StripeConnectOnboarding: React.FC<StripeConnectOnboardingProps> = (
         </div>
       );
     }
-    
+
     return (
       <div className="flex items-center gap-2 text-green-600 dark:text-green-500">
         <CheckCircle className="w-4 h-4" />
@@ -286,26 +286,16 @@ export const StripeConnectOnboarding: React.FC<StripeConnectOnboardingProps> = (
     <Card className={className}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          {imageError ? (
-            <div className="w-6 h-6 rounded bg-[#635bff] flex items-center justify-center">
-              <CreditCard className="w-4 h-4 text-white" />
-            </div>
-          ) : (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img 
-              src="https://js.stripe.com/v3/fingerprinted/Image/stripe-logo-280x280.png" 
-              alt="Stripe" 
-              className="w-6 h-6"
-              onError={() => setImageError(true)}
-            />
-          )}
+          <div className="w-6 h-6 rounded bg-[#635bff] flex items-center justify-center">
+            <Building2 className="w-4 h-4 text-white" />
+          </div>
           Configuração Stripe Connect
         </CardTitle>
         <CardDescription>
           Configure sua conta Stripe para receber pagamentos de forma segura
         </CardDescription>
       </CardHeader>
-      
+
       <CardContent className="space-y-6">
         {error && (
           <Alert variant="destructive">
@@ -346,7 +336,7 @@ export const StripeConnectOnboarding: React.FC<StripeConnectOnboardingProps> = (
             )}
 
             <div className="flex flex-col sm:flex-row gap-3">
-              <Button 
+              <Button
                 onClick={handleCreateAccountLink}
                 disabled={isCreatingLink}
                 className="flex-1"
@@ -363,9 +353,9 @@ export const StripeConnectOnboarding: React.FC<StripeConnectOnboardingProps> = (
                   </>
                 )}
               </Button>
-              
-              <Button 
-                variant="outline" 
+
+              <Button
+                variant="outline"
                 onClick={loadAccountStatus}
                 disabled={isLoading}
                 className="flex-1"
@@ -378,28 +368,18 @@ export const StripeConnectOnboarding: React.FC<StripeConnectOnboardingProps> = (
         ) : (
           <div className="text-center space-y-4">
             <div className="w-20 h-20 mx-auto bg-gradient-to-br from-[#635bff] to-[#7c3aed] rounded-full flex items-center justify-center shadow-lg">
-              {imageError ? (
-                <Building2 className="w-10 h-10 text-white" />
-              ) : (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img 
-                  src="https://js.stripe.com/v3/fingerprinted/Image/stripe-logo-280x280.png" 
-                  alt="Stripe" 
-                  className="w-10 h-10"
-                  onError={() => setImageError(true)}
-                />
-              )}
+              <Building2 className="w-10 h-10 text-white" />
             </div>
-            
+
             <div>
               <h3 className="text-lg font-semibold mb-2">Conecte sua conta Stripe</h3>
               <p className="text-muted-foreground text-sm mb-4">
-                Para receber pagamentos, você precisa conectar sua conta Stripe. 
+                Para receber pagamentos, você precisa conectar sua conta Stripe.
                 O processo é rápido e seguro.
               </p>
             </div>
 
-            <Button 
+            <Button
               onClick={handleCreateAccountLink}
               disabled={isCreatingLink}
               size="lg"

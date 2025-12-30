@@ -57,7 +57,12 @@ export default function MessagesPage() {
         (force = false) => {
             if (!messagesEndRef.current) return
             if (!force && !shouldAutoScroll) return
-            messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
+
+            // Usamos um pequeno timeout para garantir que o DOM foi atualizado
+            // e as dimensões calculadas corretamente
+            setTimeout(() => {
+                messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+            }, 50)
         },
         [shouldAutoScroll]
     )
@@ -76,8 +81,23 @@ export default function MessagesPage() {
         if (!container) return
         const distanceFromBottom =
             container.scrollHeight - container.scrollTop - container.clientHeight
-        setShouldAutoScroll(distanceFromBottom < 80)
+        setShouldAutoScroll(distanceFromBottom < 100)
     }
+
+    // ResizeObserver para detectar mudanças de tamanho (como imagens carregando)
+    useEffect(() => {
+        const container = messagesContainerRef.current
+        if (!container) return
+
+        const resizeObserver = new ResizeObserver(() => {
+            if (shouldAutoScroll) {
+                scrollToBottom(true)
+            }
+        })
+
+        resizeObserver.observe(container)
+        return () => resizeObserver.disconnect()
+    }, [shouldAutoScroll, scrollToBottom])
 
     const handleTyping = () => {
         if (!selectedChat) return
@@ -488,15 +508,20 @@ export default function MessagesPage() {
                                 <div>
                                     <div className="font-semibold flex items-center gap-2">
                                         {selectedChat.other_user.name}
-                                        {selectedChat.other_user.online ? (
-                                            <div className="flex items-center gap-1 bg-green-800/70 text-green-400 px-1 py-0.5 rounded-full text-[10px] font-medium border">
-                                                <Wifi className="h-3 w-3" />
-                                            </div>
-                                        ) : (
-                                            <div className="flex items-center gap-1 bg-muted text-muted-foreground px-1 py-0.5 rounded-full text-[10px] font-medium border">
-                                                <WifiOff className="h-3 w-3" />
-                                            </div>
-                                        )}
+                                        {(() => {
+                                            const chatInList = chats.find(c => c.room_id === selectedChat.room_id);
+                                            const isOnline = chatInList ? chatInList.other_user.online : selectedChat.other_user.online;
+
+                                            return isOnline ? (
+                                                <div className="flex items-center gap-1 bg-green-800/70 text-green-400 px-1 py-0.5 rounded-full text-[10px] font-medium border">
+                                                    <Wifi className="h-3 w-3" />
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center gap-1 bg-muted text-muted-foreground px-1 py-0.5 rounded-full text-[10px] font-medium border">
+                                                    <WifiOff className="h-3 w-3" />
+                                                </div>
+                                            );
+                                        })()}
                                     </div>
                                     <div className="text-xs text-muted-foreground h-4">
                                         {remoteTyping ? (
@@ -510,15 +535,17 @@ export default function MessagesPage() {
                                             </div>
                                         ) : (
                                             <span
-                                                className={
-                                                    selectedChat.other_user.online
-                                                        ? "text-green-600"
-                                                        : "text-muted-foreground"
-                                                }
+                                                className={(() => {
+                                                    const chatInList = chats.find(c => c.room_id === selectedChat.room_id);
+                                                    const isOnline = chatInList ? chatInList.other_user.online : selectedChat.other_user.online;
+                                                    return isOnline ? "text-green-600" : "text-muted-foreground";
+                                                })()}
                                             >
-                                                {selectedChat.other_user.online
-                                                    ? "Online agora"
-                                                    : "Offline"}
+                                                {(() => {
+                                                    const chatInList = chats.find(c => c.room_id === selectedChat.room_id);
+                                                    const isOnline = chatInList ? chatInList.other_user.online : selectedChat.other_user.online;
+                                                    return isOnline ? "Online agora" : "Offline";
+                                                })()}
                                             </span>
                                         )}
                                     </div>
