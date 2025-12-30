@@ -261,24 +261,22 @@ function CreatorSignUpInner() {
       <div className="absolute top-0 left-0 -ml-20 -mt-20 h-96 w-96 rounded-full bg-pink-500/10 blur-3xl" />
       <div className="absolute bottom-0 right-0 -mr-20 -mb-20 h-96 w-96 rounded-full bg-purple-600/10 blur-3xl" />
 
-      <Card className="relative w-full max-w-md bg-white dark:bg-zinc-900 border-2 border-zinc-200 dark:border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-[2.5rem] overflow-hidden">
-        <CardHeader className="space-y-4 text-center">
-          <div className="flex justify-center">
-            <Logo width={100} height={40} />
-          </div>
-          <div className="space-y-1">
-            <CardTitle className="text-2xl font-bold tracking-tight">
+      <Card className="relative w-full max-w-md mx-auto bg-white dark:bg-zinc-900 border-2 border-zinc-200 dark:border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-[2.5rem] overflow-hidden">
+        <CardHeader className="space-y-2 text-center pb-2">
+          <div className="flex items-center justify-between ">
+            <CardTitle className="text-xl font-bold tracking-tight">
               Crie sua conta Nexa
             </CardTitle>
-            <CardDescription className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">
-              Junte-se à maior comunidade de creators UGC do Brasil.
-            </CardDescription>
+            <Logo width={100} height={100} />
           </div>
+          <CardDescription className="mb-1 text-[11px] text-left text-zinc-600 dark:text-zinc-400 font-medium leading-none">
+            Junte-se à maior comunidade de creators do Brasil.
+          </CardDescription>
         </CardHeader>
 
         <div className="relative">
           {/* Scroll Shadow Indicator - Top */}
-          <div className="absolute top-0 left-0 right-0 h-8 bg-linear-to-b from-white dark:from-zinc-900 to-transparent pointer-events-none z-10 opacity-0 transition-opacity duration-300" id="scroll-shadow-top" />
+            <div className="absolute top-0 left-0 right-0 h-8 bg-linear-to-b from-white dark:from-zinc-900 to-transparent pointer-events-none z-10 opacity-0 transition-opacity duration-300" id="scroll-shadow-top" />
 
           {/* Scroll Shadow Indicator - Bottom */}
           <div className="absolute bottom-0 left-0 right-0 h-12 bg-linear-to-t from-white dark:from-zinc-900 via-white/80 dark:via-zinc-900/80 to-transparent pointer-events-none z-10 transition-opacity duration-300" id="scroll-shadow-bottom" />
@@ -302,7 +300,7 @@ function CreatorSignUpInner() {
           }}>
 
             {/* Progress Indicator */}
-            <div className="flex items-center gap-2 mb-8 px-2">
+            <div className="flex items-center gap-2 mb-5 px-2">
               {[1, 2, 3].map((s) => (
                 <button
                   key={s}
@@ -318,7 +316,7 @@ function CreatorSignUpInner() {
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
 
                 {/* Step 1: Personal Info */}
-                <div className={step === 1 ? "space-y-6" : "hidden"}>
+                <div className={step === 1 ? "space-y-3" : "hidden"}>
                   <FormField
                     control={form.control}
                     name="nome"
@@ -328,7 +326,7 @@ function CreatorSignUpInner() {
                         <FormControl>
                           <Input
                             placeholder="Seu nome"
-                            className="bg-zinc-100/50 dark:bg-white/5 border-2 border-zinc-200 dark:border-white/10 focus-visible:ring-pink-500/50 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 rounded-xl"
+                            className="text-xs bg-zinc-100/50 dark:bg-white/5 border-2 border-zinc-200 dark:border-white/10 focus-visible:ring-pink-500/50 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 rounded-xl"
                             {...field}
                           />
                         </FormControl>
@@ -346,7 +344,7 @@ function CreatorSignUpInner() {
                           <Input
                             placeholder="seu@email.com"
                             type="email"
-                            className="bg-zinc-100/50 dark:bg-white/5 border-2 border-zinc-200 dark:border-white/10 focus-visible:ring-pink-500/50 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 rounded-xl"
+                            className="text-xs bg-zinc-100/50 dark:bg-white/5 border-2 border-zinc-200 dark:border-white/10 focus-visible:ring-pink-500/50 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 rounded-xl"
                             {...field}
                           />
                         </FormControl>
@@ -547,7 +545,7 @@ function CreatorSignUpInner() {
               </form>
             </Form>
 
-            <div className="mt-8 space-y-6">
+            <div>
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <span className="w-full border-t border-white/5" />

@@ -72,7 +72,7 @@ export const Hero = () => {
                                 </Link>
                                 <div className="pt-12 sm:pt-auto h-8 mx-1 sm:h-6 w-px bg-zinc-800 sm:mx-2  " />
                                 <Link
-                                    href="/signup/brand"
+                                    href="/signup/brand?redirectTo=/dashboard"
                                     className={`relative group flex items-center rounded-full gap-2 px-2.5 py-1 sm:px-6 sm:py-3 text-base font-semibold transition-all cursor-pointer ${hoverBrand
                                         ? "bg-purple-600 text-white shadow-lg shadow-purple-600/20"
                                         : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
@@ -97,7 +97,7 @@ export const Hero = () => {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ duration: 1, delay: 0.5 }}
-                            className="pt-4 flex items-center justify-center lg:justify-start gap-2 text-sm text-muted-foreground"
+                            className="pt-4 mb-10 flex items-center justify-center lg:justify-start gap-2 text-sm text-muted-foreground"
                         >
                             <span>Já usa a NEXA?</span>
                             <Link href="/login" className="font-medium text-foreground hover:text-pink-500 transition-colors underline underline-offset-4 cursor-pointer">

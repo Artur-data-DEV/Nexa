@@ -254,18 +254,16 @@ function BrandSignUpInner() {
       <div className="absolute bottom-0 left-0 -ml-20 -mb-20 h-96 w-96 rounded-full bg-pink-500/10 blur-3xl" />
 
       <Card className="relative w-full max-w-md bg-white dark:bg-zinc-900 border-2 border-zinc-200 dark:border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-[2.5rem] overflow-hidden">
-        <CardHeader className="space-y-4 text-center">
-          <div className="flex justify-center">
-            <Logo width={100} height={40} />
-          </div>
-          <div className="space-y-1">
-            <CardTitle className="text-2xl font-bold tracking-tight">
+        <CardHeader className="space-y-2 text-center pb-2">
+          <div className="flex items-center justify-between ">
+            <CardTitle className="text-xl font-bold tracking-tight">
               Nexa para Marcas
             </CardTitle>
-            <CardDescription className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">
-              Encontre os melhores criadores para suas campanhas.
-            </CardDescription>
+            <Logo width={100} height={100} />
           </div>
+          <CardDescription className="mb-1  text-xs text-left text-zinc-600 dark:text-zinc-400 font-medium leading-none">
+            Encontre os melhores criadores para suas campanhas.
+          </CardDescription>
         </CardHeader>
         <div className="relative">
           {/* Scroll Shadow Indicator - Top */}
@@ -292,7 +290,7 @@ function BrandSignUpInner() {
             }
           }}>
             {/* Progress Indicator */}
-            <div className="flex items-center gap-2 mb-8 px-2">
+            <div className="flex items-center gap-2 mb-5 px-2">
               {[1, 2, 3].map((s) => (
                 <button
                   key={s}
@@ -308,7 +306,7 @@ function BrandSignUpInner() {
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
 
                 {/* Step 1: Company Info */}
-                <div className={step === 1 ? "space-y-6" : "hidden"}>
+                <div className={step === 1 ? "space-y-3" : "hidden"}>
                   <FormField
                     control={form.control}
                     name="companyName"
@@ -318,7 +316,7 @@ function BrandSignUpInner() {
                         <FormControl>
                           <Input
                             placeholder="Sua Marca Ltda"
-                            className="bg-zinc-100/50 dark:bg-white/5 border-2 border-zinc-200 dark:border-white/10 focus-visible:ring-purple-600/50 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 rounded-xl"
+                            className="text-xs bg-zinc-100/50 dark:bg-white/5 border-2 border-zinc-200 dark:border-white/10 focus-visible:ring-purple-600/50 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 rounded-xl"
                             {...field}
                           />
                         </FormControl>
@@ -336,7 +334,7 @@ function BrandSignUpInner() {
                           <Input
                             placeholder="contato@empresa.com"
                             type="email"
-                            className="bg-zinc-100/50 dark:bg-white/5 border-2 border-zinc-200 dark:border-white/10 focus-visible:ring-purple-600/50 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 rounded-xl"
+                            className="text-xs bg-zinc-100/50 dark:bg-white/5 border-2 border-zinc-200 dark:border-white/10 focus-visible:ring-purple-600/50 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 rounded-xl"
                             {...field}
                           />
                         </FormControl>
@@ -537,7 +535,7 @@ function BrandSignUpInner() {
               </form>
             </Form>
 
-            <div className="mt-8 space-y-6">
+            <div>
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <span className="w-full border-t border-white/5" />

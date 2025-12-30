@@ -30,7 +30,8 @@ import {
   Building2,
   UserStar,
   ArrowRight,
-  Menu
+  Menu,
+  Video
 } from "lucide-react";
 import { MdOutlineLibraryBooks } from "react-icons/md";
 
@@ -125,6 +126,56 @@ const MOCK_GUIDES: Guide[] = [
     created_at: new Date(),
     updated_at: new Date()
   },
+  {
+    id: 7,
+    title: "Gestão Financeira e Pagamentos",
+    description: "Aprenda como funciona o sistema de escrow, faturamento e carteira da plataforma.",
+    audience: "Brand",
+    steps: [
+      {
+        id: 701,
+        title: "Sistema de Proteção (Escrow)",
+        description: "Entenda como o pagamento fica retido com segurança até que o criador entregue o conteúdo aprovado.",
+        order: 1
+      },
+      {
+        id: 702,
+        title: "Adicionar Créditos",
+        description: "Veja como carregar sua carteira Nexa para agilizar a contratação de múltiplos criadores.",
+        order: 2
+      },
+      {
+        id: 703,
+        title: "Relatórios e Invoices",
+        description: "Acesse a aba Financeiro para baixar comprovantes e relatórios de gastos mensais por campanha.",
+        order: 3
+      }
+    ],
+    created_at: new Date(),
+    updated_at: new Date()
+  },
+  {
+    id: 8,
+    title: "Análise de Resultados e ROI",
+    description: "Como interpretar as métricas das campanhas e otimizar seus investimentos futuros.",
+    audience: "Brand",
+    steps: [
+      {
+        id: 801,
+        title: "Monitoramento de Performance",
+        description: "Acompanhe visualizações, taxa de engajamento e alcance real dos conteúdos produzidos.",
+        order: 1
+      },
+      {
+        id: 802,
+        title: "Cálculo de CPA e ROI",
+        description: "Saiba integrar seus links de trackeamento para medir conversões diretas geradas pelos criadores.",
+        order: 2
+      }
+    ],
+    created_at: new Date(),
+    updated_at: new Date()
+  },
 
   // CREATOR GUIDES
   {
@@ -144,6 +195,12 @@ const MOCK_GUIDES: Guide[] = [
         title: "Montar seu Mídia Kit",
         description: "Mantenha seu perfil atualizado com seus melhores trabalhos e nichos de atuação. Isso é seu cartão de visitas.",
         order: 2
+      },
+      {
+        id: 403,
+        title: "Verificação de Identidade",
+        description: "Complete a verificação KYC para garantir sua segurança e agilizar seus recebimentos.",
+        order: 3
       }
     ],
     created_at: new Date(),
@@ -166,6 +223,12 @@ const MOCK_GUIDES: Guide[] = [
         title: "Definir Preço e Ideia",
         description: "Ofereça um valor competitivo e descreva brevemente sua ideia criativa para a campanha.",
         order: 2
+      },
+      {
+        id: 503,
+        title: "Uso do Chat Nexa",
+        description: "Tire dúvidas e alinhe detalhes diretamente com a marca antes e depois de enviar sua proposta.",
+        order: 3
       }
     ],
     created_at: new Date(),
@@ -194,6 +257,50 @@ const MOCK_GUIDES: Guide[] = [
         title: "Postagem e Comprovação",
         description: "Após aprovado, poste na sua rede social e insira o link da publicação na plataforma para validar a entrega.",
         order: 3
+      }
+    ],
+    created_at: new Date(),
+    updated_at: new Date()
+  },
+  {
+    id: 9,
+    title: "Precificação e Propostas",
+    description: "Como definir seu valor e negociar de forma justa e profissional.",
+    audience: "Creator",
+    steps: [
+      {
+        id: 901,
+        title: "Entenda seu Valor",
+        description: "Considere sua produção, tempo, equipamento e o alcance médio de seus conteúdos para cobrar.",
+        order: 1
+      },
+      {
+        id: 902,
+        title: "Pacotes de Conteúdo",
+        description: "Saiba oferecer pacotes (ex: 3 vídeos + 5 fotos) para aumentar o ticket médio de suas parcerias.",
+        order: 2
+      }
+    ],
+    created_at: new Date(),
+    updated_at: new Date()
+  },
+  {
+    id: 10,
+    title: "Gestão de Carreira e Portfólio",
+    description: "Construa relacionamentos de longo prazo com as marcas e cresça como creator.",
+    audience: "Creator",
+    steps: [
+      {
+        id: 1001,
+        title: "Manutenção de Perfil",
+        description: "Atualize suas métricas e biografia a cada 30 dias para refletir seu crescimento real.",
+        order: 1
+      },
+      {
+        id: 1002,
+        title: "Feedback e Recorrência",
+        description: "Peça feedback após cada job e aproveite para sugerir novas parcerias com as marcas que já atendeu.",
+        order: 2
       }
     ],
     created_at: new Date(),
@@ -254,7 +361,9 @@ function DocumentationSidebar({ sections, activeSection, onSectionChange }: {
                   <span className={`mr-3 ${isActive ? `text-${activeColor}-500` : 'text-muted-foreground'}`}>
                     {section.icon}
                   </span>
-                  {section.title}
+                  <span className="truncate flex-1 text-left">
+                    {section.title}
+                  </span>
                 </Button>
 
                 {(isActive) && section.guides.length > 0 && (
@@ -273,7 +382,9 @@ function DocumentationSidebar({ sections, activeSection, onSectionChange }: {
                           onClick={() => onSectionChange(`guide-${guide.id}`)}
                         >
                           <ChevronRight className={`h-3 w-3 mr-2 transition-transform ${isGuideActive ? 'rotate-90' : ''}`} />
-                          {guide.title}
+                          <span className="truncate flex-1 text-left">
+                            {guide.title}
+                          </span>
                         </Button>
                       );
                     })}
@@ -386,7 +497,9 @@ function MobileSidebar({ sections, activeSection, onSectionChange, audience, onA
                         onClick={() => { setOpen(false); onSectionChange(section.id); }}
                       >
                         <span className="mr-3">{section.icon}</span>
-                        {section.title}
+                        <span className="truncate flex-1 text-left">
+                          {section.title}
+                        </span>
                       </Button>
 
                       {isSectionActive && section.guides.length > 0 && (
@@ -402,7 +515,9 @@ function MobileSidebar({ sections, activeSection, onSectionChange, audience, onA
                                 }`}
                               onClick={() => { setOpen(false); onSectionChange(`guide-${guide.id}`); }}
                             >
-                              {guide.title}
+                              <span className="truncate flex-1 text-left">
+                                {guide.title}
+                              </span>
                             </Button>
                           ))}
                         </div>
@@ -826,47 +941,41 @@ function DocumentationInner() {
       id: 'brand-registration',
       title: 'Registro de Marca',
       icon: <UserPlus className="h-4 w-4" />,
-      guides: guides.filter(g => g.audience === 'Brand' && g.title.toLowerCase().includes('registro'))
+      guides: guides.filter(g => g.audience === 'Brand' && (g.title.toLowerCase().includes('registro') || g.title.toLowerCase().includes('financeira')))
     },
     {
       id: 'brand-campaigns',
       title: 'Criação de Campanhas',
       icon: <PlusCircle className="h-4 w-4" />,
-      guides: guides.filter(g => g.audience === 'Brand' && g.title.toLowerCase().includes('campanha'))
+      guides: guides.filter(g => g.audience === 'Brand' && (g.title.toLowerCase().includes('campanha') || g.title.toLowerCase().includes('análise')))
     },
     {
       id: 'brand-approval',
       title: 'Aprovação de Criadores',
       icon: <CheckCircle className="h-4 w-4" />,
-      guides: guides.filter(g => g.audience === 'Brand' && g.title.toLowerCase().includes('aprovar'))
+      guides: guides.filter(g => g.audience === 'Brand' && (g.title.toLowerCase().includes('aprovação') || g.title.toLowerCase().includes('gestão de criadores')))
     },
   ];
 
   const creatorSections: DocSection[] = [
     {
       id: 'creator-registration',
-      title: 'Registro de Criador',
+      title: 'Começando na Nexa',
       icon: <UserPlus className="h-4 w-4" />,
-      guides: guides.filter(g => g.audience === 'Creator' && g.title.toLowerCase().includes('registro'))
+      guides: guides.filter(g => g.audience === 'Creator' && (g.title.toLowerCase().includes('primeiros') || g.title.toLowerCase().includes('cadastro') || g.title.toLowerCase().includes('carreira')))
     },
     {
       id: 'creator-campaigns',
-      title: 'Candidatura a Campanhas',
+      title: 'Propostas e Campanhas',
       icon: <Target className="h-4 w-4" />,
-      guides: guides.filter(g => g.audience === 'Creator' && g.title.toLowerCase().includes('candidatar'))
+      guides: guides.filter(g => g.audience === 'Creator' && (g.title.toLowerCase().includes('propostas') || g.title.toLowerCase().includes('precificação')))
     },
     {
       id: 'creator-content',
-      title: 'Criação de Conteúdo',
-      icon: <PlusCircle className="h-4 w-4" />,
-      guides: guides.filter(g => g.audience === 'Creator' && g.title.toLowerCase().includes('conteúdo'))
-    },
-    {
-      id: 'creator-chat',
-      title: 'Comunicação e Entrega',
-      icon: <MessageSquare className="h-4 w-4" />,
-      guides: guides.filter(g => g.audience === 'Creator' && (g.title.toLowerCase().includes('proposta') || g.title.toLowerCase().includes('entrega')))
-    },
+      title: 'Produção e Entrega',
+      icon: <Video className="h-4 w-4" />,
+      guides: guides.filter(g => g.audience === 'Creator' && (g.title.toLowerCase().includes('conteúdo') || g.title.toLowerCase().includes('produção')))
+    }
   ];
 
   const sections: DocSection[] = audience === 'Brand' ? brandSections : audience === 'Creator' ? creatorSections : [

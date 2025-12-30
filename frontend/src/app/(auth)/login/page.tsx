@@ -281,7 +281,7 @@ function LoginInner() {
 
             </Link>
             <Link
-              href="/signup/brand"
+              href="/signup/brand?redirectTo=/dashboard"
               className="flex-1 align-middle gap-1 flex items-center justify-center p-2 rounded-lg bg-purple-600/10 text-purple-600 border border-purple-600/20 hover:bg-purple-600/20 transition-all font-semibold"
             >
 

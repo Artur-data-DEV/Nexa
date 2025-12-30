@@ -112,7 +112,7 @@ export const HowItWorks = () => {
             className="group relative bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 px-12 py-8 text-xl rounded-full font-black shadow-[0_20px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_40px_rgba(255,255,255,0.1)] transition-all hover:scale-105 hover:-translate-y-1 active:scale-95 overflow-hidden hover:shadow-purple-500/25"
             asChild
           >
-            <Link href="/signup/brand">
+            <Link href="/signup/creator">
               <span className="relative z-10 flex items-center gap-3 group-hover:text-white transition-colors duration-300">
                 Começar agora
                 <ArrowRight className="h-6 w-6 group-hover:translate-x-2 transition-transform duration-300" />
