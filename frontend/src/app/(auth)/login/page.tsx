@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { Loader2 } from "lucide-react"
+import { Building2, CameraIcon, CameraOff, Loader2, LucideBriefcaseBusiness, UserStar } from "lucide-react"
 
 import { Button } from "@/presentation/components/ui/button"
 import { Input } from "@/presentation/components/ui/input"
@@ -277,7 +277,7 @@ function LoginInner() {
               className="flex-1 align-middle gap-1 flex items-center justify-center p-2 rounded-lg bg-pink-500/10 text-pink-500 border border-pink-500/20 hover:bg-pink-500/20 transition-all font-semibold"
             >
               Sou Criador
-              <FcCamcorderPro size={20} />
+              <UserStar size={20} />
 
             </Link>
             <Link
@@ -285,8 +285,8 @@ function LoginInner() {
               className="flex-1 align-middle gap-1 flex items-center justify-center p-2 rounded-lg bg-purple-600/10 text-purple-600 border border-purple-600/20 hover:bg-purple-600/20 transition-all font-semibold"
             >
 
-              Sou Marca
-              <FcBriefcase size={20} />
+              Sou Empresa
+              <Building2 size={20} />
 
             </Link>
           </div>

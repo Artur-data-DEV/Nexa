@@ -27,7 +27,7 @@ export const Hero = () => {
             />
 
             <div className="relative max-w-7xl mx-auto mt-18 sm:mt-26 xl:mt-6 px-4 xl:px-0">
-                <div className="grid lg:grid-cols-2 items-center gap-12 lg:gap-0">
+                <div className="grid lg:grid-cols-2 items-center sm:gap-12 lg:gap-0">
                     <div className="order-2 lg:order-1 space-y-12 text-center lg:text-left">
                         <motion.div
                             initial={{ opacity: 0, y: 30 }}
@@ -63,8 +63,8 @@ export const Hero = () => {
                                 >
                                     <Speech size={24} />
                                     <div className="flex items-center justify-center align-middle gap-0 sm:gap-1">
-                                        <p className="text-sm sm:text-lg sm:font-thin">Gerar conteúdo</p>
-                                        <span className="font-thin hidden sm:block ">NEXA</span>
+                                        <p className="text-xs sm:text-sm md:text-lg font-light">Gerar conteúdo</p>
+                                        <span className="font-light hidden sm:block ">NEXA</span>
                                     </div>
                                     <span className="pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-zinc-900 px-3 py-1.5 text-xs text-white opacity-0 group-hover:opacity-100 shadow-lg ring-1 ring-zinc-700 transition-opacity">
                                         Para Criadores
@@ -83,7 +83,7 @@ export const Hero = () => {
                                 >
 
                                     <BsSendArrowUp size={22} />
-                                    <span className="text-sm sm:text-lg">
+                                    <span className="text-xs sm:text-sm md:text-lg font-light">
                                         Engajar sua marca
                                     </span>
                                     <span className="pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-zinc-900 px-3 py-1 text-xs text-white opacity-0 group-hover:opacity-100 shadow-lg ring-1 ring-zinc-700 transition-opacity">

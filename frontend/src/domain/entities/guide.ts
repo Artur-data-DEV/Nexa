@@ -20,7 +20,7 @@ export interface Guide {
     screenshots?: string[];
     screenshot_urls?: string[];
     created_by?: number;
-    created_at: string;
-    updated_at: string;
+    created_at: Date;
+    updated_at: Date;
     steps?: GuideStep[];
 }
