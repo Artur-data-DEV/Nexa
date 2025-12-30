@@ -73,7 +73,7 @@ export const Hero = () => {
                                 <div className="pt-12 sm:pt-auto h-8 mx-1 sm:h-6 w-px bg-zinc-800 sm:mx-2  " />
                                 <Link
                                     href="/signup/brand"
-                                    className={`relative group flex items-center rounded-full gap-2 px-2.5 py-2 sm:px-6 sm:py-3 text-base font-semibold transition-all cursor-pointer ${hoverBrand
+                                    className={`relative group flex items-center rounded-full gap-2 px-2.5 py-1 sm:px-6 sm:py-3 text-base font-semibold transition-all cursor-pointer ${hoverBrand
                                         ? "bg-purple-600 text-white shadow-lg shadow-purple-600/20"
                                         : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
                                         }`}
@@ -86,7 +86,7 @@ export const Hero = () => {
                                     <span className="text-sm sm:text-lg">
                                         Engajar sua marca
                                     </span>
-                                    <span className="pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-zinc-900 px-3 py-1.5 text-xs text-white opacity-0 group-hover:opacity-100 shadow-lg ring-1 ring-zinc-700 transition-opacity">
+                                    <span className="pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-zinc-900 px-3 py-1 text-xs text-white opacity-0 group-hover:opacity-100 shadow-lg ring-1 ring-zinc-700 transition-opacity">
                                         Para Empresas
                                     </span>
                                 </Link>

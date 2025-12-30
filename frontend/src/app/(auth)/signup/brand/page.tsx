@@ -330,7 +330,6 @@ function BrandSignUpInner() {
                       <FormControl>
                         <PhoneInput
                           placeholder="(11) 99999-9999"
-                          className="bg-zinc-100/50 dark:bg-white/5 border-2 border-zinc-200 dark:border-white/10 focus-visible:ring-purple-600/50 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 rounded-xl"
                           {...field}
                         />
                       </FormControl>

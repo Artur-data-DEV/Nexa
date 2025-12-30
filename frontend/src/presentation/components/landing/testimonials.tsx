@@ -54,16 +54,16 @@ export const Testimonials = () => {
     const secondRow = [...testimonials.slice().reverse(), ...testimonials.slice().reverse()];
 
     return (
-        <section className="py-24 bg-background relative overflow-hidden">
+        <section className=" bg-background relative overflow-hidden">
             {/* Background elements */}
             <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-pink-500/5 rounded-full blur-[120px] -z-10" />
             <div className="absolute bottom-0 left-1/4 w-[600px] h-[600px] bg-purple-600/5 rounded-full blur-[120px] -z-10" />
 
             <div className="max-w-7xl mx-auto px-4 md:px-6">
                 <div className="text-center mb-16">
-                    <h2 className="text-4xl lg:text-5xl font-black text-foreground mb-6 tracking-tight leading-tight">
+                    <h2 className="text-4xl lg:text-6xl font-black text-foreground mb-6 tracking-tighter leading-tight">
                         Aprovado por quem <br />
-                        <span className="text-transparent bg-clip-text bg-linear-to-r from-pink-500 to-purple-600">
+                        <span className="text-transparent bg-clip-text bg-linear-to-r from-pink-500 via-fuchsia-500 to-purple-600 drop-shadow-[0_2px_15px_rgba(236,72,153,0.3)]">
                             vive de conteúdo
                         </span>
                     </h2>
@@ -77,7 +77,7 @@ export const Testimonials = () => {
                     <div className="flex flex-col gap-6 h-[600px] overflow-hidden relative">
                         <motion.div
                             animate={{ y: ["0%", "-50%"] }}
-                            transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+                            transition={{ duration: 40, repeat: Infinity, ease: "linear", delay: 1 }}
                             className="flex flex-col gap-6"
                         >
                             {firstRow.map((t, i) => (

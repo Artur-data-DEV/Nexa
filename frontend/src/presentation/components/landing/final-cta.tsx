@@ -29,9 +29,9 @@ export const FinalCTA = () => {
                     viewport={{ once: true }}
                     transition={{ duration: 0.8 }}
                 >
-                    <h2 className="text-3xl sm:text-4xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-tight">
+                    <h2 className="text-4xl sm:text-5xl lg:text-7xl font-black tracking-tighter text-foreground leading-[1.1]">
                         Pronto para Transformar sua <br className="hidden sm:block" />
-                        <span className="text-transparent bg-clip-text bg-linear-to-rrom-pink-500 to-purple-600">
+                        <span className="text-transparent bg-clip-text bg-linear-to-r from-pink-500 via-fuchsia-500 to-purple-600 drop-shadow-[0_2px_15px_rgba(236,72,153,0.3)]">
                             Vida Financeira?
                         </span>
                     </h2>

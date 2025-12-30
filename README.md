@@ -10,6 +10,7 @@ Nexa/
 ├── frontend/         # Next.js 16 (React 19)
 ├── docs/             # Documentação histórica
 ├── infra/            # Configurações de infraestrutura
+├── mobile/           # React Native ou Flutter (futuras implementações)
 └── monitoring/       # Configurações de monitoramento
 ```
 
