@@ -1,4 +1,4 @@
-import { Accordion } from "@/components/ui/accordion"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/presentation/components/ui/accordion"
 
 
 export const FAQ = () => {
