@@ -15,26 +15,26 @@ export const WhyNexaSection = () => {
               />
             </div>
           </div>
-          <div className="space-y-4 md:space-y-6 text-left">
+          <div className="space-y-4 md:space-y-6 text-left leading-relaxed font-stretch-semi-expanded">
             <h2 className="text-2xl text-center! sm:text-3xl lg:text-4xl font-bold text-foreground">
               Por que criei a NEXA
             </h2>
             <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
-              Há 5 anos, comecei a <span className="text-chart-4 font-bold">criar conteúdo para marcas</span> sem saber que isso se tornaria minha carreira.
+              Há 5 anos, comecei a <span className="text-purple-700 font-bold">criar conteúdo para marcas</span> sem saber que isso se tornaria minha carreira.
 
-              O que começou como um hobby se transformou em uma fonte de renda que<span className="text-chart-4 font-bold"> mudou completamente minha vida financeira.</span>
+              O que começou como um hobby se transformou em uma fonte de renda que<span className="text-purple-700 font-bold"> mudou completamente minha vida financeira.</span>
             </p>
             <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
-              Durante essa jornada, percebi que muitos creators talentosos não sabiam como <span className="text-chart-4 font-bold">monetizar adequadamente seu conteúdo</span> ou como se <span className="text-chart-4 font-bold">conectar com marcas</span> dispostas a pagar valores justos.
+              Durante essa jornada, percebi que muitos creators talentosos não sabiam como <span className="text-purple-700 font-bold">monetizar adequadamente seu conteúdo</span> ou como se <span className="text-purple-700 font-bold">conectar com marcas</span> dispostas a pagar valores justos.
             </p>
             <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
-              Percebi a falta de uma plataforma brasileira que realmente entendesse nossa realidade e oferecesse  <span className="text-chart-4 font-bold">oportunidades reais</span>, um problema que eu mesma enfrentei.
+              Percebi a falta de uma plataforma brasileira que realmente entendesse nossa realidade e oferecesse  <span className="text-purple-700 font-bold">oportunidades reais</span>, um problema que eu mesma enfrentei.
             </p>
             <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
-              Foi então que criei a <span className="font-thin text-chart-4">NEXA</span> -  para ser a ponte definitiva entre <span className="text-chart-4 font-bold">creators autênticos</span> e marcas que valorizam <span className="text-chart-4 font-bold">conteúdo genuíno</span>, garantindo <span className="text-chart-4 font-bold">pagamentos justos</span>, processos transparentes e proteção total para ambos os lados.
+              Foi então que criei a <span className="font-thin text-purple-700">NEXA</span> -  para ser a ponte definitiva entre <span className="text-purple-700 font-bold">creators autênticos</span> e marcas que valorizam <span className="text-purple-700 font-bold">conteúdo genuíno</span>, garantindo <span className="text-purple-700 font-bold">pagamentos justos</span>, processos transparentes e proteção total para ambos os lados.
             </p>
             <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
-              Minha missão é construir <span className="text-chart-4 font-bold">o maior ecossistema de UGC do Brasil</span>, onde creators podem prosperar financeiramente, aprender continuamente e crescer em uma comunidade de alta performance.
+              Minha missão é construir <span className="text-purple-700 font-bold">o maior ecossistema de UGC do Brasil</span>, onde creators podem prosperar financeiramente, aprender continuamente e crescer em uma comunidade de alta performance.
             </p>
           </div>
         </div>
