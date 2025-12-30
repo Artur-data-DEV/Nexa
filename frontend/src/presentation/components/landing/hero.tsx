@@ -17,13 +17,13 @@ export const Hero = () => {
                     <div className="order-2 lg:order-1 space-y-12 text-center lg:text-left">
                         <div className="space-y-6">
                             <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold text-foreground tracking-tight leading-[1.1]">
-                                A nova era das colaborações entre {''}
+                                A nova era das colaborações já começou. {''}
                                 <span className="text-transparent bg-clip-text bg-linear-to-r from-pink-500 to-purple-600">
-                                    influenciadores e marcas
+                                    Sua nova central de conexões.
                                 </span>
                             </h1>
                             <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto lg:mx-0 leading-relaxed">
-                                Conexões de UGC com segurança, contratos e pagamento garantido. Fature com vídeos curtos. Encontre creators qualificados.
+                                Fature <strong className="text-foreground">R$ 5.000+ Por Mês</strong> Criando Vídeos de até 60 Segundos! Sem precisar ter seguidores ou se expor, com as conexões certas.
                             </p>
                         </div>
 
@@ -32,8 +32,8 @@ export const Hero = () => {
                                 <Link
                                     href="/signup/creator?redirectTo=/dashboard"
                                     className={`relative group flex items-center rounded-full px-4 py-2 sm:px-6 sm:py-3 gap-2 text-base font-semibold transition-all cursor-pointer ${hoverBrand
-                                            ? "bg-transparent text-white"
-                                            : "bg-pink-500 text-white   shadow-lg shadow-pink-500/20 hover:bg-pink-600 hover:shadow-pink-500/40"
+                                        ? "bg-transparent text-white"
+                                        : "bg-pink-500 text-white   shadow-lg shadow-pink-500/20 hover:bg-pink-600 hover:shadow-pink-500/40"
                                         }`}
                                     title="Para Criadores"
                                 >
@@ -50,8 +50,8 @@ export const Hero = () => {
                                 <Link
                                     href="/signup/brand"
                                     className={`relative group flex items-center rounded-full gap-2 px-2.5 py-2 sm:px-6 sm:py-3 text-base font-medium transition-all cursor-pointer ${hoverBrand
-                                            ? "bg-purple-600 text-white shadow-lg shadow-purple-600/20"
-                                            : "text-zinc-400 hover:text-white"
+                                        ? "bg-purple-600 text-white shadow-lg shadow-purple-600/20"
+                                        : "text-zinc-400 hover:text-white"
                                         }`}
                                     title="Para Empresas"
                                     onMouseEnter={() => setHoverBrand(true)}

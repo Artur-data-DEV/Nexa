@@ -5,6 +5,9 @@ import { HowItWorks } from "@/presentation/components/landing/how-it-works"
 import { WhyNexaSection } from "@/presentation/components/landing/why-nexa"
 import { Pricing } from "@/presentation/components/landing/pricing"
 import { Footer } from "@/presentation/components/landing/footer"
+import { Testimonials } from "@/presentation/components/landing/testimonials"
+import { FAQ } from "@/presentation/components/landing/faq"
+import { FinalCTA } from "@/presentation/components/landing/final-cta"
 
 export default function LandingPage() {
   return (
@@ -12,10 +15,13 @@ export default function LandingPage() {
       <Navbar />
       <main className="flex-1">
         <Hero />
-        <Benefits />
         <WhyNexaSection />
         <HowItWorks />
+        <Testimonials />
+        <Benefits />
         <Pricing />
+        <FinalCTA />
+        <FAQ />
       </main>
       <Footer />
     </div>

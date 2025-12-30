@@ -9,6 +9,10 @@ import { SubscriptionPlan } from "@/domain/repositories/payment-repository.inter
 import { ApiPaymentRepository } from "@/infrastructure/repositories/payment-repository"
 import { api } from "@/infrastructure/api/axios-adapter"
 
+interface LandingPlan extends SubscriptionPlan {
+  popular?: boolean
+}
+
 const paymentRepository = new ApiPaymentRepository(api)
 
 const getMonthlyPrice = (plan: SubscriptionPlan): number => {
@@ -26,7 +30,7 @@ const formatCurrency = (value: number): string => {
   return value.toFixed(2).replace(".", ",")
 }
 
-const fallbackPlans: SubscriptionPlan[] = [
+const fallbackPlans: LandingPlan[] = [
   {
     id: 1,
     name: "Acesso Mensal",
@@ -59,13 +63,14 @@ const fallbackPlans: SubscriptionPlan[] = [
     savings_percentage: 50,
     features: [],
     sort_order: 3,
+    popular: true,
   },
 ]
 
 export const Pricing = () => {
   const router = useRouter()
   const { isAuthenticated, user } = useAuth()
-  const [plans, setPlans] = useState<SubscriptionPlan[]>([])
+  const [plans, setPlans] = useState<LandingPlan[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -126,12 +131,16 @@ export const Pricing = () => {
               return (
                 <Card
                   key={plan.id}
-                  className={`relative overflow-hidden transition hover:shadow-xl ${
-                    isHighlighted && !isSemestralPlan ? "border-pink-500" : ""
-                  }`}
+                  className={`relative overflow-hidden transition hover:shadow-xl ${isHighlighted && !isSemestralPlan ? "border-pink-500" : ""
+                    }`}
                 >
                   <CardContent className="p-6">
-                    {isHighlighted && (
+                    {plan.popular && (
+                      <div className="absolute top-0 right-0 bg-pink-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl z-20">
+                        Popular
+                      </div>
+                    )}
+                    {isHighlighted && !plan.popular && (
                       <div className="absolute right-4 top-4">
                         <span className="rounded-full bg-emerald-500/15 text-emerald-600 text-xs font-semibold px-2 py-1">
                           {plan.savings_percentage}% OFF
