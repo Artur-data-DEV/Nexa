@@ -37,6 +37,7 @@ export default function MessagesPage() {
         selectChat,
         sendMessage,
         isChatLoading,
+        setChats,
     } = useChat()
     const [newMessage, setNewMessage] = useState("")
     const [isListOpen, setIsListOpen] = useState(false)
@@ -389,12 +390,30 @@ export default function MessagesPage() {
             ))
         })
 
+        // Status updates channel (Global)
+        const statusChannel = echo.channel('user-status')
+        statusChannel.listen('.user_status_updated', (e: { userId: number, isOnline: boolean }) => {
+            setChats(prev => prev.map(chat => {
+                if (chat.other_user.id === e.userId) {
+                    return {
+                        ...chat,
+                        other_user: {
+                            ...chat.other_user,
+                            online: e.isOnline
+                        }
+                    }
+                }
+                return chat
+            }))
+        })
+
         return () => {
             channel.stopListening('.new_message')
             channel.stopListening('.user_typing')
             channel.stopListening('.messages_read')
+            statusChannel.stopListening('.user_status_updated')
         }
-    }, [selectedChat, echo, scrollToBottom, user?.id])
+    }, [selectedChat, echo, scrollToBottom, user?.id, setChats])
 
     const renderChatList = () => (
         <div className="flex flex-col gap-1 p-2">
