@@ -50,7 +50,7 @@ export function CampaignCard({ campaign }: CampaignCardProps) {
               className="object-cover"
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-r from-pink-500 to-purple-600 opacity-20" />
+            <div className="w-full h-full bg-linear-to-r from-pink-500 to-purple-600 opacity-20" />
           )}
           <div className="absolute -bottom-6 left-4">
             <Avatar className="h-12 w-12 border-2 border-background">

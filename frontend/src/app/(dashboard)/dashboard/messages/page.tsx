@@ -641,7 +641,7 @@ export default function MessagesPage() {
                                                             className={cn(
                                                                 "w-full rounded-lg border px-3 py-2 text-sm",
                                                                 isMe
-                                                                    ? "bg-gradient-to-r from-blue-50 to-indigo-50"
+                                                                    ? "bg-linear-to-r from-blue-50 to-indigo-50"
                                                                     : "bg-muted"
                                                             )}
                                                         >
@@ -795,7 +795,7 @@ export default function MessagesPage() {
                                                                 loading="lazy"
                                                             />
                                                             {msg.message && msg.message !== msg.file_name && (
-                                                                <p className="text-xs break-words">
+                                                                <p className="text-xs wrap-break-word">
                                                                     {msg.message}
                                                                 </p>
                                                             )}

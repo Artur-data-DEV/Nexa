@@ -128,10 +128,10 @@ function PaymentMethodsInner() {
           </p>
         </div>
 
-        <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
+        <Card className="border-2 border-primary/20 bg-linear-to-br from-primary/5 to-primary/10">
           <CardHeader className="p-4 md:p-6 pb-2 md:pb-4">
             <CardTitle className="flex items-start md:items-center gap-2 text-lg md:text-xl">
-              <CreditCard className="w-5 h-5 text-primary flex-shrink-0 mt-1 md:mt-0" />
+              <CreditCard className="w-5 h-5 text-primary shrink-0 mt-1 md:mt-0" />
               <span>{isBrand ? "Conta Stripe da Marca" : "Receber Pagamentos de Contratos"}</span>
             </CardTitle>
             <CardDescription className="text-sm md:text-base">
@@ -143,7 +143,7 @@ function PaymentMethodsInner() {
           <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
             <div className="mb-4 p-3 md:p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
               <div className="flex items-start gap-3">
-                <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
                 <div className="text-xs md:text-sm text-blue-800 dark:text-blue-200">
                   <p className="font-medium mb-1">
                     {isBrand
@@ -209,7 +209,7 @@ function PaymentMethodsInner() {
         </Card>
 
         <Alert className="text-xs md:text-sm">
-          <Shield className="h-4 w-4 flex-shrink-0" />
+          <Shield className="h-4 w-4 shrink-0" />
           <AlertDescription>
             Seus dados estão seguros: o Stripe é certificado PCI DSS Level 1, o mais alto nível de segurança
             para processamento de pagamentos. Suas informações bancárias nunca passam pelos nossos servidores.
