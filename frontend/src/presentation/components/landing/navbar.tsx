@@ -9,10 +9,10 @@ import { ThemeToggle } from "@/presentation/components/theme-toggle"
 import { Logo } from "@/presentation/components/logo"
 import { usePathname } from "next/navigation"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
 } from "@/presentation/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/presentation/components/ui/avatar"
 import { useAuth } from "@/presentation/contexts/auth-provider"
@@ -90,7 +90,7 @@ export const Navbar = () => {
     }
 
     return (
-        <header className="w-full top-0 z-50 p-4 md:p-6 bg-background/95 backdrop-blur fixed supports-backdrop-filter:bg-background/60 border-b border-border/40">
+        <header className="w-full top-0 z-50 p-4 md:p-6 bg-background/95 backdrop-blur fixed supports-backdrop-filter:bg-background/60">
             <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
                 <Link href="/" className="text-xl md:text-2xl font-bold text-foreground cursor-pointer">
                     <Logo
@@ -178,7 +178,6 @@ export const Navbar = () => {
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
-                            <ThemeToggle />
                         </>
                     ) : (
                         <>
@@ -195,7 +194,7 @@ export const Navbar = () => {
                                     >
                                         <Avatar className="h-8 w-8">
                                             <AvatarImage src={user?.avatar || ""} alt={user?.name || "Perfil"} />
-                                            <AvatarFallback>{(user?.name || "U").slice(0,1).toUpperCase()}</AvatarFallback>
+                                            <AvatarFallback>{(user?.name || "U").slice(0, 1).toUpperCase()}</AvatarFallback>
                                         </Avatar>
                                         <span className="text-sm font-medium">{user?.name || "Perfil"}</span>
                                     </button>
@@ -213,27 +212,25 @@ export const Navbar = () => {
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
-                            <ThemeToggle />
                         </>
                     )}
                 </div>
 
                 <div className="flex md:hidden items-center gap-3">
-                    <ThemeToggle />
-                            {isAuthenticated ? (
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <button
-                                            className="flex items-center gap-2 rounded-full px-2 py-1 hover:bg-muted transition-colors"
-                                            aria-label="Abrir perfil"
-                                        >
-                                            <Avatar className="h-8 w-8">
-                                                <AvatarImage src={user?.avatar || ""} alt={user?.name || "Perfil"} />
-                                                <AvatarFallback>{(user?.name || "U").slice(0,1).toUpperCase()}</AvatarFallback>
-                                            </Avatar>
-                                        </button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
+                    {isAuthenticated ? (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <button
+                                    className="flex items-center gap-2 rounded-full px-2 py-1 hover:bg-muted transition-colors"
+                                    aria-label="Abrir perfil"
+                                >
+                                    <Avatar className="h-8 w-8">
+                                        <AvatarImage src={user?.avatar || ""} alt={user?.name || "Perfil"} />
+                                        <AvatarFallback>{(user?.name || "U").slice(0, 1).toUpperCase()}</AvatarFallback>
+                                    </Avatar>
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
                                 <DropdownMenuItem asChild>
                                     <Link href="/dashboard">
                                         Ir para o painel

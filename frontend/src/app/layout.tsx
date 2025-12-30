@@ -41,6 +41,7 @@ export default function RootLayout({
           <AuthProvider>
             {children}
             <Toaster />
+            <ThemeToggle />
           </AuthProvider>
         </ThemeProvider>
       </body>

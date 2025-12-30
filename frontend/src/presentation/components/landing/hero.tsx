@@ -17,13 +17,13 @@ export const Hero = () => {
                     <div className="order-2 lg:order-1 space-y-12 text-center lg:text-left">
                         <div className="space-y-6">
                             <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold text-foreground tracking-tight leading-[1.1]">
-                                A nova era das colaborações já começou. {''}
+                                A nova era das colaborações entre {''}
                                 <span className="text-transparent bg-clip-text bg-linear-to-r from-pink-500 to-purple-600">
-                                    Sua nova central de conexões.
+                                    influenciadores e marcas
                                 </span>
                             </h1>
                             <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto lg:mx-0 leading-relaxed">
-                                Fature <strong className="text-foreground">R$ 5.000+ Por Mês</strong> Criando Vídeos de até 60 Segundos! Sem precisar ter seguidores ou se expor, com as conexões certas.
+                                Conexões de UGC com segurança, contratos e pagamento garantido. Fature com vídeos curtos. Encontre creators qualificados.
                             </p>
                         </div>
 
