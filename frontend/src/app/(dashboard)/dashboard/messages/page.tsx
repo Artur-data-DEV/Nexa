@@ -304,9 +304,16 @@ export default function MessagesPage() {
                 offer_data: e.offerData,
             }
 
+            console.log('INCOMING MESSAGE:', incoming)
+            console.log('is_sender:', incoming.is_sender, 'user?.id:', user?.id, 'senderId:', e.senderId)
+
             setMessages((prev) => {
+                console.log('PREV MESSAGES COUNT:', prev.length)
+
                 // Se a mensagem já existe (por ID ou ID temporário que virou real), ignora
-                if (prev.some(m => m.id === incoming.id)) return prev
+                const alreadyExists = prev.some(m => m.id === incoming.id)
+                console.log('Already exists by ID?', alreadyExists)
+                if (alreadyExists) return prev
 
                 // Se a mensagem é minha e chegou via socket, preciso remover a otimista se ela ainda estiver lá (embora o fluxo de envio já deva ter tratado)
                 // Mas como estamos recebendo via socket, o socket pode chegar antes ou depois da resposta da API.
@@ -318,12 +325,15 @@ export default function MessagesPage() {
                         (m.id > 1000000000000 && m.message === incoming.message) || // ID grande = otimista
                         m.id === incoming.id
                     )
+                    console.log('Is duplicate optimistic?', isDuplicateOptimistic)
                     if (isDuplicateOptimistic) {
                         // Se achou otimista, substitui pela real
+                        console.log('Replacing optimistic message')
                         return prev.map(m => (m.id > 1000000000000 && m.message === incoming.message) ? incoming : m)
                     }
                 }
 
+                console.log('ADDING NEW MESSAGE TO LIST')
                 return [...prev, incoming]
             })
             updateChatList(selectedChat.room_id, incoming)
@@ -730,15 +740,16 @@ export default function MessagesPage() {
                                                     )}
                                                 >
                                                     {isImageMessage && msg.file_url ? (
-                                                        <div className="space-y-1">
+                                                        <div className="space-y-1 max-w-[200px] sm:max-w-[280px]">
                                                             <img
                                                                 src={msg.file_url}
                                                                 alt={msg.file_name || "Imagem"}
-                                                                className="max-w-full h-auto rounded-md object-cover"
-                                                                style={{ maxHeight: '300px' }}
+                                                                className="w-full h-auto rounded-md object-cover"
+                                                                style={{ maxHeight: '200px' }}
+                                                                loading="lazy"
                                                             />
                                                             {msg.message && msg.message !== msg.file_name && (
-                                                                <p className="text-xs">
+                                                                <p className="text-xs break-words">
                                                                     {msg.message}
                                                                 </p>
                                                             )}

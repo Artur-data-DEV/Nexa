@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/presentation/components/ui/card";
 import { Alert, AlertDescription } from "@/presentation/components/ui/alert";
 import { Button } from "@/presentation/components/ui/button";
-import { Info, CreditCard, Shield, Loader2 } from "lucide-react";
+import { Info, CreditCard, Shield, Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { StripeConnectOnboarding } from "@/presentation/components/stripe/stripe-connect-onboarding";
 import { ApiStripeRepository } from "@/infrastructure/repositories/stripe-repository";
@@ -106,13 +106,22 @@ function PaymentMethodsInner() {
   const isBrand = role === "brand";
 
   return (
-    <div className="min-h-screen bg-background py-8">
-      <div className="max-w-4xl mx-auto px-4 space-y-6">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
+    <div className="min-h-screen bg-background py-6 md:py-8 w-full overflow-x-hidden">
+      <div className="max-w-4xl mx-auto px-4 space-y-4 md:space-y-6">
+        <div className="mb-6 md:mb-8">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.back()}
+            className="flex items-center gap-2 mb-4 pl-0"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Voltar
+          </Button>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
             {isBrand ? "Pagamentos da Marca" : "Configuração de Pagamento"}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm md:text-base text-muted-foreground">
             {isBrand
               ? "Conecte seus métodos de pagamento para financiar contratos e ofertas com segurança."
               : "Conecte sua conta Stripe para receber pagamentos de contratos com marcas de forma segura."}
@@ -120,22 +129,22 @@ function PaymentMethodsInner() {
         </div>
 
         <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <CreditCard className="w-5 h-5 text-primary" />
-              {isBrand ? "Conta Stripe da Marca" : "Receber Pagamentos de Contratos"}
+          <CardHeader className="p-4 md:p-6 pb-2 md:pb-4">
+            <CardTitle className="flex items-start md:items-center gap-2 text-lg md:text-xl">
+              <CreditCard className="w-5 h-5 text-primary flex-shrink-0 mt-1 md:mt-0" />
+              <span>{isBrand ? "Conta Stripe da Marca" : "Receber Pagamentos de Contratos"}</span>
             </CardTitle>
-            <CardDescription className="text-base">
+            <CardDescription className="text-sm md:text-base">
               {isBrand
                 ? "Conecte sua conta Stripe para processar pagamentos de contratos e ofertas de forma segura."
                 : "Conecte sua conta Stripe para receber pagamentos de marcas de forma segura e rápida."}
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
+            <div className="mb-4 p-3 md:p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
               <div className="flex items-start gap-3">
                 <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-blue-800 dark:text-blue-200">
+                <div className="text-xs md:text-sm text-blue-800 dark:text-blue-200">
                   <p className="font-medium mb-1">
                     {isBrand
                       ? "Por que preciso conectar a conta Stripe da minha marca?"
@@ -167,22 +176,22 @@ function PaymentMethodsInner() {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+          <CardHeader className="p-4 md:p-6 pb-2 md:pb-4">
+            <CardTitle className="flex items-center gap-2 text-lg">
               <CreditCard className="w-5 h-5" />
               {isBrand ? "Método de Pagamento para Contratos" : "Método de Pagamento para Saques"}
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-sm">
               {isBrand
                 ? "Conecte um cartão de crédito ou débito para pagar contratos e financiar ofertas."
                 : "Conecte um cartão de crédito ou débito para receber seus saques de campanhas."}
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
             <Button
               onClick={handleConnectPaymentMethod}
               disabled={isLoadingPaymentMethod}
-              className="w-full"
+              className="w-full text-sm h-10 md:h-11"
             >
               {isLoadingPaymentMethod ? (
                 <>
@@ -199,8 +208,8 @@ function PaymentMethodsInner() {
           </CardContent>
         </Card>
 
-        <Alert>
-          <Shield className="h-4 w-4" />
+        <Alert className="text-xs md:text-sm">
+          <Shield className="h-4 w-4 flex-shrink-0" />
           <AlertDescription>
             Seus dados estão seguros: o Stripe é certificado PCI DSS Level 1, o mais alto nível de segurança
             para processamento de pagamentos. Suas informações bancárias nunca passam pelos nossos servidores.

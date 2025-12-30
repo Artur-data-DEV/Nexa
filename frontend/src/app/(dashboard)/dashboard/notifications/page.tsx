@@ -122,90 +122,95 @@ export default function NotificationsPage() {
     };
 
     return (
-        <div className="min-h-screen bg-background">
-            <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="min-h-screen bg-background w-full overflow-x-hidden">
+            <div className="container mx-auto px-4 py-6 md:py-8 max-w-4xl">
                 {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                    <div className="flex items-center gap-4">
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => router.back()}
-                            className="flex items-center gap-2"
-                        >
-                            <ArrowLeft className="w-4 h-4" />
-                            Voltar
-                        </Button>
-                        <div>
-                            <h1 className="text-2xl md:text-3xl font-bold">Notificações</h1>
-                            <p className="text-sm md:text-base text-muted-foreground">
-                                {unreadCount > 0 ? `${unreadCount} não lida${unreadCount !== 1 ? 's' : ''}` : 'Todas as notificações foram lidas'}
-                            </p>
+                <div className="flex flex-col gap-4 mb-6 md:mb-8">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="flex items-start md:items-center gap-3">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => router.back()}
+                                className="flex items-center gap-2 pl-0 md:pl-3"
+                            >
+                                <ArrowLeft className="w-4 h-4" />
+                                <span className="md:inline">Voltar</span>
+                            </Button>
+                            <div>
+                                <h1 className="text-xl md:text-3xl font-bold">Notificações</h1>
+                                <p className="text-xs md:text-base text-muted-foreground">
+                                    {unreadCount > 0 ? `${unreadCount} não lida${unreadCount !== 1 ? 's' : ''}` : 'Todas as notificações foram lidas'}
+                                </p>
+                            </div>
                         </div>
-                    </div>
 
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                        {unreadCount > 0 && (
-                            <Button
-                                variant="outline"
-                                onClick={handleMarkAllAsRead}
-                                className="flex items-center justify-center gap-2"
-                            >
-                                <Check className="w-4 h-4" />
-                                Marcar todas como lidas
-                            </Button>
-                        )}
-                        {notifications.length > 0 && (
-                            <Button
-                                variant="outline"
-                                onClick={handleDeleteAllNotifications}
-                                className="flex items-center justify-center gap-2 text-red-600 border-red-600 hover:bg-red-50"
-                            >
-                                <Trash2 className="w-4 h-4" />
-                                Excluir todas
-                            </Button>
-                        )}
+                        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                            {unreadCount > 0 && (
+                                <Button
+                                    variant="outline"
+                                    onClick={handleMarkAllAsRead}
+                                    className="flex items-center justify-center gap-2 w-full sm:w-auto"
+                                    size="sm"
+                                >
+                                    <Check className="w-4 h-4" />
+                                    Marcar todas lidas
+                                </Button>
+                            )}
+                            {notifications.length > 0 && (
+                                <Button
+                                    variant="outline"
+                                    onClick={handleDeleteAllNotifications}
+                                    className="flex items-center justify-center gap-2 text-red-600 border-red-600 hover:bg-red-50 w-full sm:w-auto mt-2 sm:mt-0"
+                                    size="sm"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                    Excluir todas
+                                </Button>
+                            )}
+                        </div>
                     </div>
                 </div>
 
                 {/* Filter Tabs */}
-                <div className="flex gap-2 mb-6">
+                <div className="flex gap-2 mb-6 overflow-x-auto pb-2 md:pb-0">
                     <Button
                         variant={filter === 'all' ? 'default' : 'outline'}
                         onClick={() => setFilter('all')}
+                        size="sm"
+                        className="whitespace-nowrap"
                     >
                         Todas ({notifications.length})
                     </Button>
                     <Button
                         variant={filter === 'unread' ? 'default' : 'outline'}
                         onClick={() => setFilter('unread')}
+                        size="sm"
+                        className="whitespace-nowrap"
                     >
                         Não lidas ({unreadCount})
                     </Button>
                 </div>
 
                 {/* Notifications List */}
-                <div className="space-y-4">
+                <div className="space-y-3 md:space-y-4">
                     {isLoading && notifications.length === 0 ? (
                         <Card>
-                            <CardContent className="p-12 text-center">
-                                <Bell className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                            <CardContent className="p-8 md:p-12 text-center">
+                                <Bell className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
                                 <h3 className="text-lg font-semibold mb-2">
                                     Carregando notificações...
                                 </h3>
-                                <p className="text-muted-foreground">
-                                    Buscando suas notificações recentes.
-                                </p>
                             </CardContent>
                         </Card>
                     ) : filteredNotifications.length === 0 ? (
                         <Card>
-                            <CardContent className="p-12 text-center">
-                                <Bell className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                            <CardContent className="p-8 md:p-12 text-center">
+                                <Bell className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
                                 <h3 className="text-lg font-semibold mb-2">
                                     {filter === 'unread' ? 'Nenhuma notificação não lida' : 'Nenhuma notificação'}
                                 </h3>
-                                <p className="text-muted-foreground">
+                                <p className="text-sm md:text-base text-muted-foreground">
                                     {filter === 'unread'
                                         ? 'Todas as suas notificações foram lidas.'
                                         : 'Você ainda não recebeu nenhuma notificação.'
@@ -217,64 +222,71 @@ export default function NotificationsPage() {
                         filteredNotifications.map((notification) => (
                             <Card
                                 key={notification.id}
-                                className={`transition-all ${!notification.is_read ? 'border-primary/50 bg-primary/5' : ''} cursor-pointer`}
+                                className={`transition-all ${!notification.is_read ? 'border-primary/50 bg-primary/5' : ''} cursor-pointer hover:bg-accent/5`}
                                 onClick={() => handleNotificationClick(notification)}
                             >
-                                <CardContent className="p-6">
-                                    <div className="flex items-start gap-4">
-                                        <div className="flex-shrink-0 mt-1 text-2xl">
+                                <CardContent className="p-4 md:p-6">
+                                    <div className="flex items-start gap-3 md:gap-4">
+                                        <div className="flex-shrink-0 mt-1 text-xl md:text-2xl">
                                             {getNotificationIcon(notification.type)}
                                         </div>
 
                                         <div className="flex-1 min-w-0">
-                                            <div className="flex items-start justify-between gap-4 mb-2">
-                                                <div className="flex-1">
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        <h3 className="font-semibold text-lg">
-                                                            {notification.title}
-                                                        </h3>
-                                                        {!notification.is_read && (
-                                                            <Badge variant="secondary" className="text-xs">
-                                                                Não lida
-                                                            </Badge>
-                                                        )}
-                                                        <Badge variant="outline" className="text-xs">
+                                            <div className="flex flex-col gap-1">
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <div className="flex flex-col gap-1 pr-2">
+                                                        <div className="flex flex-wrap items-center gap-2">
+                                                            <h3 className="font-semibold text-sm md:text-lg leading-tight">
+                                                                {notification.title}
+                                                            </h3>
+                                                            {!notification.is_read && (
+                                                                <Badge variant="secondary" className="text-[10px] px-1.5 h-5">
+                                                                    Novo
+                                                                </Badge>
+                                                            )}
+                                                        </div>
+                                                        <span className="text-xs text-muted-foreground md:hidden">
+                                                            {getNotificationTypeLabel(notification.type)} • {formatTime(notification.created_at)}
+                                                        </span>
+                                                        <Badge variant="outline" className="text-xs w-fit hidden md:inline-flex">
                                                             {getNotificationTypeLabel(notification.type)}
                                                         </Badge>
                                                     </div>
-                                                    <p className="text-muted-foreground mb-2">
-                                                        {notification.message}
-                                                    </p>
-                                                    <p className="text-sm text-muted-foreground">
-                                                        {formatTime(notification.created_at)}
-                                                    </p>
-                                                </div>
 
-                                                <div className="flex items-center gap-2">
-                                                    {!notification.is_read && (
+                                                    <div className="flex items-center gap-1 flex-shrink-0">
+                                                        {!notification.is_read && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleMarkAsRead(notification.id);
+                                                                }}
+                                                                className="h-8 w-8 hover:bg-accent rounded-full"
+                                                                title="Marcar como lida"
+                                                            >
+                                                                <Check className="w-4 h-4" />
+                                                            </Button>
+                                                        )}
                                                         <Button
                                                             variant="ghost"
-                                                            size="sm"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleMarkAsRead(notification.id);
-                                                            }}
-                                                            className="h-8 w-8 p-0 hover:bg-accent"
-                                                            title="Marcar como lida"
+                                                            size="icon"
+                                                            onClick={(e) => handleDeleteNotification(notification.id, e)}
+                                                            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-accent rounded-full"
+                                                            title="Excluir"
                                                         >
-                                                            <Check className="w-4 h-4" />
+                                                            <Trash2 className="w-4 h-4" />
                                                         </Button>
-                                                    )}
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={(e) => handleDeleteNotification(notification.id, e)}
-                                                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-accent"
-                                                        title="Excluir notificação"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </Button>
+                                                    </div>
                                                 </div>
+
+                                                <p className="text-sm text-muted-foreground line-clamp-3 md:line-clamp-none mt-1">
+                                                    {notification.message}
+                                                </p>
+
+                                                <p className="text-xs text-muted-foreground hidden md:block mt-2">
+                                                    {formatTime(notification.created_at)}
+                                                </p>
                                             </div>
                                         </div>
                                     </div>
