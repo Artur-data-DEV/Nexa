@@ -46,12 +46,12 @@ export default function PortfolioView() {
     const [portfolio, setPortfolio] = useState<Portfolio | null>(null)
     const [stats, setStats] = useState<PortfolioStats | null>(null)
     const [loading, setLoading] = useState(true)
-    
+
     // Edit Profile State
     const [isEditOpen, setIsEditOpen] = useState(false)
     const [editTitle, setEditTitle] = useState("")
     const [editBio, setEditBio] = useState("")
-    const [editLinks, setEditLinks] = useState<{title: string, url: string}[]>([])
+    const [editLinks, setEditLinks] = useState<{ title: string, url: string }[]>([])
     const [editAvatar, setEditAvatar] = useState<File | null>(null)
     const [editAvatarPreview, setEditAvatarPreview] = useState<string | null>(null)
     const [savingProfile, setSavingProfile] = useState(false)
@@ -66,10 +66,10 @@ export default function PortfolioView() {
     // Upload Media State
     const [isUploadOpen, setIsUploadOpen] = useState(false)
     const [uploadFiles, setUploadFiles] = useState<File[]>([])
-    const [uploadPreviews, setUploadPreviews] = useState<{file: File, url: string, type: string}[]>([])
+    const [uploadPreviews, setUploadPreviews] = useState<{ file: File, url: string, type: string }[]>([])
     const [uploading, setUploading] = useState(false)
     const [dragActive, setDragActive] = useState(false)
-    
+
     // Delete State
     const [deleteId, setDeleteId] = useState<number | null>(null)
     const [deleting, setDeleting] = useState(false)
@@ -95,12 +95,12 @@ export default function PortfolioView() {
         if (!portfolio) {
             setEditTitle(user?.name || "")
             setEditBio("")
-            setEditLinks([{title: "", url: ""}])
+            setEditLinks([{ title: "", url: "" }])
             setEditAvatarPreview(user?.avatar || null)
         } else {
             setEditTitle(portfolio.title || "")
             setEditBio(portfolio.bio || "")
-            setEditLinks(portfolio.project_links ? [...portfolio.project_links] : [{title: "", url: ""}])
+            setEditLinks(portfolio.project_links ? [...portfolio.project_links] : [{ title: "", url: "" }])
             setEditAvatarPreview(portfolio.profile_picture_url || null)
         }
         setEditAvatar(null)
@@ -136,7 +136,7 @@ export default function PortfolioView() {
             const formData = new FormData()
             formData.append('title', editTitle)
             formData.append('bio', editBio)
-            
+
             const validLinks = editLinks.filter(l => l.url.trim() !== "")
             if (validLinks.length > 0) {
                 formData.append('project_links', JSON.stringify(validLinks))
@@ -172,7 +172,7 @@ export default function PortfolioView() {
 
     const addFiles = (files: File[]) => {
         const validFiles = files.filter(f => ACCEPTED_TYPES.includes(f.type))
-        
+
         const currentCount = (portfolio?.items?.length || 0) + uploadFiles.length
         if (currentCount + validFiles.length > MAX_TOTAL_FILES) {
             toast.error(`Limite de ${MAX_TOTAL_FILES} itens excedido`)
@@ -253,7 +253,7 @@ export default function PortfolioView() {
                 </div>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {[1,2,3,4].map(i => <Skeleton key={i} className="h-48 w-full" />)}
+                {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-48 w-full" />)}
             </div>
         </div>
     }
@@ -264,10 +264,10 @@ export default function PortfolioView() {
             <Card className="bg-linear-to-r from-pink-50 to-purple-50 dark:from-pink-950/20 dark:to-purple-950/20 border-none shadow-sm">
                 <CardContent className="p-6 md:p-8 flex flex-col md:flex-row items-center md:items-start gap-6">
                     <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-white shadow-md">
-                        <AvatarImage src={portfolio?.profile_picture_url || user?.avatar} />
+                        <AvatarImage src={user?.avatar} />
                         <AvatarFallback className="text-2xl">{user?.name?.substring(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
-                    
+
                     <div className="flex-1 text-center md:text-left space-y-2">
                         <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-4">
                             <div>
@@ -285,10 +285,10 @@ export default function PortfolioView() {
                         {portfolio?.project_links && portfolio.project_links.length > 0 && (
                             <div className="flex flex-wrap gap-2 justify-center md:justify-start mt-4">
                                 {portfolio.project_links.map((link, i) => (
-                                    <a 
-                                        key={i} 
-                                        href={link.url} 
-                                        target="_blank" 
+                                    <a
+                                        key={i}
+                                        href={link.url}
+                                        target="_blank"
                                         rel="noopener noreferrer"
                                         className="inline-flex items-center gap-1 text-sm text-pink-600 hover:text-pink-700 hover:underline bg-white/50 px-3 py-1 rounded-full border border-pink-100 transition-colors"
                                     >
@@ -314,25 +314,25 @@ export default function PortfolioView() {
 
                 {portfolio?.items && portfolio.items.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                                {portfolio.items.map((item) => (
-                                    <div key={item.id} className="group relative aspect-square bg-muted rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all">
+                        {portfolio.items.map((item) => (
+                            <div key={item.id} className="group relative aspect-square bg-muted rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all">
                                 {item.media_type === "image" ? (
-                                    <img 
-                                        src={item.file_url} 
-                                        alt={item.title || ""} 
+                                    <img
+                                        src={item.file_url}
+                                        alt={item.title || ""}
                                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                     />
                                 ) : (
-                                    <video 
-                                        src={item.file_url} 
+                                    <video
+                                        src={item.file_url}
                                         className="w-full h-full object-cover"
                                     />
                                 )}
-                                
+
                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                                    <Button 
-                                        variant="secondary" 
-                                        size="icon" 
+                                    <Button
+                                        variant="secondary"
+                                        size="icon"
                                         onClick={() => {
                                             setEditingItem(item)
                                             setEditItemTitle(item.title || "")
@@ -343,9 +343,9 @@ export default function PortfolioView() {
                                     >
                                         <Edit2 className="h-4 w-4" />
                                     </Button>
-                                    <Button 
-                                        variant="destructive" 
-                                        size="icon" 
+                                    <Button
+                                        variant="destructive"
+                                        size="icon"
                                         onClick={() => setDeleteId(item.id)}
                                         title="Excluir"
                                     >
@@ -386,17 +386,17 @@ export default function PortfolioView() {
                                     <AvatarImage src={editAvatarPreview || undefined} />
                                     <AvatarFallback>{user?.name?.substring(0, 2).toUpperCase()}</AvatarFallback>
                                 </Avatar>
-                                <label 
-                                    htmlFor="avatar-upload" 
+                                <label
+                                    htmlFor="avatar-upload"
                                     className="absolute bottom-0 right-0 bg-primary text-white p-1.5 rounded-full cursor-pointer hover:bg-primary/90 transition-colors"
                                 >
                                     <Camera className="h-4 w-4" />
                                 </label>
-                                <input 
-                                    id="avatar-upload" 
-                                    type="file" 
-                                    accept="image/*" 
-                                    className="hidden" 
+                                <input
+                                    id="avatar-upload"
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
                                     onChange={handleAvatarChange}
                                 />
                             </div>
@@ -404,18 +404,18 @@ export default function PortfolioView() {
 
                         <div className="space-y-2">
                             <Label>Título Profissional</Label>
-                            <Input 
-                                value={editTitle} 
-                                onChange={(e) => setEditTitle(e.target.value)} 
+                            <Input
+                                value={editTitle}
+                                onChange={(e) => setEditTitle(e.target.value)}
                                 placeholder="Ex: Criador de Conteúdo Lifestyle"
                             />
                         </div>
 
                         <div className="space-y-2">
                             <Label>Bio</Label>
-                            <Textarea 
-                                value={editBio} 
-                                onChange={(e) => setEditBio(e.target.value)} 
+                            <Textarea
+                                value={editBio}
+                                onChange={(e) => setEditBio(e.target.value)}
                                 placeholder="Conte um pouco sobre você..."
                                 className="resize-none h-24"
                             />
@@ -425,15 +425,15 @@ export default function PortfolioView() {
                             <Label>Links de Projetos</Label>
                             {editLinks.map((link, index) => (
                                 <div key={index} className="flex gap-2">
-                                    <Input 
-                                        placeholder="Título (Opcional)" 
-                                        value={link.title} 
+                                    <Input
+                                        placeholder="Título (Opcional)"
+                                        value={link.title}
                                         onChange={(e) => handleLinkChange(index, 'title', e.target.value)}
                                         className="flex-1"
                                     />
-                                    <Input 
-                                        placeholder="URL" 
-                                        value={link.url} 
+                                    <Input
+                                        placeholder="URL"
+                                        value={link.url}
                                         onChange={(e) => handleLinkChange(index, 'url', e.target.value)}
                                         className="flex-2"
                                     />
@@ -463,12 +463,11 @@ export default function PortfolioView() {
                         <DialogTitle>Adicionar Mídia</DialogTitle>
                         <DialogDescription>Carregue fotos ou vídeos para seu portfólio.</DialogDescription>
                     </DialogHeader>
-                    
+
                     <div className="space-y-4 py-4">
-                        <div 
-                            className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
-                                dragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-primary/50'
-                            }`}
+                        <div
+                            className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${dragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-primary/50'
+                                }`}
                             onDragEnter={() => setDragActive(true)}
                             onDragLeave={() => setDragActive(false)}
                             onDragOver={(e) => e.preventDefault()}
@@ -484,11 +483,11 @@ export default function PortfolioView() {
                             <p className="text-sm text-muted-foreground mb-2">
                                 Arraste e solte arquivos aqui ou clique para selecionar
                             </p>
-                            <input 
-                                type="file" 
-                                id="media-upload" 
-                                className="hidden" 
-                                multiple 
+                            <input
+                                type="file"
+                                id="media-upload"
+                                className="hidden"
+                                multiple
                                 accept={ACCEPTED_TYPES.join(',')}
                                 onChange={handleFileSelect}
                             />
@@ -506,7 +505,7 @@ export default function PortfolioView() {
                                         ) : (
                                             <video src={preview.url} className="w-full h-full object-cover" />
                                         )}
-                                        <button 
+                                        <button
                                             onClick={() => removeUploadFile(i)}
                                             className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
                                         >
