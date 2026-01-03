@@ -63,6 +63,8 @@ Host: db.iuyapitbtdeoktaeqjai.supabase.co
 Port: 5432
 Database: postgres
 User: postgres
+
+> **Gestão:** O projeto utiliza **Supabase CLI** e **Supabase MCP** para migrações e gerenciamento direto via interface de comando e inteligência artificial.
 ```
 
 **Limites Free Tier:**

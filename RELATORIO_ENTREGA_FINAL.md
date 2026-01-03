@@ -2,8 +2,8 @@
 
 **Responsável Técnico:** Artur Campos  
 **Contrato:** Prestação de Serviços de Arquitetura e Engenharia de Software 
-**Versão:** 3.0 (Versão Final de Entrega)  
-**Data da Entrega:** 30 / 12 / 2025
+**Versão:** 4.0 (Atualizado - Migração Supabase)  
+**Data da Entrega:** 03 / 01 / 2026
 
 ---
 
@@ -62,7 +62,7 @@ Esta arquitetura garante que **o custo de infraestrutura seja zero quando não h
 | Camada | Tecnologia | Estratégia de Economia Implementada |
 | :--- | :--- | :--- |
 | **Computação** | **Google Cloud Run** | **Escala a Zero:** O servidor desliga automaticamente quando ocioso. Cobrança por milissegundo de uso. |
-| **Banco de Dados** | **Cloud SQL (PostgreSQL)** | Configurado com **IP Privado** para evitar custos de tráfego de saída (NAT Gateway) e aumentar segurança. |
+| **Banco de Dados** | **Supabase (PostgreSQL)** | Migrado do Cloud SQL para **Supabase** para eliminar custo fixo. Inclui integração com **Supabase MCP** e **CLI** para gestão ágil. |
 | **Cache & Filas** | **Upstash Redis** | **Modelo Serverless:** Custo por requisição/comando, infinitamente mais barato que instâncias Redis provisionadas (ex: Elasticache). |
 | **Emails** | **AWS SES** | Custo irrisório (~USD 0,10 por 1000 emails) comparado a ferramentas de marketing. |
 | **CDN** | **Google Cloud CDN** | Cache de ativos estáticos na borda, reduzindo requisições aos servidores de aplicação. |
@@ -77,8 +77,8 @@ flowchart TD
     CDN -->|HTTPS Seguro| Backend["Cloud Run<br/>Backend API"]
     CDN -->|WSS Seguro| Chat["Cloud Run<br/>WebSocket (Chat)"]
 
-    subgraph VPC["VPC Privada<br/>(Sem Acesso Público)"]
-        Backend -->|Unix Socket| SQL["Cloud SQL<br/>PostgreSQL"]
+    subgraph VPC["VPC/Cloud Infrastructure"]
+        Backend -->|Conexão Segura| SQL["Supabase<br/>PostgreSQL"]
         Backend -->|Conexão Privada| Redis["Upstash Redis"]
         Chat -->|Conexão Privada| Redis
     end
@@ -94,7 +94,7 @@ Além da infraestrutura, foram aplicadas correções profundas no nível da apli
 *   ✅ **Proteção de Rotas:** Remoção total de endpoints de debug (`/payment/debug`) que expunham dados em produção.
 *   ✅ **Validação Rígida:** Implementação de `FormRequests` para garantir que nenhum dado inválido entre no banco.
 *   ✅ **Sanitização de Logs:** Remoção de logs que expunham chaves de API ou dados de clientes.
-*   ✅ **Segurança de Rede:** Banco de dados isolado em rede privada, inacessível via internet pública.
+*   ✅ **Segurança de Rede:** Banco de dados gerenciado pelo Supabase com políticas de acesso rigorosas e SSL obrigatório.
 *   ✅ **Rate Limiting:** Proteção contra ataques de força bruta nas rotas de login e cadastro.
 *   ✅ **Autenticação:** Implementação de autenticação JWT para garantir que apenas usuários autenticados possam acessar as rotas.
 *   ✅ **LGPD:** páginas de privacidade e termos de uso.
@@ -112,7 +112,7 @@ O ambiente abaixo foi configurado para validação final e testes de aceitação
 | **Frontend** | [Acessar Aplicação](https://nexa-frontend-1044548850970.southamerica-east1.run.app) | Versão Final (Candidate) |
 | **Backend API** | `https://nexa-backend2-....run.app` | Apenas consumo via API |
 | **Chat** | `https://nexa-chat-....run.app` | Instância Chat WebSocket de Homologação |
-| **Banco de Dados** | `nexa-db-1` (GCP South America) | Instância DB de Homologação |
+| **Banco de Dados** | **Supabase (PostgreSQL)** | Instância Supabase (db.iuyapitbtdeoktaeqjai.supabase.co) |
 | **Redis** | nexa-redis | Upstash Redis de Homologação -> Obs.: Está configurado porém desativado no momento para economia de recursos e por se tratar de uma instância serverless de homologação, porém pode ser configurado facilmente para produção em caso de necessidade de escalabilidade (pode gerar custos adicionais que estão já pré-configurados para serem pagos apenas por uso).
 ---
 
@@ -122,8 +122,8 @@ O ambiente abaixo foi configurado para validação final e testes de aceitação
 2.  **Fundação:** Configuração de Docker e ambiente de desenvolvimento/homologação/produção reprodutível.
 3.  **Correção:** Implementação de segurança (Hardening) e correção de bugs críticos.
 4.  **Modernização:** Reescrita integral do módulo de Chat utilizando WebSockets (Laravel Echo + Laravel Reverb) para comunicação em tempo real.
-5.  **Escalabilidade:** Migração para infraestrutura Serverless no Google Cloud, implementando estratégias de FinOps para redução de custos.
-6.  **Entrega:** Testes finais, documentação e deploy.
+5.  **Escalabilidade & FinOps:** Migração para infraestrutura Serverless no Google Cloud e transição do banco de dados para **Supabase** para atingir **Custo Zero** em repouso.
+6.  **Entrega:** Testes finais, documentação detalhada e implantação dos novos artefatos (incluindo Supabase CLI/MCP).
 
 ---
 
