@@ -93,26 +93,17 @@ test.describe('Campaign Application Approval Flow', () => {
                 await creatorPage.waitForLoadState('networkidle');
 
                 // Find the specific campaign by title or click the first one
-                // Usage of 'div.rounded-xl' or 'div.bg-card'
-                const campaignCard = creatorPage.locator('div.bg-card').filter({ hasText: uniqueCampaignTitle }).first();
-
-                // Fallback to reload and try again if not found immediately
-                try {
-                    await expect(campaignCard).toBeVisible({ timeout: 5000 });
-                    await campaignCard.click();
-                } catch (e) {
-                    console.log('Campaign specific card not found, reloading...');
+                // Use polling to find the campaign (handling potential propagation delay)
+                await expect(async () => {
                     await creatorPage.reload();
                     await creatorPage.waitForLoadState('networkidle');
-
-                    try {
-                        await expect(campaignCard).toBeVisible({ timeout: 5000 });
-                        await campaignCard.click();
-                    } catch (e2) {
-                        console.log('Still not found, clicking first available.');
-                        await creatorPage.locator(selectors.campaigns.card).first().click();
-                    }
-                }
+                    const campaignCard = creatorPage.locator('div.bg-card').filter({ hasText: uniqueCampaignTitle }).first();
+                    await expect(campaignCard).toBeVisible();
+                    await campaignCard.click();
+                }).toPass({
+                    intervals: [1000, 2000, 5000],
+                    timeout: 45000 // Wait up to 45s for the campaign to appear
+                });
 
                 await creatorPage.waitForLoadState('networkidle');
 
