@@ -170,36 +170,48 @@ test.describe('Authentication Flows', () => {
             ).toBeVisible({ timeout: timeouts.apiResponse });
         });
 
-        test.skip('should verify valid OTP', async ({ page }) => {
-            // This test assumes OTP_DEBUG=true which returns the code in response
+        test('should verify valid OTP', async ({ page }) => {
+            // Mock the OTP send response
+            await page.route('**/api/otp/send', async route => {
+                await route.fulfill({
+                    status: 200,
+                    contentType: 'application/json',
+                    body: JSON.stringify({ message: 'OTP sent', dev_code: '123456' })
+                });
+            });
+
+            // Mock the OTP verification response
+            await page.route('**/api/otp/verify', async route => {
+                await route.fulfill({
+                    status: 200,
+                    contentType: 'application/json',
+                    body: JSON.stringify({ message: 'OTP verified', token: 'mock-token' })
+                });
+            });
+
             await page.goto('/signup/brand');
 
             await page.fill('input[placeholder="Sua Marca Ltda"]', 'Marca Teste OTP');
             await page.fill(selectors.auth.emailInput, 'otptest@nexa.test');
             await page.fill('input[placeholder="(11) 99999-9999"]', '11999999999');
 
-            // Intercept the OTP response to get the code
-            const otpResponse = await Promise.all([
-                page.waitForResponse((response) =>
-                    response.url().includes('/api/otp/send') && response.status() === 200
-                ),
-                page.click(selectors.auth.sendOtpButton),
-            ]);
+            await page.click(selectors.auth.sendOtpButton);
 
             await handleConfirmationStep(page);
 
-            // In debug mode, the code is returned in the response
-            const responseBody = await otpResponse[0].json();
-            const otpCode = responseBody.dev_code;
+            // Verify we are on OTP screen
+            await expect(page.locator('text=Verifique seu contato')).toBeVisible({ timeout: timeouts.apiResponse });
 
-            if (otpCode) {
-                const otpInput = page.locator('input[autocomplete="one-time-code"]').or(page.locator('input[inputmode="numeric"]')).first();
-                await otpInput.fill(otpCode);
-                await page.click(selectors.auth.verifyOtpButton);
+            const otpInput = page.locator('input[autocomplete="one-time-code"]').or(page.locator('input[inputmode="numeric"]')).first();
+            await otpInput.waitFor({ state: 'visible', timeout: 10000 });
+            await otpInput.click(); // Focus
+            await otpInput.fill('123456');
+            
+            await page.click(selectors.auth.verifyOtpButton);
 
-                // Should proceed to next step
-                await expect(page.locator('text=/verificado|verified/i')).toBeVisible();
-            }
+            // Should proceed to next step (mocked response success)
+            // Adjust expectation based on actual flow (e.g. redirect to dashboard or success message)
+             await expect(page.locator('text=/verificado|verified/i').or(page.locator('text=Sucesso'))).toBeVisible({ timeout: timeouts.apiResponse });
         });
 
         test.skip('should show error for invalid OTP', async ({ page }) => {

@@ -35,3 +35,10 @@ Desktop.ini
 .trae/
 
 root_Nexa-Backend.env
+
+# Test logs and artifacts
+*.log
+*.txt
+**/test-results/
+**/playwright-report/
+**/blob-report/
