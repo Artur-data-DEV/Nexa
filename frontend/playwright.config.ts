@@ -30,7 +30,7 @@ export default defineConfig({
     /* Shared settings for all the projects below */
     use: {
         /* Base URL - PRODUCTION environment */
-        baseURL: process.env.BASE_URL || 'https://nexa.pro',
+        baseURL: process.env.BASE_URL || 'https://nexa-frontend-bwld7w5onq-rj.a.run.app',
 
         /* Collect trace when retrying the failed test */
         trace: 'on-first-retry',

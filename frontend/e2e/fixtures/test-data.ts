@@ -107,45 +107,45 @@ export const timeouts = {
 export const selectors = {
     // Auth
     auth: {
-        emailInput: '[data-testid="email-input"]',
-        passwordInput: '[data-testid="password-input"]',
-        loginButton: '[data-testid="login-button"]',
-        logoutButton: '[data-testid="logout-button"]',
-        errorMessage: '[data-testid="error-message"]',
-        otpInput: '[data-testid="otp-input"]',
-        sendOtpButton: '[data-testid="send-otp-button"]',
-        verifyOtpButton: '[data-testid="verify-otp-button"]',
+        emailInput: 'input[name="email"]', // Fallback from [data-testid="email-input"]
+        passwordInput: 'input[name="password"]', // Fallback from [data-testid="password-input"]
+        loginButton: 'button[type="submit"]', // Fallback from [data-testid="login-button"]
+        logoutButton: 'div[role="menuitem"]:has-text("Sair")', // Generic fallback
+        errorMessage: 'div[role="alert"]', // Generic fallback
+        otpInput: 'input[type="text"]', // Generic fallback
+        sendOtpButton: 'button:has-text("Próxima etapa")',
+        verifyOtpButton: 'button:has-text("Confirmar Código")',
     },
 
     // Dashboard
     dashboard: {
-        sidebar: '[data-testid="sidebar"]',
-        userMenu: '[data-testid="user-menu"]',
-        notifications: '[data-testid="notifications"]',
+        sidebar: 'aside', // Semantic HTML fallback
+        userMenu: 'button[id^="radix-"]', // Radix trigger fallback
+        notifications: 'button[aria-label="Notifications"]',
     },
 
     // Campaigns
     campaigns: {
-        card: '[data-testid="campaign-card"]',
-        applyButton: '[data-testid="apply-button"]',
-        coverLetterInput: '[data-testid="cover-letter-input"]',
-        submitApplication: '[data-testid="submit-application"]',
-        applicationStatus: '[data-testid="application-status"]',
-        applicationsTab: '[data-testid="applications-tab"]',
-        applicationRow: '[data-testid="application-row"]',
-        approveButton: '[data-testid="approve-button"]',
-        rejectButton: '[data-testid="reject-button"]',
+        card: '.card, div[class*="rounded-xl"]',
+        applyButton: 'button:has-text("Candidatar-se")',
+        coverLetterInput: 'textarea',
+        submitApplication: 'button:has-text("Enviar Candidatura")',
+        applicationStatus: 'span[class*="badge"]',
+        applicationsTab: 'button[role="tab"]:has-text("Candidaturas")',
+        applicationRow: 'tr',
+        approveButton: 'button:has-text("Aprovar")',
+        rejectButton: 'button:has-text("Rejeitar")',
     },
 
     // Chat
     chat: {
-        roomList: '[data-testid="chat-room-list"]',
-        room: '[data-testid="chat-room"]',
-        messageInput: '[data-testid="message-input"]',
-        sendButton: '[data-testid="send-message-button"]',
-        messageItem: '[data-testid="message-item"]',
-        typingIndicator: '[data-testid="typing-indicator"]',
-        fileUpload: '[data-testid="file-upload"]',
+        roomList: 'div[class*="flex-col gap-1"]',
+        room: 'button[class*="text-left"]',
+        messageInput: 'input[placeholder*="mensagem"], textarea[placeholder*="mensagem"]',
+        sendButton: 'button:has(svg.lucide-send)', // Icon based fallback
+        messageItem: 'div[class*="max-w-[75%]"]',
+        typingIndicator: 'div[class*="animate-bounce"]',
+        fileUpload: 'input[type="file"]',
     },
 
     // Contracts
