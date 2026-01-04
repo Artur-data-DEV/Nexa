@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 import { testUsers, selectors, timeouts } from '../fixtures/test-data';
 
 test.describe('Authentication Flows', () => {
@@ -124,7 +124,7 @@ test.describe('Authentication Flows', () => {
     test.describe('OTP Verification', () => {
 
         // Helper function to handle potential intermediate confirmation step
-        async function handleConfirmationStep(page) {
+        async function handleConfirmationStep(page: Page) {
             try {
                 // Look for "Enviar Código" button that might appear after initial submit
                 const confirmationButton = page.getByRole('button', { name: 'Enviar Código' });

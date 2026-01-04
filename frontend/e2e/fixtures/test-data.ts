@@ -150,17 +150,17 @@ export const selectors = {
 
     // Contracts
     contracts: {
-        card: '[data-testid="contract-card"]',
-        status: '[data-testid="contract-status"]',
-        activateButton: '[data-testid="activate-contract"]',
-        completeButton: '[data-testid="complete-contract"]',
+        card: 'div.rounded-xl.border.bg-card', // Generic card selector
+        status: 'div.inline-flex.items-center.rounded-full', // Badge selector
+        activateButton: 'button:has-text("Ativar Contrato")',
+        completeButton: 'button:has-text("Marcar como Concluído")',
     },
 
     // Payment
     payment: {
-        payButton: '[data-testid="pay-button"]',
-        successMessage: '[data-testid="payment-success"]',
-        errorMessage: '[data-testid="payment-error"]',
-        stripeFrame: 'iframe[name*="stripe"]',
+        payButton: 'button:has-text("Realizar Pagamento")',
+        successMessage: 'text=/pagamento realizado|sucesso/i',
+        errorMessage: 'text=/erro no pagamento/i',
+        stripeFrame: 'iframe[name^="__privateStripeFrame"]',
     },
 };

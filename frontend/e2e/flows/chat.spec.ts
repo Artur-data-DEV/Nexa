@@ -175,7 +175,7 @@ test.describe('Chat Real-Time Flows', () => {
                     await page.waitForTimeout(2000);
 
                     // File message should appear
-                    await expect(page.locator('[data-testid="file-message"]')).toBeVisible({
+                    await expect(page.locator('text=test-image.png')).toBeVisible({
                         timeout: timeouts.apiResponse,
                     });
                 }
