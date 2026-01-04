@@ -46,16 +46,16 @@ test.describe('Campaign Application Approval Flow', () => {
                 await expect(brandPage.locator('h2:has-text("Criar Nova Campanha")')).toBeVisible({ timeout: 10000 });
 
                 // Fill Title using Label association
-                const titleInput = brandPage.locator('div').filter({ has: brandPage.locator('label', { hasText: 'Título da Campanha' }) }).locator('input');
+                const titleInput = brandPage.locator('div').filter({ has: brandPage.locator('label', { hasText: 'Título da Campanha' }) }).locator('input').first();
                 await titleInput.fill(uniqueCampaignTitle);
 
                 // Fill Description
-                const descInput = brandPage.locator('div').filter({ has: brandPage.locator('label', { hasText: 'Descrição da Campanha' }) }).locator('textarea');
+                const descInput = brandPage.locator('div').filter({ has: brandPage.locator('label', { hasText: 'Descrição da Campanha' }) }).locator('textarea').first();
                 await descInput.fill('This is a test campaign description.');
 
                 // Fill Budget
                 // Budget input is usually near "Orçamento (R$)" or "Valor Estimado"
-                const budgetInput = brandPage.locator('div').filter({ has: brandPage.locator('label', { hasText: 'Orçamento' }) }).locator('input');
+                const budgetInput = brandPage.locator('div').filter({ has: brandPage.locator('label', { hasText: 'Orçamento' }) }).locator('input').first();
                 await budgetInput.fill('100');
 
                 // Campaign Type
@@ -70,7 +70,7 @@ test.describe('Campaign Application Approval Flow', () => {
 
                 // Deadline
                 const deadlineDiv = brandPage.locator('div').filter({ has: brandPage.locator('label', { hasText: 'Prazo Final' }) }).first();
-                await deadlineDiv.locator('input').click();
+                await deadlineDiv.locator('input').first().click();
                 await brandPage.locator('.react-datepicker__day').filter({ hasText: '28' }).first().click(); // Pick a day, safely
                 // Or just type if possible? Datepicker usually readonly. 
                 // Pressing Escape checking if closed
@@ -96,13 +96,22 @@ test.describe('Campaign Application Approval Flow', () => {
                 // Usage of 'div.rounded-xl' or 'div.bg-card'
                 const campaignCard = creatorPage.locator('div.bg-card').filter({ hasText: uniqueCampaignTitle }).first();
 
-                // Fallback to first if filtering fails (though it shouldn't)
+                // Fallback to reload and try again if not found immediately
                 try {
                     await expect(campaignCard).toBeVisible({ timeout: 5000 });
                     await campaignCard.click();
                 } catch (e) {
-                    console.log('Campaign specific card not found, clicking first available.');
-                    await creatorPage.locator(selectors.campaigns.card).first().click();
+                    console.log('Campaign specific card not found, reloading...');
+                    await creatorPage.reload();
+                    await creatorPage.waitForLoadState('networkidle');
+
+                    try {
+                        await expect(campaignCard).toBeVisible({ timeout: 5000 });
+                        await campaignCard.click();
+                    } catch (e2) {
+                        console.log('Still not found, clicking first available.');
+                        await creatorPage.locator(selectors.campaigns.card).first().click();
+                    }
                 }
 
                 await creatorPage.waitForLoadState('networkidle');
@@ -133,6 +142,7 @@ test.describe('Campaign Application Approval Flow', () => {
                     await expect(myCampaign).toBeVisible({ timeout: 5000 });
                     await myCampaign.click();
                 } catch (e) {
+                    console.log('My campaign verification failed, trying fallback.');
                     await brandPage.locator(selectors.campaigns.card).first().click();
                 }
 
