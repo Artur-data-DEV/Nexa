@@ -113,7 +113,7 @@ export default function DashboardLayout({
                     </Link>
                   </div>
                   <div className="flex-1">
-                    <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
+                    <nav className="grid items-start px-2 text-sm font-medium lg:px-4" data-testid="sidebar">
                       {navItems.map((item) => {
                         const Icon = item.icon
                         const hrefPath = item.href.split("?")[0]
@@ -197,7 +197,7 @@ export default function DashboardLayout({
                   <NotificationBell />
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="secondary" size="icon" className="rounded-full">
+                      <Button variant="secondary" size="icon" className="rounded-full" data-testid="user-menu">
                         <Avatar>
                           <AvatarImage src={user?.avatar} />
                           <AvatarFallback>{user?.name?.substring(0, 2).toUpperCase()}</AvatarFallback>
@@ -219,7 +219,7 @@ export default function DashboardLayout({
                         Configurações
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={logout} className="text-destructive">
+                      <DropdownMenuItem onClick={logout} className="text-destructive" data-testid="logout-button">
                         <LogOut className="mr-2 h-4 w-4" />
                         Sair
                       </DropdownMenuItem>

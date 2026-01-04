@@ -173,6 +173,7 @@ function LoginInner() {
                         placeholder="seu@email.com"
                         type="email"
                         disabled={loading}
+                        data-testid="email-input"
                         className="bg-zinc-100/50 dark:bg-white/5 border-2 border-zinc-200 dark:border-white/10 focus-visible:ring-pink-500/50 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 rounded-xl"
                         {...field}
                       />
@@ -192,6 +193,7 @@ function LoginInner() {
                         type="password"
                         placeholder="******"
                         disabled={loading}
+                        data-testid="password-input"
                         className="bg-zinc-100/50 dark:bg-white/5 border-2 border-zinc-200 dark:border-white/10 focus-visible:ring-pink-500/50 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 rounded-xl"
                         {...field}
                       />
@@ -232,7 +234,7 @@ function LoginInner() {
               </div>
 
               {serverError && (
-                <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive">
+                <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive" data-testid="error-message">
                   <AlertDescription>{serverError}</AlertDescription>
                 </Alert>
               )}
@@ -241,6 +243,7 @@ function LoginInner() {
                 type="submit"
                 className="w-full bg-pink-500 hover:bg-pink-600 text-white shadow-lg shadow-pink-500/25 h-11 font-bold rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
                 disabled={loading}
+                data-testid="login-button"
               >
                 {loading ? (
                   <>

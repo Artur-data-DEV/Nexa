@@ -416,11 +416,12 @@ export default function MessagesPage() {
     }, [selectedChat, echo, scrollToBottom, user?.id, setChats])
 
     const renderChatList = () => (
-        <div className="flex flex-col gap-1 p-2">
+        <div className="flex flex-col gap-1 p-2" data-testid="chat-room-list">
             {chats.map((chat) => (
                 <button
                     key={chat.room_id}
                     onClick={() => handleSelectChat(chat)}
+                    data-testid="chat-room"
                     className={cn(
                         "flex items-start gap-3 rounded-lg p-3 text-left text-sm transition-all hover:bg-accent",
                         selectedChat?.room_id === chat.room_id && "bg-accent"
@@ -842,7 +843,7 @@ export default function MessagesPage() {
                                             )
                                         })}
                                         {remoteTyping && (
-                                            <div className="flex w-max max-w-[75%] flex-col gap-2 rounded-lg px-4 py-3 text-sm bg-muted self-start">
+                                            <div className="flex w-max max-w-[75%] flex-col gap-2 rounded-lg px-4 py-3 text-sm bg-muted self-start" data-testid="typing-indicator">
                                                 <div className="flex gap-1 items-center">
                                                     <div className="w-1.5 h-1.5 bg-muted-foreground/60 rounded-full animate-bounce [animation-delay:-0.3s]" />
                                                     <div className="w-1.5 h-1.5 bg-muted-foreground/60 rounded-full animate-bounce [animation-delay:-0.15s]" />
@@ -869,6 +870,7 @@ export default function MessagesPage() {
                                 <Input
                                     placeholder="Digite sua mensagem..."
                                     value={newMessage}
+                                    data-testid="message-input"
                                     onChange={(e) => {
                                         setNewMessage(e.target.value)
                                         handleTyping()
@@ -879,7 +881,7 @@ export default function MessagesPage() {
                                     onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                                 />
                             </div>
-                            <Button size="icon" onClick={handleSendMessage}>
+                            <Button size="icon" onClick={handleSendMessage} data-testid="send-message-button">
                                 <Send className="h-4 w-4" />
                             </Button>
                         </div>
