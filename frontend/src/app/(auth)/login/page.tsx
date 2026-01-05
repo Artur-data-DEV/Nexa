@@ -160,102 +160,104 @@ function LoginInner() {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs font-black uppercase tracking-widest text-zinc-900 dark:text-zinc-100">Email</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="seu@email.com"
-                        type="email"
-                        disabled={loading}
-                        data-testid="email-input"
-                        className="bg-zinc-100/50 dark:bg-white/5 border-2 border-zinc-200 dark:border-white/10 focus-visible:ring-pink-500/50 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 rounded-xl"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs font-black uppercase tracking-widest text-zinc-900 dark:text-zinc-100">Senha</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="******"
-                        disabled={loading}
-                        data-testid="password-input"
-                        className="bg-zinc-100/50 dark:bg-white/5 border-2 border-zinc-200 dark:border-white/10 focus-visible:ring-pink-500/50 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 rounded-xl"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <main>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-black uppercase tracking-widest text-zinc-900 dark:text-zinc-100">Email</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="seu@email.com"
+                            type="email"
+                            disabled={loading}
+                            data-testid="email-input"
+                            className="bg-zinc-100/50 dark:bg-white/5 border-2 border-zinc-200 dark:border-white/10 focus-visible:ring-pink-500/50 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 rounded-xl"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-black uppercase tracking-widest text-zinc-900 dark:text-zinc-100">Senha</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="password"
+                            placeholder="******"
+                            disabled={loading}
+                            data-testid="password-input"
+                            className="bg-zinc-100/50 dark:bg-white/5 border-2 border-zinc-200 dark:border-white/10 focus-visible:ring-pink-500/50 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 rounded-xl"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <div className="flex items-center justify-between">
-                <FormField
-                  control={form.control}
-                  name="remember"
-                  render={({ field }) => (
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="remember"
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        disabled={loading}
-                        className="border-foreground/20 data-[state=checked]:bg-pink-500 data-[state=checked]:border-pink-500"
-                      />
-                      <label
-                        htmlFor="remember"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-zinc-700 dark:text-muted-foreground"
-                      >
-                        Lembrar de mim
-                      </label>
-                    </div>
+                  <div className="flex items-center justify-between">
+                    <FormField
+                      control={form.control}
+                      name="remember"
+                      render={({ field }) => (
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="remember"
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            disabled={loading}
+                            className="border-foreground/20 data-[state=checked]:bg-pink-500 data-[state=checked]:border-pink-500"
+                          />
+                          <label
+                            htmlFor="remember"
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-zinc-700 dark:text-muted-foreground"
+                          >
+                            Lembrar de mim
+                          </label>
+                        </div>
+                      )}
+                    />
+                    <Link
+                      href="/forgot-password"
+                      className="text-sm font-medium text-pink-500 hover:text-pink-600 transition-colors"
+                    >
+                      Esqueceu a senha?
+                    </Link>
+                  </div>
+
+                  {serverError && (
+                    <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive" data-testid="error-message">
+                      <AlertDescription>{serverError}</AlertDescription>
+                    </Alert>
                   )}
-                />
-                <Link
-                  href="/forgot-password"
-                  className="text-sm font-medium text-pink-500 hover:text-pink-600 transition-colors"
-                >
-                  Esqueceu a senha?
-                </Link>
-              </div>
 
-              {serverError && (
-                <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive" data-testid="error-message">
-                  <AlertDescription>{serverError}</AlertDescription>
-                </Alert>
-              )}
-
-              <Button
-                type="submit"
-                className="w-full bg-pink-500 hover:bg-pink-600 text-white shadow-lg shadow-pink-500/25 h-11 font-bold rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
-                disabled={loading}
-                data-testid="login-button"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Entrando...
-                  </>
-                ) : (
-                  "Entrar na plataforma"
-                )}
-              </Button>
-            </form>
-          </Form>
+                  <Button
+                    type="submit"
+                    className="w-full bg-pink-500 hover:bg-pink-600 text-white shadow-lg shadow-pink-500/25 h-11 font-bold rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+                    disabled={loading}
+                    data-testid="login-button"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Entrando...
+                      </>
+                    ) : (
+                      "Entrar na plataforma"
+                    )}
+                  </Button>
+                </form>
+              </Form>
+              </main>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">

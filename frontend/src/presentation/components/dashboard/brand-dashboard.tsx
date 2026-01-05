@@ -39,7 +39,7 @@ export default function BrandDashboard() {
                 setIsLoading(false)
             }
         }
-        
+
         if (user?.id) {
             fetchBrandCampaigns()
         }
@@ -82,11 +82,11 @@ export default function BrandDashboard() {
 
                 <TabsContent value="campaigns" className="space-y-6">
                     {isLoading ? (
-                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {[1, 2, 3].map(i => (
                                 <Skeleton key={i} className="h-[200px] w-full" />
                             ))}
-                         </div>
+                        </div>
                     ) : campaigns.length === 0 ? (
                         <Card>
                             <CardContent className="p-6">
@@ -399,8 +399,9 @@ function PaymentsTab() {
 
                 <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">Filtrar status:</span>
+                        <label htmlFor="statusFilter" className="text-sm text-muted-foreground">Filtrar status:</label>
                         <select
+                            id="statusFilter"
                             className="h-9 border rounded-md bg-background px-2 text-sm"
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}

@@ -275,8 +275,9 @@ export default function CreateCampaignPage() {
           <h2 className="font-bold text-lg md:text-xl mb-6">Criar Nova Campanha</h2>
 
           <div className="mb-5">
-            <label className="block text-xs font-medium text-muted-foreground mb-1">Título da Campanha *</label>
+            <label htmlFor="title" className="block text-xs font-medium text-muted-foreground mb-1">Título da Campanha *</label>
             <Input
+              id="title"
               value={title}
               onChange={e => setTitle(e.target.value)}
               placeholder="Campanha Verão 2024"
@@ -285,8 +286,9 @@ export default function CreateCampaignPage() {
           </div>
 
           <div className="mb-5">
-            <label className="block text-xs font-medium text-muted-foreground mb-1">Descrição da Campanha *</label>
+            <label htmlFor="description" className="block text-xs font-medium text-muted-foreground mb-1">Descrição da Campanha *</label>
             <Textarea
+              id="description"
               value={description}
               onChange={e => setDescription(e.target.value)}
               placeholder="Queremos conteúdo autêntico sobre moda verão"
@@ -296,8 +298,9 @@ export default function CreateCampaignPage() {
           </div>
 
           <div className="mb-5">
-            <label className="block text-xs font-medium text-muted-foreground mb-1">Tipo de Remuneração *</label>
+            <label htmlFor="remunerationType" className="block text-xs font-medium text-muted-foreground mb-1">Tipo de Remuneração *</label>
             <select
+              id="remunerationType"
               value={remunerationType}
               onChange={e => setRemunerationType(e.target.value as 'paga' | 'permuta')}
               className="w-full px-3 py-2 border rounded-lg bg-background text-sm"
@@ -309,10 +312,11 @@ export default function CreateCampaignPage() {
           </div>
 
           <div className="mb-5">
-            <label className="block text-xs font-medium text-muted-foreground mb-1">
+            <label htmlFor="budget" className="block text-xs font-medium text-muted-foreground mb-1">
               {remunerationType === 'permuta' ? 'Valor Estimado (R$) - Opcional' : 'Orçamento (R$) *'}
             </label>
             <Input
+              id="budget"
               type="number"
               value={budget}
               onChange={e => setBudget(e.target.value)}
@@ -324,8 +328,9 @@ export default function CreateCampaignPage() {
           </div>
 
           <div className="mb-5">
-            <label className="block text-xs font-medium text-muted-foreground mb-1">Tipo de Campanha *</label>
+            <label htmlFor="campaignType" className="block text-xs font-medium text-muted-foreground mb-1">Tipo de Campanha *</label>
             <select
+              id="campaignType"
               value={campaignType}
               onChange={e => setCampaignType(e.target.value)}
               className="w-full px-3 py-2 border rounded-lg bg-background text-sm"
@@ -373,8 +378,9 @@ export default function CreateCampaignPage() {
               <label className="block text-xs font-medium text-muted-foreground mb-2">Faixa de Idade (opcional)</label>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">Idade Mínima</label>
+                  <label htmlFor="minAge" className="block text-xs text-muted-foreground mb-1">Idade Mínima</label>
                   <Input
+                    id="minAge"
                     type="number"
                     min="18"
                     max="100"
@@ -384,8 +390,9 @@ export default function CreateCampaignPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">Idade Máxima</label>
+                  <label htmlFor="maxAge" className="block text-xs text-muted-foreground mb-1">Idade Máxima</label>
                   <Input
+                    id="maxAge"
                     type="number"
                     min="18"
                     max="100"
@@ -426,9 +433,10 @@ export default function CreateCampaignPage() {
           </div>
 
           <div className="mb-5">
-            <label className="block text-xs font-medium text-muted-foreground mb-1">Prazo Final *</label>
+            <label htmlFor="deadline" className="block text-xs font-medium text-muted-foreground mb-1">Prazo Final *</label>
             <div className="w-full">
               <DatePicker
+                id="deadline"
                 selected={deadline}
                 onChange={(date: Date | null) => setDeadline(date || undefined)}
                 locale="pt-BR"
@@ -437,14 +445,14 @@ export default function CreateCampaignPage() {
                 showMonthDropdown
                 showYearDropdown
                 dropdownMode="select"
-                customInput={<Input />}
+                customInput={<Input id="deadline" />}
                 placeholderText="Selecione uma data"
               />
             </div>
           </div>
 
           <div className="mb-5">
-            <label className="block text-xs font-medium text-muted-foreground mb-1">Em quais estados a campanha será divulgada? *</label>
+            <label htmlFor="stateSelector" className="block text-xs font-medium text-muted-foreground mb-1">Em quais estados a campanha será divulgada? *</label>
             <div className="flex flex-wrap gap-2 mb-2">
               {selectedStates.map(state => (
                 <span
@@ -480,6 +488,7 @@ export default function CreateCampaignPage() {
               </label>
             </div>
             <select
+              id="stateSelector"
               value=""
               onChange={handleStateChange}
               className="w-full px-3 py-2 border rounded-lg bg-background text-sm"

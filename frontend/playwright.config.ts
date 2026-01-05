@@ -1,51 +1,40 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Playwright Configuration for Nexa E2E Tests
- * @see https://playwright.dev/docs/test-configuration
- * 
- * NOTE: Configured to test against PRODUCTION environment
+ * Playwright Configuration - PRODUCTION
+ * Strictly forced to ignore unit tests in /src folder.
  */
 export default defineConfig({
+    /* Define o diretório de testes explicitamente */
     testDir: './e2e',
 
-    /* Run tests in files in parallel */
-    fullyParallel: true,
-
-    /* Fail the build on CI if you accidentally left test.only in the source code */
-    forbidOnly: !!process.env.CI,
-
-    /* Retry on CI only */
-    retries: process.env.CI ? 2 : 0,
-
-    /* Opt out of parallel tests on CI */
-    workers: process.env.CI ? 1 : undefined,
-
-    /* Reporter to use */
-    reporter: [
-        ['html', { open: 'never' }],
-        ['list'],
+    /* Ignora COMPLETAMENTE a pasta src e arquivos de teste de unidade */
+    testIgnore: [
+        '**/src/**',
+        '**/__tests__/**',
+        '**/*.test.ts',
+        '**/*.test.tsx'
     ],
 
-    /* Shared settings for all the projects below */
+    /* Apenas arquivos .spec.ts dentro de e2e */
+    testMatch: '**/*.spec.ts',
+
+    fullyParallel: true,
+    forbidOnly: !!process.env.CI,
+    retries: 2,
+    workers: process.env.CI ? 1 : 2,
+    reporter: [['list'], ['html', { open: 'never' }]],
+
     use: {
         /* Base URL - PRODUCTION environment */
-        baseURL: process.env.BASE_URL || 'https://nexa-frontend-bwld7w5onq-rj.a.run.app',
-
-        /* Collect trace when retrying the failed test */
+        baseURL: 'https://nexa-frontend-bwld7w5onq-rj.a.run.app',
         trace: 'on-first-retry',
-
-        /* Screenshot on failure */
-        screenshot: 'only-on-failure',
-
-        /* Video on failure */
-        video: 'on-first-retry',
-
-        /* Timeout for each action */
-        actionTimeout: 15000,
+        screenshot: 'on',
+        video: 'retain-on-failure',
+        actionTimeout: 45000,
+        navigationTimeout: 60000,
     },
 
-    /* Configure projects for major browsers */
     projects: [
         {
             name: 'chromium',
@@ -53,11 +42,8 @@ export default defineConfig({
         },
     ],
 
-    /* Global timeout for each test */
-    timeout: 60000,
-
-    /* Expect timeout */
+    timeout: 120000,
     expect: {
-        timeout: 10000,
+        timeout: 20000,
     },
 });

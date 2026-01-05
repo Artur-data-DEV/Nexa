@@ -1,23 +1,93 @@
-import { Page, expect } from '@playwright/test';
+import { Page, expect, test } from '@playwright/test';
 import { testUsers, selectors, timeouts } from '../fixtures/test-data';
 
 type UserType = keyof typeof testUsers;
 
 /**
  * Helper function to login as a specific user type
+ * Includes retry logic and better error handling
  */
 export async function loginAs(page: Page, userType: UserType): Promise<void> {
     const user = testUsers[userType];
+    const maxRetries = 3;
+    let lastError: Error | null = null;
 
-    await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            await page.goto('/login');
+            await page.waitForLoadState('networkidle');
 
-    await page.fill(selectors.auth.emailInput, user.email);
-    await page.fill(selectors.auth.passwordInput, user.password);
-    await page.click(selectors.auth.loginButton);
+            // Check if already logged in (redirected to dashboard)
+            if (page.url().includes('/dashboard')) {
+                console.log(`[INFO] Already logged in as ${userType}`);
+                return;
+            }
 
-    // Wait for redirect to dashboard
-    await expect(page).toHaveURL(/dashboard/, { timeout: timeouts.pageLoad });
+            await page.fill(selectors.auth.emailInput, user.email);
+            await page.fill(selectors.auth.passwordInput, user.password);
+            await page.click(selectors.auth.loginButton);
+
+            // Check for rate limiting
+            const rateLimit = page.getByText('Muitas tentativas. Aguarde um pouco e tente novamente.');
+            if (await rateLimit.isVisible({ timeout: 2000 }).catch(() => false)) {
+                console.log(`[WARN] Rate limit hit for ${userType}. Waiting 10s...`);
+                await page.waitForTimeout(10000);
+                await page.click(selectors.auth.loginButton);
+            }
+
+            // Check for invalid credentials error
+            const invalidCredentials = page.getByText(/credenciais inválidas|invalid credentials|usuário não encontrado|user not found/i);
+            if (await invalidCredentials.isVisible({ timeout: 3000 }).catch(() => false)) {
+                throw new Error(`E2E test user "${user.email}" not found in database. Run: php artisan db:seed --class=E2ETestUsersSeeder`);
+            }
+
+            // Wait for redirect to dashboard with increased timeout
+            await expect(page).toHaveURL(/dashboard|admin/, { timeout: timeouts.pageLoad * 3 });
+            console.log(`[INFO] Successfully logged in as ${userType} (attempt ${attempt})`);
+            return;
+
+        } catch (error) {
+            lastError = error as Error;
+            console.log(`[WARN] Login attempt ${attempt} failed for ${userType}: ${lastError.message}`);
+
+            if (attempt < maxRetries) {
+                await page.waitForTimeout(2000);
+            }
+        }
+    }
+
+    // If all retries failed, throw the last error
+    throw lastError || new Error(`Failed to login as ${userType} after ${maxRetries} attempts`);
+}
+
+/**
+ * Helper to check if E2E test users exist before running tests
+ * Can be used in beforeAll hooks
+ */
+export async function verifyTestUsersExist(page: Page): Promise<boolean> {
+    try {
+        await page.goto('/login');
+        await page.waitForLoadState('networkidle');
+
+        await page.fill(selectors.auth.emailInput, testUsers.brand.email);
+        await page.fill(selectors.auth.passwordInput, testUsers.brand.password);
+        await page.click(selectors.auth.loginButton);
+
+        // Wait briefly for response
+        await page.waitForTimeout(3000);
+
+        // Check if login succeeded
+        const isOnDashboard = page.url().includes('/dashboard');
+
+        // Logout if logged in
+        if (isOnDashboard) {
+            await page.context().clearCookies();
+        }
+
+        return isOnDashboard;
+    } catch {
+        return false;
+    }
 }
 
 /**

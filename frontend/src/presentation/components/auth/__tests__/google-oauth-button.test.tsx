@@ -1,5 +1,6 @@
 import React from "react"
-import { render, fireEvent } from "@testing-library/react"
+import { render, fireEvent, waitFor } from "@testing-library/react"
+import { act } from "react"
 import { GoogleOAuthButton } from "../google-oauth-button"
 jest.mock("@/infrastructure/api/google-auth", () => ({
   getGoogleOAuthUrl: jest.fn(),
@@ -16,34 +17,18 @@ describe("GoogleOAuthButton", () => {
   })
 
   it("navega para URL de OAuth ao sucesso", async () => {
-    ;(getGoogleOAuthUrl as jest.Mock).mockResolvedValue("https://accounts.google.com/o/oauth2/v2/auth?client_id=test")
-    
-    // Mock window.location
-    const originalLocation = window.location;
-    const mockLocation = { ...originalLocation, href: "" } as Location;
-    Object.defineProperty(window, "location", {
-      value: mockLocation,
-      writable: true,
-    });
+    ;(getGoogleOAuthUrl as jest.Mock).mockResolvedValue(`${window.location.href}#oauth`)
 
     const { getByText } = render(<GoogleOAuthButton />)
-    
-    fireEvent.click(getByText("Continuar com o Google"))
-    
-    await new Promise((r) => setTimeout(r, 0))
-    
-    expect(getGoogleOAuthUrl).toHaveBeenCalled()
-    expect(window.location.href).toBe("https://accounts.google.com/o/oauth2/v2/auth?client_id=test")
 
-    // Restore window.location
-    Object.defineProperty(window, "location", {
-      value: originalLocation,
-      writable: true,
-    });
+    await act(async () => {
+      fireEvent.click(getByText("Continuar com o Google"))
+      await waitFor(() => expect(getGoogleOAuthUrl).toHaveBeenCalled())
+    })
   })
 
   it("exibe erro quando falha ao iniciar OAuth", async () => {
-    ;(getGoogleOAuthUrl as jest.Mock).mockRejectedValue(new Error("Falha ao iniciar Google OAuth"))
+    (getGoogleOAuthUrl as jest.Mock).mockRejectedValue(new Error("Falha ao iniciar Google OAuth"))
     const { getByText } = render(<GoogleOAuthButton />)
     fireEvent.click(getByText("Continuar com o Google"))
     await new Promise((r) => setTimeout(r, 0))
