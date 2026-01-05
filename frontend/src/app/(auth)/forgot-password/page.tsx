@@ -8,6 +8,7 @@ import { useTheme } from "next-themes"
 import { ThemeToggle } from "@/presentation/components/theme-toggle"
 import { ApiAuthRepository } from "@/infrastructure/repositories/auth-repository"
 import { api } from "@/infrastructure/api/axios-adapter"
+import type { AxiosError } from "axios"
 
 const authRepository = new ApiAuthRepository(api)
 
@@ -28,17 +29,20 @@ export default function ForgotPasswordPage() {
     setLoading(true)
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const data: any = await authRepository.forgotPassword(email)
+      const data = await authRepository.forgotPassword(email) as { status?: boolean; message?: string }
       
       if (data.status || data.message) { // Laravel usually returns status or message
         setSubmitted(true)
       } else {
         alert(data.message || "Email não encontrado. Tente novamente.")
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError<{ message?: string }>
       console.error("Error sending reset link:", error)
-      const errorMessage = error?.response?.data?.message || error?.message || "Algo deu errado. Tente novamente mais tarde."
+      const errorMessage =
+        axiosError.response?.data?.message ||
+        axiosError.message ||
+        "Algo deu errado. Tente novamente mais tarde."
       alert(errorMessage)
     } finally {
       setLoading(false)

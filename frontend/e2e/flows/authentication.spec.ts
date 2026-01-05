@@ -131,7 +131,7 @@ test.describe('Authentication Flows', () => {
                 if (await confirmationButton.isVisible({ timeout: 3000 })) {
                     await confirmationButton.click();
                 }
-            } catch (e) {
+            } catch {
                 // Ignore if not present
             }
         }

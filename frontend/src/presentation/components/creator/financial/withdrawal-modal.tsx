@@ -12,6 +12,7 @@ import { GetWithdrawalMethodsUseCase } from "@/application/use-cases/get-withdra
 import { RequestWithdrawalUseCase } from "@/application/use-cases/request-withdrawal.use-case"
 import { api } from "@/infrastructure/api/axios-adapter"
 import { WithdrawalMethod } from "@/domain/entities/financial"
+import type { AxiosError } from "axios"
 
 const financialRepository = new ApiFinancialRepository(api)
 const getWithdrawalMethodsUseCase = new GetWithdrawalMethodsUseCase(financialRepository)
@@ -42,9 +43,10 @@ export function WithdrawalModal({ open, onOpenChange, availableBalance, onSucces
         try {
             const data = await getWithdrawalMethodsUseCase.execute()
             setMethods(data)
-        } catch (error) {
+        } catch (error: unknown) {
             console.error("Failed to load withdrawal methods", error)
-            toast.error("Erro ao carregar métodos de saque")
+            const axiosError = error as AxiosError<{ message?: string }>
+            toast.error(axiosError.response?.data?.message || "Erro ao carregar métodos de saque")
         } finally {
             setLoading(false)
         }
@@ -83,17 +85,17 @@ export function WithdrawalModal({ open, onOpenChange, availableBalance, onSucces
         try {
             await requestWithdrawalUseCase.execute({
                 amount: numericAmount,
-                withdrawal_method: selectedMethod,
-                withdrawal_details: {} // In a real app, we might need dynamic fields based on method
+                method: selectedMethod,
             })
             toast.success("Solicitação de saque enviada com sucesso!")
             onSuccess()
             onOpenChange(false)
             setAmount("")
             setSelectedMethod("")
-        } catch (error) {
+        } catch (error: unknown) {
             console.error("Failed to request withdrawal", error)
-            toast.error("Erro ao solicitar saque")
+            const axiosError = error as AxiosError<{ message?: string }>
+            toast.error(axiosError.response?.data?.message || "Erro ao solicitar saque")
         } finally {
             setSubmitting(false)
         }
@@ -101,7 +103,7 @@ export function WithdrawalModal({ open, onOpenChange, availableBalance, onSucces
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-106.25">
                 <DialogHeader>
                     <DialogTitle>Solicitar Saque</DialogTitle>
                     <DialogDescription>

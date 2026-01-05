@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useState, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/presentation/components/ui/card";
 import { Badge } from "@/presentation/components/ui/badge";
@@ -10,8 +10,6 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from 
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Navbar } from "@/presentation/components/landing/navbar";
 import { Tabs, TabsList, TabsTrigger } from "@/presentation/components/ui/tabs";
-import { ApiGuideRepository } from "@/infrastructure/repositories/guide-repository";
-import { api } from "@/infrastructure/api/axios-adapter";
 import { Guide } from "@/domain/entities/guide";
 import {
   BookOpen,
@@ -29,14 +27,12 @@ import {
   Wallet,
   Building2,
   UserStar,
-  ArrowRight,
-  Menu,
   Video
 } from "lucide-react";
 import { MdOutlineLibraryBooks } from "react-icons/md";
 
 // Repository Instance
-const guideRepository = new ApiGuideRepository(api);
+// const guideRepository = new ApiGuideRepository(api);
 
 // Types
 interface DocSection {
@@ -317,7 +313,7 @@ function DocumentationSidebar({ sections, activeSection, onSectionChange }: {
   onSectionChange: (sectionId: string) => void;
 }) {
   return (
-    <div className="hidden md:block fixed top-[80px] left-0 w-80 bg-background/40 backdrop-blur-md border-r border-white/5 h-[calc(100vh-80px)] overflow-y-auto">
+    <div className="hidden md:block fixed top-20 left-0 w-80 bg-background/40 backdrop-blur-md border-r border-white/5 h-[calc(100vh-80px)] overflow-y-auto">
       <div className="p-6">
         <h2 className="text-lg font-bold mb-6 flex items-center gap-2 text-foreground/90">
           <BookOpen className="h-5 w-5 text-indigo-500" />
@@ -418,7 +414,7 @@ function MobileSidebar({ sections, activeSection, onSectionChange, audience, onA
     'Menu de Navegação';
 
   return (
-    <div className="md:hidden sticky top-[60px] z-40 bg-background/80 backdrop-blur-xl border-b border-white/5 w-full">
+    <div className="md:hidden sticky top-15 z-40 bg-background/80 backdrop-blur-xl border-b border-white/5 w-full">
       <div className="px-4 h-14 flex items-center justify-between">
         <div className="flex items-center gap-2 overflow-hidden">
           <BookOpen className="h-4 w-4 text-indigo-500 shrink-0" />
@@ -807,7 +803,7 @@ function GuideContent({ guide }: { guide: Guide }) {
           </div>
 
           <div className="space-y-12">
-            {sortedSteps.map((step, idx) => (
+            {sortedSteps.map((step: typeof sortedSteps[number], idx: number) => (
               <Card key={step.id} className="relative overflow-hidden border-2 bg-background/50 backdrop-blur-md group hover:border-white/10 transition-all duration-500 rounded-[2rem] shadow-xl hover:shadow-black/20 hover:-translate-y-1">
                 <div className={`absolute top-0 left-0 w-2 h-full bg-${accentColor}-500 opacity-80 group-hover:opacity-100 transition-opacity`} />
                 <CardContent className="p-6 md:p-8">
@@ -908,28 +904,18 @@ function DocumentationInner() {
   const sectionParam = searchParams.get('section');
   const audienceParam = searchParams.get('audience');
 
-  const [guides, setGuides] = useState<Guide[]>(MOCK_GUIDES);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [activeSection, setActiveSection] = useState(sectionParam || 'overview');
+  const [guides] = useState<Guide[]>(MOCK_GUIDES);
+  const [loading] = useState(false);
+  const [error] = useState<string | null>(null);
+  
+  // Derived state from URL
+  const activeSection = sectionParam || 'overview';
+
   const [audience, setAudience] = useState<'overview' | 'Brand' | 'Creator'>(
     audienceParam === 'Brand' || audienceParam === 'Creator' ? (audienceParam as 'Brand' | 'Creator') : 'overview'
   );
 
-  useEffect(() => {
-    // Override fetch with mock for now to ensure content display
-    setGuides(MOCK_GUIDES);
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    if (sectionParam) {
-      setActiveSection(sectionParam);
-    }
-  }, [sectionParam]);
-
   const handleSectionChange = (sectionId: string) => {
-    setActiveSection(sectionId);
     const params = new URLSearchParams();
     params.set('section', sectionId);
     if (audience !== 'overview') params.set('audience', audience);
@@ -1095,7 +1081,7 @@ function DocumentationInner() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col md:flex-row pt-[64px] md:pt-[80px]">
+    <div className="min-h-screen bg-background text-foreground flex flex-col md:flex-row pt-16 md:pt-20">
       <DocumentationSidebar
         sections={sections}
         activeSection={activeSection}

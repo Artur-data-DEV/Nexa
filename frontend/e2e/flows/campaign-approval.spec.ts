@@ -1,12 +1,12 @@
 import { test, expect } from '@playwright/test';
 import {
-    testUsers,
-    stripeTestCards,
-    selectors,
-    timeouts,
-    testApplication
+    // testUsers,
+    // stripeTestCards,
+    // selectors,
+    // timeouts,
+    // testApplication
 } from '../fixtures/test-data';
-import { loginAs, fillStripeCard, waitForWebSocketConnection, takeScreenshot } from '../helpers/auth';
+import { loginAs } from '../helpers/auth';
 
 test.describe('Campaign Application Approval Flow', () => {
 
@@ -73,7 +73,7 @@ test.describe('Campaign Application Approval Flow', () => {
                 try {
                     await expect(brandPage.getByText(/Campanha Criada|sucesso/i)).toBeVisible({ timeout: 10000 });
                     console.log('[TEST] Campaign created successfully (Verified)');
-                } catch (e) {
+                } catch {
                     console.log('[TEST] WARN: Campaign creation success not visible. Proceeding to verify via Admin...');
                 }
             });

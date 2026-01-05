@@ -11,6 +11,7 @@ import { StripeConnectOnboarding } from "@/presentation/components/stripe/stripe
 import { ApiStripeRepository } from "@/infrastructure/repositories/stripe-repository";
 import { api } from "@/infrastructure/api/axios-adapter";
 import { useAuth } from "@/presentation/contexts/auth-provider";
+import type { AxiosError } from "axios";
 
 const stripeRepository = new ApiStripeRepository(api);
 
@@ -91,18 +92,18 @@ function PaymentMethodsInner() {
       }
 
       throw new Error(response.message || "Erro ao criar sessão de checkout");
-    } catch (error: any) {
-      console.error("Error connecting payment method:", error);
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError<{ message?: string }>;
+      console.error("Error connecting payment method:", axiosError);
       const message =
-        error?.response?.data?.message ||
-        error?.message ||
+        axiosError.response?.data?.message ||
+        axiosError.message ||
         "Erro ao conectar método de pagamento. Tente novamente.";
       toast.error(message);
       setIsLoadingPaymentMethod(false);
     }
   };
 
-  const isCreator = role === "creator";
   const isBrand = role === "brand";
 
   return (

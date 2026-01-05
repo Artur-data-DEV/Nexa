@@ -1,5 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { testUsers, testCampaign, selectors, timeouts } from '../fixtures/test-data';
+import {
+    // testUsers,
+    // testCampaign,
+    // selectors,
+    timeouts
+} from '../fixtures/test-data';
 import { loginAs } from '../helpers/auth';
 
 test.describe('Campaign CRUD Flows', () => {

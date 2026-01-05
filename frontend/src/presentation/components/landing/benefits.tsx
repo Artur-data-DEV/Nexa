@@ -1,6 +1,6 @@
 "use client"
 
-import { MessageSquare, Shield, DollarSign, Heart, Eye, Star, User, Book, ArrowRight } from "lucide-react";
+import { MessageSquare, Shield, DollarSign, Heart, Eye, Star, User, Book } from "lucide-react";
 import { motion } from "framer-motion";
 import { Badge } from "@/presentation/components/ui/badge";
 
@@ -65,7 +65,7 @@ export const Benefits = () => {
 
   return (
     <section id="benefits" className="py-12 md:py-24 bg-background relative">
-      <div className="absolute top-1/2 left-0 w-full h-[500px] bg-linear-to-b from-muted/20 to-transparent -z-10" />
+      <div className="absolute top-1/2 left-0 w-full h-125 bg-linear-to-b from-muted/20 to-transparent -z-10" />
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

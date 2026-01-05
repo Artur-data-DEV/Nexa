@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { ArrowLeft, CheckCircle, XCircle, Clock, MessageCircle } from "lucide-react"
 import Link from "next/link"
+import type { AxiosError } from "axios"
 
 import { ApiApplicationRepository } from "@/infrastructure/repositories/application-repository"
 import { ApiCampaignRepository } from "@/infrastructure/repositories/campaign-repository"
@@ -100,10 +101,16 @@ export default function ManageCandidatesPage() {
             if (status !== 'approved') {
                 toast.success(`Candidato ${status === 'rejected' ? 'rejeitado' : 'atualizado'} com sucesso!`)
             }
-        } catch (error: any) {
+        } catch (error) {
             console.error("Failed to update status", error)
-            const statusCode = error?.response?.status
-            const data = error?.response?.data
+            const axiosError = error as AxiosError<{
+                message?: string
+                requires_stripe_account?: boolean
+                requires_funding?: boolean
+                redirect_url?: string
+            }>
+            const statusCode = axiosError.response?.status
+            const data = axiosError.response?.data
 
             if (statusCode === 402 && data) {
                 const message =
@@ -118,7 +125,7 @@ export default function ManageCandidatesPage() {
 
                 if (data.requires_stripe_account) {
                     router.push("/dashboard/payment-methods")
-                } else if (data.requires_funding && data.redirect_url && typeof window !== "undefined") {
+                } else if (data.requires_funding && typeof data.redirect_url === "string" && typeof window !== "undefined") {
                     window.location.href = data.redirect_url
                 }
             } else {
@@ -134,7 +141,7 @@ export default function ManageCandidatesPage() {
             <div className="flex flex-col gap-6 p-6">
                 <Skeleton className="h-8 w-1/3" />
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {[1, 2, 3].map(i => <Skeleton key={i} className="h-[250px] w-full" />)}
+                    {[1, 2, 3].map(i => <Skeleton key={i} className="h-64 w-full" />)}
                 </div>
             </div>
         )
@@ -166,7 +173,7 @@ export default function ManageCandidatesPage() {
             </div>
 
             <Tabs defaultValue="pending" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 max-w-[600px]">
+                <TabsList className="grid w-full grid-cols-3 max-w-xl">
                     <TabsTrigger value="pending" className="flex items-center gap-2">
                         <Clock className="h-4 w-4" />
                         Pendentes ({pendingApplications.length})
@@ -262,12 +269,12 @@ function CandidateCard({
                     </p>
                 </div>
                 <div className="grid gap-2 text-sm">
-                    {typeof (application as any).proposed_budget === "number" || (application as any).proposed_budget ? (
+                    {typeof application.proposed_budget === "number" || application.proposed_budget ? (
                         <div className="flex justify-between items-center bg-muted p-2 rounded">
                             <span>Orçamento proposto</span>
                             <span className="font-semibold">
                                 {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
-                                    Number((application as any).proposed_budget ?? application.budget ?? 0)
+                                    Number(application.proposed_budget ?? application.budget ?? 0)
                                 )}
                             </span>
                         </div>
@@ -279,20 +286,20 @@ function CandidateCard({
                             </span>
                         </div>
                     ) : null}
-                    {((application as any).estimated_delivery_days || application.delivery_days) && (
+                    {(application.estimated_delivery_days || application.delivery_days) && (
                         <div className="flex justify-between items-center bg-muted p-2 rounded">
                             <span>Prazo estimado</span>
                             <span className="font-semibold">
-                                {((application as any).estimated_delivery_days ?? application.delivery_days) + " dias"}
+                                {((application.estimated_delivery_days ?? application.delivery_days) ?? 0) + " dias"}
                             </span>
                         </div>
                     )}
                 </div>
-                {Array.isArray((application as any).portfolio_links) && (application as any).portfolio_links.length > 0 && (
+                {Array.isArray(application.portfolio_links) && application.portfolio_links.length > 0 && (
                     <div className="space-y-1">
                         <h4 className="text-sm font-medium">Portfólio</h4>
                         <ul className="space-y-1">
-                            {(application as any).portfolio_links.map((link: string, index: number) => (
+                            {application.portfolio_links.map((link: string, index: number) => (
                                 <li key={index}>
                                     <a
                                         href={link}

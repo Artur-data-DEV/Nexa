@@ -8,6 +8,7 @@ import { useTheme } from "next-themes"
 import { ThemeToggle } from "@/presentation/components/theme-toggle"
 import { ApiAuthRepository } from "@/infrastructure/repositories/auth-repository"
 import { api } from "@/infrastructure/api/axios-adapter"
+import type { AxiosError } from "axios"
 
 const authRepository = new ApiAuthRepository(api)
 
@@ -84,10 +85,10 @@ function ResetPasswordForm() {
         password_confirmation: passwordConfirmation,
       })
       setSubmitted(true)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      console.error("Error resetting password:", error)
-      const errorMessage = error?.response?.data?.message || error?.message || "Erro ao redefinir senha. Tente novamente."
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError<{ message?: string }>
+      console.error("Error resetting password:", axiosError)
+      const errorMessage = axiosError.response?.data?.message || axiosError.message || "Erro ao redefinir senha. Tente novamente."
       setError(errorMessage)
     } finally {
       setLoading(false)

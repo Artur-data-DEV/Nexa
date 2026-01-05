@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/presentation/components/ui/card';
 import { Badge } from '@/presentation/components/ui/badge';
 import { Check, Trash2, Bell, ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { Notification } from '@/domain/entities/notification';
 
 export default function NotificationsPage() {
     const router = useRouter();
@@ -103,15 +104,24 @@ export default function NotificationsPage() {
         }
     };
 
-    const handleNotificationClick = async (notification: any) => {
+    const handleNotificationClick = async (notification: Notification) => {
+        const data = notification.data as Record<string, unknown>
+        const chatType = typeof data["chat_type"] === "string" ? data["chat_type"] : undefined
+        const chatRoomIdValue = data["chat_room_id"]
+        const chatRoomId =
+            typeof chatRoomIdValue === "number"
+                ? chatRoomIdValue
+                : typeof chatRoomIdValue === "string"
+                    ? Number(chatRoomIdValue)
+                    : undefined
         const isChatNotification =
             notification.type === 'new_message' &&
-            notification.data &&
-            (notification.data.chat_type === 'campaign' || notification.data.chat_type === 'direct') &&
-            notification.data.chat_room_id;
+            (chatType === 'campaign' || chatType === 'direct') &&
+            typeof chatRoomId === "number" &&
+            !Number.isNaN(chatRoomId);
 
         if (isChatNotification) {
-            const roomId = notification.data.chat_room_id;
+            const roomId = chatRoomId;
             // Assuming dashboard/messages is the route
             router.push(`/dashboard/messages?roomId=${roomId}`);
         }

@@ -64,9 +64,10 @@ export class ApiPortfolioRepository implements PortfolioRepository {
       return path.startsWith("/") ? `${rootUrl}${path}` : path || undefined
     }
     const updated = response.data
+    const profilePicturePath = (updated as unknown as { profile_picture?: string | null }).profile_picture
     return {
       ...updated,
-      profile_picture_url: resolveUrl((updated as any).profile_picture || updated.profile_picture_url),
+      profile_picture_url: resolveUrl(profilePicturePath ?? updated.profile_picture_url ?? null),
     }
   }
 

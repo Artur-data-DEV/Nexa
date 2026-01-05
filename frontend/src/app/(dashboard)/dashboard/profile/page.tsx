@@ -14,6 +14,7 @@ import { api } from "@/infrastructure/api/axios-adapter"
 import { toast } from "sonner"
 import { MdOutlineVerified } from "react-icons/md";
 import { BsFacebook, BsInstagram, BsTiktok, BsTwitter, BsYoutube } from "react-icons/bs"
+import { User } from "@/domain/entities/user"
 
 
 const authRepository = new ApiAuthRepository(api)
@@ -26,7 +27,7 @@ export default function ProfilePage() {
 
     if (!user) return null
 
-    const handleSaveProfile = async (updatedProfile: Record<string, unknown>) => {
+    const handleSaveProfile = async (updatedProfile: User & { image?: File | null }) => {
         setIsLoading(true)
         try {
             const form = new FormData()
@@ -42,7 +43,7 @@ export default function ProfilePage() {
             Object.keys(updatedProfile || {}).forEach((key) => {
                 if (excludedFields.includes(key)) return
 
-                const val = updatedProfile[key]
+                const val = (updatedProfile as unknown as unknown as unknown as Record<string, unknown>)[key]
                 
                 if (key === 'languages' && Array.isArray(val)) {
                     form.append('languages', JSON.stringify(val))

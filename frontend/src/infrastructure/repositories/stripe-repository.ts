@@ -1,11 +1,11 @@
-import { StripeRepositoryInterface, CreateStripeAccountRequest, StripeAccountLink, StripeAccountStatus } from "@/domain/repositories/stripe-repository.interface";
+import { StripeRepositoryInterface, CreateStripeAccountRequest, StripeAccountLink, StripeAccountStatus, StripeApiResponse } from "@/domain/repositories/stripe-repository.interface";
 import { HttpClient } from "@/infrastructure/api/axios-adapter";
 
 export class ApiStripeRepository implements StripeRepositoryInterface {
     constructor(private http: HttpClient) {}
 
-    async createOrLinkAccount(data: CreateStripeAccountRequest): Promise<any> {
-        return this.http.post("/stripe/connect/create-or-link", data);
+    async createOrLinkAccount(data: CreateStripeAccountRequest): Promise<StripeApiResponse> {
+        return this.http.post<StripeApiResponse, CreateStripeAccountRequest>("/stripe/connect/create-or-link", data);
     }
 
     async createAccountLink(): Promise<StripeAccountLink> {
@@ -16,12 +16,12 @@ export class ApiStripeRepository implements StripeRepositoryInterface {
         return this.http.get("/stripe/connect/status");
     }
 
-    async checkConfiguration(): Promise<any> {
-        return this.http.get("/stripe/check");
+    async checkConfiguration(): Promise<StripeApiResponse> {
+        return this.http.get<StripeApiResponse>("/stripe/check");
     }
 
-    async createSetupIntent(data: { username: string; email: string }): Promise<any> {
-        return this.http.post("/stripe/setup-intent", data);
+    async createSetupIntent(data: { username: string; email: string }): Promise<StripeApiResponse> {
+        return this.http.post<StripeApiResponse, { username: string; email: string }>("/stripe/setup-intent", data);
     }
 
     async createPaymentMethodCheckout(): Promise<{ success: boolean; url: string; message?: string }> {

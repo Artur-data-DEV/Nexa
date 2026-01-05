@@ -1,14 +1,16 @@
 import { Campaign } from "@/domain/entities/campaign"
 import { Application } from "@/domain/entities/application"
 
+type QueryFilters = Record<string, string | number | boolean | null | undefined>
+type JsonObject = Record<string, unknown>
+
 export interface CampaignRepository {
-  findAll(filters?: Record<string, any>): Promise<Campaign[]>
+  findAll(filters?: QueryFilters): Promise<Campaign[]>
   findById(id: number): Promise<Campaign | null>
-  create(data: FormData | Record<string, any>): Promise<Campaign>
-  update(id: number, data: Record<string, any>): Promise<Campaign>
+  create(data: FormData | JsonObject): Promise<Campaign>
+  update(id: number, data: JsonObject): Promise<Campaign>
   delete(id: number): Promise<void>
-  apply(id: number, data: Record<string, any>): Promise<Application>
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getStats?(): Promise<any>
-  getPending?(filters?: Record<string, any>): Promise<Campaign[]>
+  apply(id: number, data: JsonObject): Promise<Application>
+  getStats?(): Promise<unknown>
+  getPending?(filters?: QueryFilters): Promise<Campaign[]>
 }

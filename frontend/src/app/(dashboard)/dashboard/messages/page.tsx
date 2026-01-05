@@ -7,6 +7,7 @@ import { useEcho } from "@/presentation/contexts/echo-provider"
 import { ApiChatRepository } from "@/infrastructure/repositories/chat-repository"
 import { api } from "@/infrastructure/api/axios-adapter"
 import { Chat, Message } from "@/domain/entities/chat"
+import type { AxiosError } from "axios"
 import { Avatar, AvatarFallback, AvatarImage } from "@/presentation/components/ui/avatar"
 import { Button } from "@/presentation/components/ui/button"
 import { Input } from "@/presentation/components/ui/input"
@@ -15,16 +16,90 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/presentation/components/ui/dialog"
 import { Badge } from "@/presentation/components/ui/badge"
 import { Label } from "@/presentation/components/ui/label"
-import { MessageCircle, Wifi, WifiOff, MoreVertical, Send, Check, CheckCheck, Briefcase, DollarSign, Calendar, Clock, X, AlertCircle, Paperclip, FileText } from "lucide-react"
+import { MessageCircle, Wifi, WifiOff, MoreVertical, Send, Check, CheckCheck, Briefcase, DollarSign, Calendar, Clock, X, Paperclip, FileText } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useChat } from "@/presentation/contexts/chat-provider"
 import { toast } from "sonner"
 
 const chatRepository = new ApiChatRepository(api)
 
+type OfferData = {
+    id?: number
+    status?: string
+    title?: string
+    description?: string
+    formatted_budget?: string
+    budget?: number
+    estimated_days?: number
+    days_until_expiry?: number
+}
+
+type NewMessageEvent = {
+    messageId?: number
+    message?: string
+    messageType?: string
+    senderId: number
+    senderName: string
+    senderAvatar: string | null
+    timestamp?: string
+    fileData?: {
+        file_path?: string | null
+        file_name?: string | null
+        file_size?: number | null
+        file_type?: string | null
+        file_url?: string | null
+    }
+    offerData?: Record<string, unknown> | null
+}
+
+type MessagesReadEvent = {
+    messageIds: number[]
+}
+
+const toOfferData = (data: Record<string, unknown>): OfferData => {
+    const rawId = data.id
+    const id =
+        typeof rawId === "number" ? rawId : typeof rawId === "string" ? Number(rawId) : undefined
+
+    const rawBudget = data.budget
+    const budget =
+        typeof rawBudget === "number"
+            ? rawBudget
+            : typeof rawBudget === "string"
+                ? Number(rawBudget)
+                : undefined
+
+    const rawEstimated = data.estimated_days
+    const estimated_days =
+        typeof rawEstimated === "number"
+            ? rawEstimated
+            : typeof rawEstimated === "string"
+                ? Number(rawEstimated)
+                : undefined
+
+    const rawDaysUntilExpiry = data.days_until_expiry
+    const days_until_expiry =
+        typeof rawDaysUntilExpiry === "number"
+            ? rawDaysUntilExpiry
+            : typeof rawDaysUntilExpiry === "string"
+                ? Number(rawDaysUntilExpiry)
+                : undefined
+
+    return {
+        id: Number.isFinite(id) ? id : undefined,
+        status: typeof data.status === "string" ? data.status : undefined,
+        title: typeof data.title === "string" ? data.title : undefined,
+        description: typeof data.description === "string" ? data.description : undefined,
+        formatted_budget: typeof data.formatted_budget === "string" ? data.formatted_budget : undefined,
+        budget: Number.isFinite(budget) ? budget : undefined,
+        estimated_days: Number.isFinite(estimated_days) ? estimated_days : undefined,
+        days_until_expiry: Number.isFinite(days_until_expiry) ? days_until_expiry : undefined,
+    }
+}
+
 export default function MessagesPage() {
     const { user } = useAuth()
-    const { echo, isConnected } = useEcho()
+    const { echo} = useEcho()
     const searchParams = useSearchParams()
     const router = useRouter()
     const {
@@ -159,7 +234,7 @@ export default function MessagesPage() {
         const targetChat = chats.find(chat => chat.room_id === roomId)
         if (!targetChat) return
         selectChat(targetChat)
-    }, [searchParams, chats, selectedChat, selectChat, router])
+    }, [searchParams, chats, selectedChat, selectChat, router, user?.id])
 
     const handleAcceptOffer = async (offerId: number) => {
         if (!offerId || offerId <= 0 || Number.isNaN(offerId)) {
@@ -168,14 +243,15 @@ export default function MessagesPage() {
         }
 
         try {
-            const response: any = await api.post(`/offers/${offerId}/accept`)
+            const response = await api.post<{ success: boolean; message?: string }>(`/offers/${offerId}/accept`)
             if (response.success) {
                 toast.success("Oferta aceita com sucesso! Contrato criado.")
             } else {
                 throw new Error(response.message || "Erro ao aceitar oferta")
             }
-        } catch (error: any) {
-            toast.error(error?.response?.data?.message || "Erro ao aceitar oferta")
+        } catch (error: unknown) {
+            const axiosError = error as AxiosError<{ message?: string }>
+            toast.error(axiosError.response?.data?.message || "Erro ao aceitar oferta")
         }
     }
 
@@ -186,14 +262,15 @@ export default function MessagesPage() {
         }
 
         try {
-            const response: any = await api.post(`/offers/${offerId}/reject`)
+            const response = await api.post<{ success: boolean; message?: string }>(`/offers/${offerId}/reject`)
             if (response.success) {
                 toast.success("Oferta rejeitada com sucesso")
             } else {
                 throw new Error(response.message || "Erro ao rejeitar oferta")
             }
-        } catch (error: any) {
-            toast.error(error?.response?.data?.message || "Erro ao rejeitar oferta")
+        } catch (error: unknown) {
+            const axiosError = error as AxiosError<{ message?: string }>
+            toast.error(axiosError.response?.data?.message || "Erro ao rejeitar oferta")
         }
     }
 
@@ -204,14 +281,15 @@ export default function MessagesPage() {
         }
 
         try {
-            const response: any = await api.delete(`/offers/${offerId}`)
+            const response = await api.delete<{ success: boolean; message?: string }>(`/offers/${offerId}`)
             if (response.success) {
                 toast.success("Oferta cancelada com sucesso")
             } else {
                 throw new Error(response.message || "Erro ao cancelar oferta")
             }
-        } catch (error: any) {
-            toast.error(error?.response?.data?.message || "Erro ao cancelar oferta")
+        } catch (error: unknown) {
+            const axiosError = error as AxiosError<{ message?: string }>
+            toast.error(axiosError.response?.data?.message || "Erro ao cancelar oferta")
         }
     }
 
@@ -240,8 +318,7 @@ export default function MessagesPage() {
                 budget: budgetValue,
                 estimated_days: daysValue,
             }
-
-            const response: any = await api.post("/offers", payload)
+            const response = await api.post<{ success: boolean; message?: string }, typeof payload>("/offers", payload)
 
             if (response.success) {
                 toast.success("Oferta enviada com sucesso!")
@@ -251,11 +328,12 @@ export default function MessagesPage() {
             } else {
                 throw new Error(response.message || "Erro ao enviar oferta")
             }
-        } catch (error: any) {
-            if (error?.response?.status === 402 && error?.response?.data?.requires_funding) {
-                const redirectUrl = error.response?.data?.redirect_url
+        } catch (error: unknown) {
+            const axiosError = error as AxiosError<{ message?: string; requires_funding?: boolean; redirect_url?: string }>
+            if (axiosError.response?.status === 402 && axiosError.response?.data?.requires_funding) {
+                const redirectUrl = axiosError.response?.data?.redirect_url
                 const message =
-                    error.response?.data?.message ||
+                    axiosError.response?.data?.message ||
                     "Você precisa configurar um método de pagamento antes de enviar ofertas."
 
                 if (typeof window !== "undefined") {
@@ -276,8 +354,8 @@ export default function MessagesPage() {
                 }
             } else {
                 const message =
-                    error?.response?.data?.message ||
-                    error?.message ||
+                    axiosError.response?.data?.message ||
+                    (error instanceof Error ? error.message : undefined) ||
                     "Erro ao enviar oferta"
                 toast.error(message)
             }
@@ -304,12 +382,11 @@ export default function MessagesPage() {
 
         // Bind all events similar to useSocket.ts
         console.log(`Subscribing to channel: chat.${selectedChat.room_id}`)
-
-        channel.listen('.new_message', (e: any) => {
+        channel.listen('.new_message', (e: NewMessageEvent) => {
             console.log('EVENT RECEIVED: .new_message', e)
             const incoming: Message = {
                 id: e.messageId || Date.now(),
-                message: e.message,
+                message: e.message || "",
                 message_type: e.messageType || "text",
                 sender_id: e.senderId,
                 sender_name: e.senderName,
@@ -384,10 +461,9 @@ export default function MessagesPage() {
         })
 
         // Handle read receipts
-        channel.listen('.messages_read', (e: any) => {
-            setMessages(prev => prev.map(msg =>
-                e.messageIds.includes(msg.id) ? { ...msg, is_read: true } : msg
-            ))
+        channel.listen('.messages_read', (e: MessagesReadEvent) => {
+            const ids = Array.isArray(e.messageIds) ? e.messageIds : []
+            setMessages(prev => prev.map(msg => (ids.includes(msg.id) ? { ...msg, is_read: true } : msg)))
         })
 
         // Status updates channel (Global)
@@ -413,7 +489,7 @@ export default function MessagesPage() {
             channel.stopListening('.messages_read')
             statusChannel.stopListening('.user_status_updated')
         }
-    }, [selectedChat, echo, scrollToBottom, user?.id, setChats])
+    }, [selectedChat, echo, scrollToBottom, user?.id, setChats, setMessages, updateChatList])
 
     const renderChatList = () => (
         <div className="flex flex-col gap-1 p-2" data-testid="chat-room-list">
@@ -611,8 +687,11 @@ export default function MessagesPage() {
                                                 msg.offer_data
 
                                             if (isOffer) {
-                                                const offer: any = msg.offer_data
-                                                const status: string = offer.status || "pending"
+                                                const offer =
+                                                    msg.offer_data && typeof msg.offer_data === "object"
+                                                        ? toOfferData(msg.offer_data)
+                                                        : {}
+                                                const status = offer.status || "pending"
                                                 const isCreatorUser = user?.role === "creator"
                                                 const canAccept =
                                                     status === "pending" &&
@@ -709,11 +788,11 @@ export default function MessagesPage() {
                                                                         {canAccept && (
                                                                             <Button
                                                                                 size="sm"
-                                                                                onClick={() =>
-                                                                                    handleAcceptOffer(
-                                                                                        offer.id
-                                                                                    )
-                                                                                }
+                                                                                onClick={() => {
+                                                                                    if (typeof offer.id === "number") {
+                                                                                        handleAcceptOffer(offer.id)
+                                                                                    }
+                                                                                }}
                                                                             >
                                                                                 Aceitar
                                                                             </Button>
@@ -722,11 +801,11 @@ export default function MessagesPage() {
                                                                             <Button
                                                                                 size="sm"
                                                                                 variant="outline"
-                                                                                onClick={() =>
-                                                                                    handleRejectOffer(
-                                                                                        offer.id
-                                                                                    )
-                                                                                }
+                                                                                onClick={() => {
+                                                                                    if (typeof offer.id === "number") {
+                                                                                        handleRejectOffer(offer.id)
+                                                                                    }
+                                                                                }}
                                                                             >
                                                                                 Rejeitar
                                                                             </Button>
@@ -735,11 +814,11 @@ export default function MessagesPage() {
                                                                             <Button
                                                                                 size="sm"
                                                                                 variant="outline"
-                                                                                onClick={() =>
-                                                                                    handleCancelOffer(
-                                                                                        offer.id
-                                                                                    )
-                                                                                }
+                                                                                onClick={() => {
+                                                                                    if (typeof offer.id === "number") {
+                                                                                        handleCancelOffer(offer.id)
+                                                                                    }
+                                                                                }}
                                                                             >
                                                                                 Cancelar
                                                                             </Button>
@@ -787,7 +866,8 @@ export default function MessagesPage() {
                                                     )}
                                                 >
                                                     {isImageMessage && msg.file_url ? (
-                                                        <div className="space-y-1 max-w-[200px] sm:max-w-[280px]">
+                                                        <div className="space-y-1 w-52 sm:w-72">
+                                                            {/* eslint-disable-next-line @next/next/no-img-element */}
                                                             <img
                                                                 src={msg.file_url}
                                                                 alt={msg.file_name || "Imagem"}
@@ -805,7 +885,7 @@ export default function MessagesPage() {
                                                         <div className="space-y-1">
                                                             <div className="flex items-center gap-2">
                                                                 <FileText className="h-4 w-4" />
-                                                                <span className="text-sm font-medium truncate max-w-[180px]">
+                                                                <span className="text-sm font-medium truncate inline-block w-44">
                                                                     {msg.file_name || "Arquivo"}
                                                                 </span>
                                                                 {msg.formatted_file_size && (
@@ -889,7 +969,7 @@ export default function MessagesPage() {
                             <div className="px-4 pb-4 flex items-center justify-between text-xs text-muted-foreground gap-2">
                                 <div className="inline-flex items-center gap-2">
                                     <FileText className="h-3 w-3" />
-                                    <span className="max-w-[200px] truncate">
+                                    <span className="truncate inline-block w-52">
                                         {selectedFile.name}
                                     </span>
                                 </div>

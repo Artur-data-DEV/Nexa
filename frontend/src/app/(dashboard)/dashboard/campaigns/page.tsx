@@ -13,10 +13,12 @@ import { useAuth } from "@/presentation/contexts/auth-provider"
 import { Button } from "@/presentation/components/ui/button"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/presentation/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/presentation/components/ui/card"
+import Link from "next/link"
 
 // DI
 const campaignRepository = new ApiCampaignRepository(api)
 const listCampaignsUseCase = new ListCampaignsUseCase(campaignRepository)
+type QueryFilters = Record<string, string | number | boolean | null | undefined>
 
 export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
@@ -27,24 +29,24 @@ export default function CampaignsPage() {
   const { user } = useAuth()
 
   useEffect(() => {
+    const fetchCampaigns = async () => {
+      setLoading(true)
+      try {
+        const filters: QueryFilters = {}
+        if (user?.role === "brand" && user?.id) {
+          filters.brand_id = user.id
+        }
+        const data = await listCampaignsUseCase.execute(filters)
+        setCampaigns(data)
+      } catch (error) {
+        console.error("Failed to fetch campaigns", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
     fetchCampaigns()
   }, [user?.id, user?.role])
-
-  const fetchCampaigns = async () => {
-    setLoading(true)
-    try {
-      const filters: Record<string, any> = {}
-      if (user?.role === "brand" && user?.id) {
-        filters.brand_id = user.id
-      }
-      const data = await listCampaignsUseCase.execute(filters)
-      setCampaigns(data)
-    } catch (error) {
-      console.error("Failed to fetch campaigns", error)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const filteredCampaigns = useMemo(() => {
     const base = Array.isArray(campaigns) ? campaigns : []
@@ -126,7 +128,7 @@ export default function CampaignsPage() {
           </div>
           {user?.role === "brand" && (
             <Button className="w-full md:w-auto md:ml-auto" asChild>
-              <a href="/dashboard/campaigns/create">Nova Campanha</a>
+              <Link href="/dashboard/campaigns/create">Nova Campanha</Link>
             </Button>
           )}
         </div>
@@ -209,10 +211,10 @@ export default function CampaignsPage() {
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="flex flex-col space-y-3">
-              <Skeleton className="h-[125px] w-full rounded-xl" />
+              <Skeleton className="h-31.25 w-full rounded-xl" />
               <div className="space-y-2">
-                <Skeleton className="h-4 w-[250px]" />
-                <Skeleton className="h-4 w-[200px]" />
+                <Skeleton className="h-4 w-62.5" />
+                <Skeleton className="h-4 w-50" />
               </div>
             </div>
           ))}
@@ -228,7 +230,7 @@ export default function CampaignsPage() {
                 </p>
                 {user?.role === "brand" && (
                   <Button className="mt-2" asChild>
-                    <a href="/dashboard/campaigns/create">Criar nova campanha</a>
+                    <Link href="/dashboard/campaigns/create">Criar nova campanha</Link>
                   </Button>
                 )}
               </div>

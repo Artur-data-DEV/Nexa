@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Bell, Check, Trash2, MailOpen } from "lucide-react"
+import { Bell, Trash2 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
 
@@ -9,15 +9,12 @@ import { Button } from "@/presentation/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/presentation/components/ui/dropdown-menu"
 import { ScrollArea } from "@/presentation/components/ui/scroll-area"
 import { useNotifications } from "@/presentation/contexts/notification-provider"
 import { cn } from "@/lib/utils"
-import { Badge } from "@/presentation/components/ui/badge"
 import { useRouter } from "next/navigation"
 
 export function NotificationBell() {

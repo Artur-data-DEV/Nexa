@@ -1,8 +1,19 @@
-import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 
-const eslintConfig = defineConfig([
+const eslintConfig = [
+  {
+    ignores: [
+      "**/.next/**",
+      "**/out/**",
+      "**/build/**",
+      "**/dist/**",
+      "**/node_modules/**",
+      "**/*.min.js",
+      "**/playwright-report/**",
+      "**/test-results/**"
+    ],
+  },
   ...nextVitals,
   ...nextTs,
   {
@@ -12,12 +23,6 @@ const eslintConfig = defineConfig([
       "react-hooks/set-state-in-effect": "off",
     },
   },
-  globalIgnores([
-    ".next/**",
-    "out/**",
-    "build/**",
-    "next-env.d.ts",
-  ]),
-]);
+];
 
 export default eslintConfig;

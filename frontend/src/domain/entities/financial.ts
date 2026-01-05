@@ -51,7 +51,7 @@ export interface WithdrawalMethod {
   processing_time: string
   fee: number
   required_fields?: string[]
-  field_config?: Record<string, any>
+  field_config?: Record<string, unknown>
 }
 
 export interface BankInfo {

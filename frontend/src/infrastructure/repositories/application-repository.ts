@@ -2,58 +2,75 @@ import { ApplicationRepository } from "@/domain/repositories/application-reposit
 import { Application } from "@/domain/entities/application"
 import { HttpClient } from "../api/axios-adapter"
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+    typeof value === "object" && value !== null
+
 export class ApiApplicationRepository implements ApplicationRepository {
     constructor(private http: HttpClient) {}
 
-    async getMyApplications(filters?: Record<string, any>): Promise<Application[]> {
-        const params = new URLSearchParams(filters).toString()
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const response: any = await this.http.get<any>(`/applications?${params}`)
-        
-        // Handle Laravel Paginator: { success: true, data: { data: [...] } }
-        if (response && response.data && Array.isArray(response.data.data)) {
-            return response.data.data
+    private buildParams(filters?: Record<string, string | number | boolean | null | undefined>) {
+        const params = new URLSearchParams()
+        if (!filters) return params
+        for (const [key, value] of Object.entries(filters)) {
+            if (value === undefined || value === null) continue
+            params.append(key, String(value))
         }
-        // Fallback
-        if (response && Array.isArray(response.data)) {
-            return response.data
-        }
-        return Array.isArray(response) ? response : []
+        return params
     }
 
-  async getCampaignApplications(campaignId: number, filters?: Record<string, any>): Promise<Application[]> {
-        const params = new URLSearchParams(filters).toString()
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const response: any = await this.http.get<any>(`/campaigns/${campaignId}/applications?${params}`)
+    async getMyApplications(filters?: Parameters<ApplicationRepository["getMyApplications"]>[0]): Promise<Application[]> {
+        const params = this.buildParams(filters).toString()
+        const url = params ? `/applications?${params}` : "/applications"
+        const response = await this.http.get<unknown>(url)
         
         // Handle Laravel Paginator: { success: true, data: { data: [...] } }
-        if (response && response.data && Array.isArray(response.data.data)) {
-            return response.data.data
+        if (isRecord(response)) {
+            const data = response["data"]
+            if (isRecord(data) && Array.isArray(data["data"])) {
+                return data["data"] as Application[]
+            }
+            if (Array.isArray(data)) {
+                return data as Application[]
+            }
         }
         // Fallback
-        if (response && Array.isArray(response.data)) {
-            return response.data
+        return Array.isArray(response) ? (response as Application[]) : []
+    }
+
+    async getCampaignApplications(campaignId: number, filters?: Parameters<ApplicationRepository["getCampaignApplications"]>[1]): Promise<Application[]> {
+        const params = this.buildParams(filters).toString()
+        const url = params ? `/campaigns/${campaignId}/applications?${params}` : `/campaigns/${campaignId}/applications`
+        const response = await this.http.get<unknown>(url)
+        
+        // Handle Laravel Paginator: { success: true, data: { data: [...] } }
+        if (isRecord(response)) {
+            const data = response["data"]
+            if (isRecord(data) && Array.isArray(data["data"])) {
+                return data["data"] as Application[]
+            }
+            if (Array.isArray(data)) {
+                return data as Application[]
+            }
         }
-    return Array.isArray(response) ? response : []
+        return Array.isArray(response) ? (response as Application[]) : []
   }
 
-  async create(campaignId: number, data: Record<string, any>): Promise<Application> {
-        const payload = {
-            proposal: data.proposal,
-            portfolio_links: data.portfolio_links,
-            estimated_delivery_days: data.delivery_days ?? data.estimated_delivery_days,
-            proposed_budget: data.budget ?? data.proposed_budget,
+    async create(campaignId: number, data: Parameters<ApplicationRepository["create"]>[1]): Promise<Application> {
+        const response = await this.http.post<unknown, Record<string, unknown>>(
+            `/campaigns/${campaignId}/applications`,
+            data as Record<string, unknown>
+        )
+        if (isRecord(response) && isRecord(response["data"])) {
+            return response["data"] as unknown as Application
         }
-
-        return this.http.post<Application>(`/campaigns/${campaignId}/applications`, payload)
-  }
+        return response as Application
+    }
 
     async updateStatus(id: number, status: 'approved' | 'rejected'): Promise<Application> {
         const action = status === "approved" ? "approve" : "reject"
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const response: any = await this.http.post<any>(`/applications/${id}/${action}`, {})
-        if (response && response.data) {
-            return response.data as Application
+        const response = await this.http.post<unknown, Record<string, never>>(`/applications/${id}/${action}`, {})
+        if (isRecord(response) && isRecord(response["data"])) {
+            return response["data"] as unknown as Application
         }
         return response as Application
     }

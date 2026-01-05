@@ -23,12 +23,14 @@ export interface StripeAccountStatus {
     country: string;
     email: string;
   }
+
+  export type StripeApiResponse = Record<string, unknown>
   
   export interface StripeRepositoryInterface {
-    createOrLinkAccount(data: CreateStripeAccountRequest): Promise<any>;
+    createOrLinkAccount(data: CreateStripeAccountRequest): Promise<StripeApiResponse>;
     createAccountLink(): Promise<StripeAccountLink>;
     getAccountStatus(): Promise<StripeAccountStatus>;
-    checkConfiguration(): Promise<any>;
-    createSetupIntent(data: { username: string; email: string }): Promise<any>;
+    checkConfiguration(): Promise<StripeApiResponse>;
+    createSetupIntent(data: { username: string; email: string }): Promise<StripeApiResponse>;
     createPaymentMethodCheckout(): Promise<{ success: boolean; url: string; message?: string }>;
   }

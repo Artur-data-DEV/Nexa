@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/presentation/components/ui/button"
-import { Card, CardContent } from "@/presentation/components/ui/card"
+import { Card } from "@/presentation/components/ui/card"
 import { useAuth } from "@/presentation/contexts/auth-provider"
 import { SubscriptionPlan } from "@/domain/repositories/payment-repository.interface"
 import { ApiPaymentRepository } from "@/infrastructure/repositories/payment-repository"
@@ -131,7 +131,7 @@ export const Pricing = () => {
         {loading ? (
           <div className="grid md:grid-cols-3 gap-8">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-[500px] rounded-3xl bg-zinc-100 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-white/5 animate-pulse" />
+              <div key={i} className="h-125 rounded-3xl bg-zinc-100 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-white/5 animate-pulse" />
             ))}
           </div>
         ) : (
@@ -139,7 +139,6 @@ export const Pricing = () => {
             {effectivePlans.map((plan, index) => {
               const monthly = getMonthlyPrice(plan)
               const isAnnual = plan.duration_months === 12
-              const isSemestral = plan.duration_months === 6
 
               return (
                 <motion.div
@@ -245,4 +244,3 @@ export const Pricing = () => {
     </section>
   )
 }
-

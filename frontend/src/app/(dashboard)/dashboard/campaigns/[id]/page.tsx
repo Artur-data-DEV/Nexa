@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { ArrowLeft, Calendar, MapPin, DollarSign, Building2 } from "lucide-react"
-import Link from "next/link"
 import Image from "next/image"
 
 import { GetCampaignByIdUseCase } from "@/application/use-cases/get-campaign-by-id.use-case"
@@ -50,7 +49,7 @@ export default function CampaignDetailsPage() {
     return (
         <div className="flex flex-col gap-6">
             <Skeleton className="h-8 w-1/3" />
-            <Skeleton className="h-[200px] w-full" />
+            <Skeleton className="h-50 w-full" />
             <div className="grid gap-6 md:grid-cols-3">
                 <div className="md:col-span-2 space-y-4">
                     <Skeleton className="h-40 w-full" />

@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { Building2, CameraIcon, CameraOff, Loader2, LucideBriefcaseBusiness, UserStar } from "lucide-react"
+import { Building2, Loader2, UserStar } from "lucide-react"
 
 import { Button } from "@/presentation/components/ui/button"
 import { Input } from "@/presentation/components/ui/input"
@@ -22,13 +22,12 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/presentation/components/ui/form"
-import { Alert, AlertDescription, AlertTitle } from "@/presentation/components/ui/alert"
+import { Alert, AlertDescription } from "@/presentation/components/ui/alert"
 
 import { LoginUseCase } from "@/application/use-cases/login.use-case"
 import { ApiAuthRepository } from "@/infrastructure/repositories/auth-repository"
@@ -36,14 +35,14 @@ import { api } from "@/infrastructure/api/axios-adapter"
 import { useAuth } from "@/presentation/contexts/auth-provider"
 import { Logo } from "@/presentation/components/logo"
 import { GoogleOAuthButton } from "@/presentation/components/auth/google-oauth-button"
-import { FcBinoculars, FcBriefcase, FcBusiness, FcCamcorderPro, FcClapperboard, FcOldTimeCamera } from "react-icons/fc"
+import type { AxiosError } from "axios"
 
 // Dependency Injection
 const authRepository = new ApiAuthRepository(api)
 const loginUseCase = new LoginUseCase(authRepository)
 
 export const loginSchema = z.object({
-  email: z.string().email("Email inválido"),
+  email: z.email("Email inválido"),
   password: z.string().min(1, "Senha obrigatória"),
   remember: z.boolean().optional(),
 })
@@ -90,7 +89,7 @@ function LoginInner() {
       setServerError("Por segurança, não aceitamos credenciais na URL. Digite seu email e senha no formulário.")
       router.replace("/login")
     }
-  }, [])
+  }, [searchParams, router])
 
   const onSubmit = async (data: LoginFormValues) => {
     if (loading) return
@@ -102,37 +101,38 @@ function LoginInner() {
       await login(response.token, response.user) // Wait for auth state to update
 
       router.push("/dashboard")
-    } catch (error: any) {
-      const status = error?.response?.status
-      const code = error?.code
-      const isNetworkError = !error?.response || error?.message === "Network Error" || code === "ECONNABORTED"
-      const validationErrors = error?.response?.data?.errors
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError<{ message?: string; errors?: Record<string, string[]> }>
+      const status = axiosError.response?.status
+      const code = (axiosError as unknown as { code?: string }).code
+      const isNetworkError = !axiosError.response || axiosError.message === "Network Error" || code === "ECONNABORTED"
+      const validationErrors = axiosError.response?.data?.errors
       const validationMessage =
         status === 422
           ? (validationErrors?.email?.[0] ||
             validationErrors?.password?.[0] ||
-            error?.response?.data?.message)
+            axiosError.response?.data?.message)
           : null
 
       if (typeof window !== "undefined") {
         console.error("Login error", {
-          message: error?.message,
+          message: axiosError.message,
           code,
           status,
-          url: error?.config?.url,
-          method: error?.config?.method,
-          data: error?.response?.data,
+          url: (axiosError as unknown as { config?: { url?: string } }).config?.url,
+          method: (axiosError as unknown as { config?: { method?: string } }).config?.method,
+          data: axiosError.response?.data,
         })
       }
 
       const message =
         isNetworkError
           ? "Não foi possível conectar ao servidor. Tente novamente em alguns minutos."
-          : status >= 500
+          : status && status >= 500
             ? "Servidor indisponível no momento. Tente novamente em instantes."
             : status === 429
               ? "Muitas tentativas. Aguarde um pouco e tente novamente."
-              : validationMessage || error?.response?.data?.message || "Credenciais inválidas. Verifique seu email e senha."
+              : validationMessage || axiosError.response?.data?.message || "Credenciais inválidas. Verifique seu email e senha."
       setServerError(message)
     } finally {
       setLoading(false)

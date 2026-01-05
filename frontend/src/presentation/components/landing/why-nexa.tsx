@@ -4,8 +4,8 @@ export const WhyNexaSection = () => {
   return (
     <section className="relative py-12 md:py-24 overflow-hidden bg-white dark:bg-[#121212]">
       {/* Decorative Background Elements */}
-      <div className="absolute top-0 right-0 -mr-32 -mt-32 h-[500px] w-[500px] rounded-full bg-purple-600/3:dark:bg-purple-600/5-[120px] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 -ml-32 -mb-32 h-[500px] w-[500px] rounded-full bg-pink-500/3 dark:bg-pink-500/5 blur-[120px] pointer-events-none" />
+      <div className="absolute top-0 right-0 -mr-32 -mt-32 h-125 w-125 rounded-full bg-purple-600/3 dark:bg-purple-600/5 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 -ml-32 -mb-32 h-125 w-125 rounded-full bg-pink-500/3 dark:bg-pink-500/5 blur-[120px] pointer-events-none" />
 
       {/* Subtle Grid Pattern (Optional but adds texture) */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-size-[44px_44px] mask-[radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none" />
@@ -60,7 +60,7 @@ export const WhyNexaSection = () => {
               </p>
 
               <p className="p-4 md:p-6 bg-zinc-100/50 dark:bg-white/5 border-l-4 border-purple-600 rounded-r-2xl italic">
-                "Foi então que criei a <span className="font-light text-chart-4">NEXA</span> - para ser a ponte definitiva entre <span className="text-chart-4 font-bold">creators autênticos</span> e marcas que valorizam <span className="text-chart-4 font-bold">conteúdo genuíno</span>, garantindo <span className="text-chart-4 font-bold">pagamentos justos</span>, processos transparentes e proteção total para ambos os lados."
+                &quot;Foi então que criei a <span className="font-light text-chart-4">NEXA</span> - para ser a ponte definitiva entre <span className="text-chart-4 font-bold">creators autênticos</span> e marcas que valorizam <span className="text-chart-4 font-bold">conteúdo genuíno</span>, garantindo <span className="text-chart-4 font-bold">pagamentos justos</span>, processos transparentes e proteção total para ambos os lados.&quot;
               </p>
             <p className="text-sm sm:text-base md:text-lg text-muted-foreground leading-relaxed tracking-wider">
               Minha missão é construir <span className="text-chart-4 font-bold">o maior ecossistema de UGC do Brasil</span>, onde creators podem prosperar financeiramente, aprender continuamente e crescer em uma comunidade de alta performance.

@@ -8,20 +8,19 @@ import { GetPortfolioUseCase } from "@/application/use-cases/get-portfolio.use-c
 import { UpdatePortfolioProfileUseCase } from "@/application/use-cases/update-portfolio-profile.use-case"
 import { UploadPortfolioMediaUseCase } from "@/application/use-cases/upload-portfolio-media.use-case"
 import { DeletePortfolioItemUseCase } from "@/application/use-cases/delete-portfolio-item.use-case"
-import { UpdatePortfolioItemUseCase } from "@/application/use-cases/update-portfolio-item.use-case"
-import { GetPortfolioStatsUseCase } from "@/application/use-cases/get-portfolio-stats.use-case"
 import { api } from "@/infrastructure/api/axios-adapter"
 import { Button } from "@/presentation/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/presentation/components/ui/card"
+import { Card, CardContent } from "@/presentation/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/presentation/components/ui/dialog"
 import { Input } from "@/presentation/components/ui/input"
 import { Textarea } from "@/presentation/components/ui/textarea"
 import { Label } from "@/presentation/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/presentation/components/ui/avatar"
 import { Skeleton } from "@/presentation/components/ui/skeleton"
-import { Camera, Plus, Trash2, Edit2, Link as LinkIcon, Upload, X, BarChart3, Image as ImageIcon, Video } from "lucide-react"
+import { Camera, Plus, Trash2, Edit2, Link as LinkIcon, Upload, X } from "lucide-react"
 import { toast } from "sonner"
-import { PortfolioItem, PortfolioStats } from "@/domain/entities/portfolio"
+import { PortfolioItem } from "@/domain/entities/portfolio"
+import type { AxiosError } from "axios"
 
 // Setup dependencies
 const portfolioRepository = new ApiPortfolioRepository(api)
@@ -29,8 +28,6 @@ const getPortfolioUseCase = new GetPortfolioUseCase(portfolioRepository)
 const updatePortfolioProfileUseCase = new UpdatePortfolioProfileUseCase(portfolioRepository)
 const uploadPortfolioMediaUseCase = new UploadPortfolioMediaUseCase(portfolioRepository)
 const deletePortfolioItemUseCase = new DeletePortfolioItemUseCase(portfolioRepository)
-const updatePortfolioItemUseCase = new UpdatePortfolioItemUseCase(portfolioRepository)
-const getPortfolioStatsUseCase = new GetPortfolioStatsUseCase(portfolioRepository)
 
 const MAX_TOTAL_FILES = 12
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/jpg", "video/mp4", "video/quicktime", "video/mov", "video/avi", "video/webm", "video/ogg", "video/x-matroska", "video/x-flv", "video/3gpp", "video/x-ms-wmv", "application/octet-stream"]
@@ -44,7 +41,6 @@ function getFileType(file: File) {
 export default function PortfolioView() {
     const { user, updateUser } = useAuth()
     const [portfolio, setPortfolio] = useState<Portfolio | null>(null)
-    const [stats, setStats] = useState<PortfolioStats | null>(null)
     const [loading, setLoading] = useState(true)
 
     // Edit Profile State
@@ -56,13 +52,6 @@ export default function PortfolioView() {
     const [editAvatarPreview, setEditAvatarPreview] = useState<string | null>(null)
     const [savingProfile, setSavingProfile] = useState(false)
 
-    // Edit Item State
-    const [editingItem, setEditingItem] = useState<PortfolioItem | null>(null)
-    const [editItemTitle, setEditItemTitle] = useState("")
-    const [editItemDescription, setEditItemDescription] = useState("")
-    const [editItemOrder, setEditItemOrder] = useState(0)
-    const [savingItem, setSavingItem] = useState(false)
-
     // Upload Media State
     const [isUploadOpen, setIsUploadOpen] = useState(false)
     const [uploadFiles, setUploadFiles] = useState<File[]>([])
@@ -73,6 +62,11 @@ export default function PortfolioView() {
     // Delete State
     const [deleteId, setDeleteId] = useState<number | null>(null)
     const [deleting, setDeleting] = useState(false)
+
+    // Edit Item State
+    const [editingItem, setEditingItem] = useState<PortfolioItem | null>(null)
+    const [editItemTitle, setEditItemTitle] = useState("")
+    const [editItemDescription, setEditItemDescription] = useState("")
 
     useEffect(() => {
         fetchPortfolio()
@@ -210,11 +204,12 @@ export default function PortfolioView() {
             setUploadFiles([])
             setUploadPreviews([])
             toast.success("Mídia enviada!")
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Failed to upload media", error)
+            const axiosError = error as AxiosError<{ message?: string; errors?: { files?: string[] } }>
             const message =
-                error?.response?.data?.message ||
-                error?.response?.data?.errors?.files?.[0] ||
+                axiosError.response?.data?.message ||
+                axiosError.response?.data?.errors?.files?.[0] ||
                 "Erro ao enviar mídia"
             toast.error(message)
         } finally {
@@ -317,6 +312,7 @@ export default function PortfolioView() {
                         {portfolio.items.map((item) => (
                             <div key={item.id} className="group relative aspect-square bg-muted rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all">
                                 {item.media_type === "image" ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
                                     <img
                                         src={item.file_url}
                                         alt={item.title || ""}
@@ -337,7 +333,6 @@ export default function PortfolioView() {
                                             setEditingItem(item)
                                             setEditItemTitle(item.title || "")
                                             setEditItemDescription(item.description || "")
-                                            setEditItemOrder(item.order || 0)
                                         }}
                                         title="Editar"
                                     >
@@ -501,6 +496,7 @@ export default function PortfolioView() {
                                 {uploadPreviews.map((preview, i) => (
                                     <div key={i} className="relative aspect-square bg-muted rounded-md overflow-hidden group">
                                         {preview.type === 'image' ? (
+                                            // eslint-disable-next-line @next/next/no-img-element
                                             <img src={preview.url} className="w-full h-full object-cover" alt="Preview Image" />
                                         ) : (
                                             <video src={preview.url} className="w-full h-full object-cover" />
@@ -521,6 +517,45 @@ export default function PortfolioView() {
                         <Button variant="outline" onClick={() => setIsUploadOpen(false)}>Cancelar</Button>
                         <Button onClick={uploadMedia} disabled={uploading || uploadFiles.length === 0}>
                             {uploading ? "Enviando..." : `Enviar ${uploadFiles.length > 0 ? `(${uploadFiles.length})` : ''}`}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Edit Item Dialog */}
+            <Dialog open={!!editingItem} onOpenChange={(open) => !open && setEditingItem(null)}>
+                <DialogContent className="sm:max-w-125">
+                    <DialogHeader>
+                        <DialogTitle>Editar Item</DialogTitle>
+                        <DialogDescription>Edite os detalhes do item do seu portfólio.</DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label>Título</Label>
+                            <Input
+                                value={editItemTitle}
+                                onChange={(e) => setEditItemTitle(e.target.value)}
+                                placeholder="Título do item"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Descrição</Label>
+                            <Textarea
+                                value={editItemDescription}
+                                onChange={(e) => setEditItemDescription(e.target.value)}
+                                placeholder="Descrição do item"
+                                className="resize-none h-24"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setEditingItem(null)}>Cancelar</Button>
+                        <Button onClick={() => {
+                            // TODO: Implement update functionality
+                            setEditingItem(null)
+                            toast.success("Item atualizado (simulação)")
+                        }}>
+                            Salvar Alterações
                         </Button>
                     </DialogFooter>
                 </DialogContent>

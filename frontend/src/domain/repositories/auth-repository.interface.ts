@@ -1,16 +1,18 @@
 import { AuthResponse, User } from "../entities/user"
 
+type JsonObject = Record<string, unknown>
+
 export interface AuthRepository {
-  login(credentials: Record<string, any>): Promise<AuthResponse>
-  register(data: Record<string, any>): Promise<AuthResponse>
+  login(credentials: JsonObject): Promise<AuthResponse>
+  register(data: JsonObject): Promise<AuthResponse>
   logout(): Promise<void>
   me(): Promise<User>
   csrf(): Promise<void>
-  updateProfile(data: Record<string, any> | FormData): Promise<User>
+  updateProfile(data: JsonObject | FormData): Promise<User>
   uploadAvatar(file: File | Blob): Promise<User>
   sendOtp(contact: string, type: 'email' | 'whatsapp'): Promise<void>
   verifyOtp(contact: string, type: 'email' | 'whatsapp', code: string): Promise<boolean>
-  forgotPassword(email: string): Promise<any>
-  resetPassword(data: Record<string, any>): Promise<any>
-  verifyStudent(data: { email: string, username: string, courseName: string }): Promise<any>
+  forgotPassword(email: string): Promise<unknown>
+  resetPassword(data: JsonObject): Promise<unknown>
+  verifyStudent(data: { email: string; username: string; courseName: string }): Promise<unknown>
 }

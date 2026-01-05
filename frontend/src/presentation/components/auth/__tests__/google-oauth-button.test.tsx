@@ -20,8 +20,11 @@ describe("GoogleOAuthButton", () => {
     
     // Mock window.location
     const originalLocation = window.location;
-    delete (window as any).location;
-    window.location = { href: '' } as any;
+    const mockLocation = { ...originalLocation, href: "" } as Location;
+    Object.defineProperty(window, "location", {
+      value: mockLocation,
+      writable: true,
+    });
 
     const { getByText } = render(<GoogleOAuthButton />)
     
@@ -33,10 +36,10 @@ describe("GoogleOAuthButton", () => {
     expect(window.location.href).toBe("https://accounts.google.com/o/oauth2/v2/auth?client_id=test")
 
     // Restore window.location
-Object.defineProperty(window, 'location', {
-  value: originalLocation,
-  writable: true,
-});
+    Object.defineProperty(window, "location", {
+      value: originalLocation,
+      writable: true,
+    });
   })
 
   it("exibe erro quando falha ao iniciar OAuth", async () => {

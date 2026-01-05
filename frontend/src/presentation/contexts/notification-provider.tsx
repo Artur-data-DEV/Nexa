@@ -14,8 +14,15 @@ interface BroadcastNotificationPayload {
     type: string
     title: string
     message: string
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    data: any
+    data: {
+        [key: string]: unknown
+        room_id?: string | number
+        roomId?: string | number
+        chat_room_id?: string | number
+        room?: {
+            room_id?: string | number
+        }
+    }
     created_at?: string
 }
 

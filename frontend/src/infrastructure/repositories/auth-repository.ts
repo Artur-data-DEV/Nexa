@@ -151,7 +151,7 @@ export class ApiAuthRepository implements AuthRepository {
           return !!(response as { verified?: boolean }).verified
         }
         return false
-    } catch (error) {
+    } catch {
         return false
     }
   }

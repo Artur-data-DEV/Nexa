@@ -8,6 +8,7 @@ import { Button } from "@/presentation/components/ui/button"
 import { toast } from "sonner"
 import { handleGoogleCallbackRequest } from "@/infrastructure/api/google-auth"
 import { useAuth } from "@/presentation/contexts/auth-provider"
+import type { AxiosError } from "axios"
 
 export default function GoogleOAuthCallbackPage() {
   return (
@@ -100,8 +101,9 @@ function GoogleOAuthCallbackInner() {
         }
 
         router.push("/dashboard")
-      } catch (err: any) {
-        const message = err?.message || "Falha na autenticação Google OAuth"
+      } catch (err: unknown) {
+        const axiosError = err as AxiosError<{ message?: string }>
+        const message = axiosError.response?.data?.message || axiosError.message || "Falha na autenticação Google OAuth"
         setError(message)
         setStatus("error")
         toast.error(message)

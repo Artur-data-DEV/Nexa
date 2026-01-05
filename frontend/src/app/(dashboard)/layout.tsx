@@ -11,7 +11,6 @@ import {
   User,
   Settings,
   Wallet,
-  BookOpen,
   BanknoteIcon,
   PlusCircle,
   LogOut,

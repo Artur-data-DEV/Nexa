@@ -1,5 +1,5 @@
 export interface NotificationData {
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 export interface Notification {

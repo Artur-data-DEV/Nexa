@@ -8,7 +8,6 @@ import { Label } from "@/presentation/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/presentation/components/ui/select"
 import { toast } from "sonner"
 import { 
-  BanknoteIcon, 
   User, 
   Building2, 
   Hash, 
@@ -18,7 +17,6 @@ import {
   Edit,
   Trash2,
   CheckCircle,
-  AlertCircle
 } from "lucide-react"
 import { BankInfo, BankRegistrationRequest } from "@/domain/entities/financial"
 import { ApiFinancialRepository } from "@/infrastructure/repositories/financial-repository"
@@ -27,7 +25,7 @@ import { RegisterBankUseCase } from "@/application/use-cases/register-bank.use-c
 import { UpdateBankInfoUseCase } from "@/application/use-cases/update-bank-info.use-case"
 import { DeleteBankInfoUseCase } from "@/application/use-cases/delete-bank-info.use-case"
 import { api } from "@/infrastructure/api/axios-adapter"
-import { cn } from "@/lib/utils"
+import type { AxiosError } from "axios"
 
 const financialRepository = new ApiFinancialRepository(api)
 const getBankInfoUseCase = new GetBankInfoUseCase(financialRepository)
@@ -227,9 +225,15 @@ export function BankRegistration() {
       }
       await loadBankInfo()
       setIsEditing(false)
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError<{ message?: string; error?: string }>
+      const message =
+        axiosError.response?.data?.message ||
+        axiosError.response?.data?.error ||
+        axiosError.message ||
+        "Erro ao salvar dados bancários"
       console.error(error)
-      toast.error(error.response?.data?.message || "Erro ao salvar dados bancários")
+      toast.error(message)
     } finally {
       setIsSaving(false)
     }
@@ -255,9 +259,11 @@ export function BankRegistration() {
         name: ''
       })
       setIsEditing(false)
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error)
-      toast.error("Erro ao remover dados bancários")
+      const axiosError = error as AxiosError<{ message?: string }>
+      const message = axiosError.response?.data?.message || axiosError.message || "Erro ao remover dados bancários"
+      toast.error(message)
     } finally {
       setIsSaving(false)
     }

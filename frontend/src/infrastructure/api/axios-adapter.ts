@@ -2,9 +2,9 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios"
 
 export interface HttpClient {
   get<T>(url: string, config?: AxiosRequestConfig): Promise<T>
-  post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T>
-  put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T>
-  patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T>
+  post<T, D = unknown>(url: string, data?: D, config?: AxiosRequestConfig): Promise<T>
+  put<T, D = unknown>(url: string, data?: D, config?: AxiosRequestConfig): Promise<T>
+  patch<T, D = unknown>(url: string, data?: D, config?: AxiosRequestConfig): Promise<T>
   delete<T>(url: string, config?: AxiosRequestConfig): Promise<T>
 }
 
@@ -28,28 +28,32 @@ export class AxiosAdapter implements HttpClient {
   private setupInterceptors() {
     this.api.interceptors.request.use(
       (config) => {
-        const skipAuth = config.headers && (config.headers as Record<string, string>)["X-Skip-Auth"] === "true"
+        const headers = config.headers as Record<string, unknown> | undefined
+        const skipAuth = headers?.["X-Skip-Auth"] === "true"
         const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null
         if (!skipAuth && token) {
           config.headers.Authorization = `Bearer ${token}`
         }
 
-        if (config.data instanceof FormData && config.headers) {
-          delete (config.headers as any)["Content-Type"]
+        if (config.data instanceof FormData && headers) {
+          delete headers["Content-Type"]
         }
 
         // Add Socket ID for broadcasting toOthers()
-        if (!skipAuth && typeof window !== "undefined" && (window as any).Echo) {
-          const socketId = (window as any).Echo.socketId()
+        const echo = typeof window !== "undefined"
+          ? (window as unknown as { Echo?: { socketId?: () => string } }).Echo
+          : undefined
+        if (!skipAuth && echo) {
+          const socketId = echo.socketId?.()
           if (socketId) {
             config.headers["X-Socket-Id"] = socketId
           }
         }
 
-        if (skipAuth && config.headers) {
-          delete (config.headers as Record<string, string>)["X-Skip-Auth"]
-          if ((config.headers as Record<string, string>)["Authorization"]) {
-            delete (config.headers as Record<string, string>)["Authorization"]
+        if (skipAuth && headers) {
+          delete headers["X-Skip-Auth"]
+          if (headers["Authorization"]) {
+            delete headers["Authorization"]
           }
         }
 
@@ -78,17 +82,17 @@ export class AxiosAdapter implements HttpClient {
     return response.data
   }
 
-  async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  async post<T, D = unknown>(url: string, data?: D, config?: AxiosRequestConfig): Promise<T> {
     const response: AxiosResponse<T> = await this.api.post(url, data, config)
     return response.data
   }
 
-  async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  async put<T, D = unknown>(url: string, data?: D, config?: AxiosRequestConfig): Promise<T> {
     const response: AxiosResponse<T> = await this.api.put(url, data, config)
     return response.data
   }
 
-  async patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  async patch<T, D = unknown>(url: string, data?: D, config?: AxiosRequestConfig): Promise<T> {
     const response: AxiosResponse<T> = await this.api.patch(url, data, config)
     return response.data
   }

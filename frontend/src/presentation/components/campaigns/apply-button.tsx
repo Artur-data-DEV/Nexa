@@ -19,7 +19,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -34,6 +33,7 @@ import { Campaign } from "@/domain/entities/campaign"
 import { Alert, AlertDescription, AlertTitle } from "@/presentation/components/ui/alert"
 import { toast } from "sonner"
 import { useAuth } from "@/presentation/contexts/auth-provider"
+import type { AxiosError } from "axios"
 
 const campaignRepository = new ApiCampaignRepository(api)
 const applyToCampaignUseCase = new ApplyToCampaignUseCase(campaignRepository)
@@ -57,10 +57,6 @@ export function ApplyButton({ campaign, onSuccess }: ApplyButtonProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  if (!user || user.role !== "creator") {
-    return null
-  }
-
   const form = useForm<ApplicationFormValues>({
     resolver: zodResolver(applicationSchema),
     defaultValues: {
@@ -70,6 +66,10 @@ export function ApplyButton({ campaign, onSuccess }: ApplyButtonProps) {
     },
   })
 
+  if (!user || user.role !== "creator") {
+    return null
+  }
+
   const onSubmit = async (data: ApplicationFormValues) => {
     setLoading(true)
     setError(null)
@@ -78,9 +78,15 @@ export function ApplyButton({ campaign, onSuccess }: ApplyButtonProps) {
       toast.success("Aplicação enviada com sucesso!")
       setOpen(false)
       if (onSuccess) onSuccess()
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error(err)
-        setError(err.response?.data?.message || "Falha ao enviar aplicação.")
+        const axiosError = err as AxiosError<{ message?: string; error?: string }>
+        setError(
+          axiosError.response?.data?.message ||
+            axiosError.response?.data?.error ||
+            axiosError.message ||
+            "Falha ao enviar aplicação."
+        )
     } finally {
       setLoading(false)
     }
@@ -93,7 +99,7 @@ export function ApplyButton({ campaign, onSuccess }: ApplyButtonProps) {
           Candidatar-se à Campanha
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-125">
         <DialogHeader>
           <DialogTitle>Nova Proposta</DialogTitle>
           <DialogDescription>

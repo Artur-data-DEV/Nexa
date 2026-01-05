@@ -17,7 +17,6 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/presentation/components/ui/card"
 import { Button } from "@/presentation/components/ui/button"
 import { Badge } from "@/presentation/components/ui/badge"
-import { Input } from "@/presentation/components/ui/input"
 import { Label } from "@/presentation/components/ui/label"
 import {
   Select,
@@ -43,6 +42,7 @@ import { toast } from "sonner"
 import { api } from "@/infrastructure/api/axios-adapter"
 import { AuthGuard } from "@/presentation/components/auth/auth-guard"
 import { useAuth } from "@/presentation/contexts/auth-provider"
+import { BankInfo } from "@/domain/entities/financial"
 
 interface WithdrawalVerificationItem {
   id: number
@@ -87,7 +87,7 @@ interface DetailedVerification {
     transaction_id: string | null
     processed_at: string | null
     created_at: string
-    withdrawal_details: any
+    withdrawal_details: Record<string, unknown>
   }
   creator: {
     id: number
@@ -95,8 +95,8 @@ interface DetailedVerification {
     email: string
   }
   bank_account_verification: {
-    withdrawal_bank_details: any
-    current_bank_account: any
+    withdrawal_bank_details: BankInfo | null
+    current_bank_account: BankInfo | null
     details_match: boolean
   }
   verification_summary: {
@@ -192,7 +192,7 @@ function WithdrawalVerificationContent() {
       }
 
       setReport(response.data)
-    } catch (error) {
+    } catch {
       toast.error("Falha ao carregar relatório de verificação")
       setReport(null)
     } finally {
@@ -214,7 +214,7 @@ function WithdrawalVerificationContent() {
       }
 
       setSelectedWithdrawal(response.data)
-    } catch (error) {
+    } catch {
       toast.error("Falha ao carregar detalhes da verificação")
     } finally {
       setDetailedLoading(false)
@@ -223,6 +223,7 @@ function WithdrawalVerificationContent() {
 
   useEffect(() => {
     fetchVerificationReport(1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handlePageChange = (page: number) => {
@@ -308,7 +309,7 @@ function WithdrawalVerificationContent() {
             : "Saque rejeitado com sucesso")
       )
       fetchVerificationReport(currentPage)
-    } catch (error) {
+    } catch {
       toast.error("Falha ao processar saque")
     } finally {
       setProcessingWithdrawalId(null)
@@ -690,12 +691,12 @@ function WithdrawalVerificationContent() {
                   <thead>
                     <tr className="border-b text-xs text-muted-foreground">
                       <th className="w-16 px-3 py-2 text-left">ID</th>
-                      <th className="min-w-[150px] px-3 py-2 text-left">Criador</th>
+                      <th className="min-w-37.5 px-3 py-2 text-left">Criador</th>
                       <th className="w-24 px-3 py-2 text-left">Valor</th>
-                      <th className="min-w-[120px] px-3 py-2 text-left">Método</th>
+                      <th className="min-w-30 px-3 py-2 text-left">Método</th>
                       <th className="w-20 px-3 py-2 text-left">Status</th>
                       <th className="w-24 px-3 py-2 text-left">Verificação</th>
-                      <th className="min-w-[100px] px-3 py-2 text-left">Data</th>
+                      <th className="min-w-25 px-3 py-2 text-left">Data</th>
                       <th className="w-16 px-3 py-2 text-left">Ações</th>
                     </tr>
                   </thead>
@@ -719,7 +720,7 @@ function WithdrawalVerificationContent() {
                         <td className="px-3 py-3 align-top font-medium">
                           {withdrawal.amount}
                         </td>
-                        <td className="max-w-[160px] px-3 py-3 align-top">
+                        <td className="max-w-40 px-3 py-3 align-top">
                           <div className="truncate" title={withdrawal.withdrawal_method}>
                             {withdrawal.withdrawal_method}
                           </div>
@@ -789,7 +790,7 @@ function WithdrawalVerificationContent() {
                                           <Label className="text-sm font-medium">
                                             Valor
                                           </Label>
-                                          <p className="break-words text-lg font-bold">
+                                          <p className="wrap-break-word text-lg font-bold">
                                             {selectedWithdrawal.withdrawal.amount}
                                           </p>
                                         </div>
@@ -797,7 +798,7 @@ function WithdrawalVerificationContent() {
                                           <Label className="text-sm font-medium">
                                             Método
                                           </Label>
-                                          <p className="break-words">
+                                          <p className="wrap-break-word">
                                             {selectedWithdrawal.withdrawal.withdrawal_method}
                                           </p>
                                         </div>
@@ -826,7 +827,7 @@ function WithdrawalVerificationContent() {
                                           <Label className="text-sm font-medium">
                                             Criado em
                                           </Label>
-                                          <p className="break-words">
+                                          <p className="wrap-break-word">
                                             {format(
                                               new Date(
                                                 selectedWithdrawal.withdrawal.created_at
@@ -840,7 +841,7 @@ function WithdrawalVerificationContent() {
                                           <Label className="text-sm font-medium">
                                             Processado em
                                           </Label>
-                                          <p className="break-words">
+                                          <p className="wrap-break-word">
                                             {selectedWithdrawal.withdrawal.processed_at
                                               ? format(
                                                   new Date(
@@ -867,7 +868,7 @@ function WithdrawalVerificationContent() {
                                           <Label className="text-sm font-medium">
                                             Nome
                                           </Label>
-                                          <p className="break-words">
+                                          <p className="wrap-break-word">
                                             {selectedWithdrawal.creator.name}
                                           </p>
                                         </div>

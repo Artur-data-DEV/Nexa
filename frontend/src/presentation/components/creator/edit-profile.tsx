@@ -10,15 +10,14 @@ import {
   SelectItem,
 } from "@/presentation/components/ui/select"
 import { NICHES } from "@/lib/niches"
-import { Calendar as CalendarIcon } from "lucide-react"
-import { ptBR } from "date-fns/locale"
-import { cn } from "@/lib/utils"
 import { UploadIcon, XIcon } from "lucide-react"
 import { Button } from "@/presentation/components/ui/button"
 import DatePicker, { registerLocale } from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
-// Turbopack/SSR-safe: avoid ReferenceError if tree-shaken
-typeof registerLocale === "function" && registerLocale("pt-BR", ptBR)
+import { ptBR } from "date-fns/locale"
+if (typeof registerLocale === "function") {
+  registerLocale("pt-BR", ptBR)
+}
 import { User } from "@/domain/entities/user"
 import Image from "next/image"
 import { format } from "date-fns"
@@ -48,7 +47,7 @@ const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"]
 interface EditProfileProps {
   initialProfile: User
   onCancel: () => void
-  onSave: (profile: any) => void
+  onSave: (profile: User & { image?: File | null }) => void
   isLoading?: boolean
 }
 
@@ -67,13 +66,13 @@ export const EditProfile: React.FC<EditProfileProps> = ({ initialProfile, onCanc
       const s = value.trim()
       const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s)
       if (iso) {
-        const [_, y, m, d] = iso
+        const [, y, m, d] = iso
         const dt = new Date(Number(y), Number(m) - 1, Number(d))
         return isNaN(dt.getTime()) ? null : dt
       }
       const br = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s)
       if (br) {
-        const [_, d, m, y] = br
+        const [, d, m, y] = br
         const dt = new Date(Number(y), Number(m) - 1, Number(d))
         return isNaN(dt.getTime()) ? null : dt
       }
@@ -84,9 +83,10 @@ export const EditProfile: React.FC<EditProfileProps> = ({ initialProfile, onCanc
   }
 
   useEffect(() => {
-    if (initialProfile.avatar) {
+    if (initialProfile.avatar && initialProfile.avatar !== imagePreview) {
       setImagePreview(initialProfile.avatar)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialProfile])
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -231,7 +231,7 @@ export const EditProfile: React.FC<EditProfileProps> = ({ initialProfile, onCanc
             <label className="text-sm font-medium">Estado</label>
             <Select
               value={profile.state}
-              onValueChange={(val) => setProfile((p: any) => ({ ...p, state: val }))}
+              onValueChange={(val) => setProfile((p) => ({ ...p, state: val }))}
               disabled={isLoading}
             >
               <SelectTrigger>
@@ -261,7 +261,7 @@ export const EditProfile: React.FC<EditProfileProps> = ({ initialProfile, onCanc
             <label className="text-sm font-medium">Gênero *</label>
             <Select
               value={profile.gender}
-              onValueChange={(val) => setProfile((p: any) => ({ ...p, gender: val }))}
+              onValueChange={(val) => setProfile((p) => ({ ...p, gender: val }))}
               disabled={isLoading}
             >
               <SelectTrigger>
@@ -281,7 +281,7 @@ export const EditProfile: React.FC<EditProfileProps> = ({ initialProfile, onCanc
               <DatePicker
                 selected={safeParseDate(profile.birth_date)}
                 onChange={(date: Date | null) => {
-                  setProfile((p: any) => ({
+                  setProfile((p) => ({
                     ...p,
                     birth_date: date ? format(date, "yyyy-MM-dd") : undefined,
                   }))

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/presentation/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/presentation/components/ui/tabs"
-import { FileText, Send } from "lucide-react"
+import { Send } from "lucide-react"
 import { ExtendedApplication, ApplicationCard } from "./application-card"
 import { ApiApplicationRepository } from "@/infrastructure/repositories/application-repository"
 import { api } from "@/infrastructure/api/axios-adapter"
@@ -37,7 +37,7 @@ export default function MyApplicationsList() {
     )
 
     return (
-        <Card className="min-h-[500px]">
+        <Card className="min-h-125">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <Send className="h-5 w-5" />
@@ -46,7 +46,7 @@ export default function MyApplicationsList() {
             </CardHeader>
             <CardContent>
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
-                    <TabsList className="grid w-full grid-cols-4 lg:w-[600px]">
+                    <TabsList className="grid w-full grid-cols-4 lg:w-150">
                         <TabsTrigger value="all">Todas</TabsTrigger>
                         <TabsTrigger value="pending">Pendentes</TabsTrigger>
                         <TabsTrigger value="approved">Aprovadas</TabsTrigger>
@@ -57,7 +57,7 @@ export default function MyApplicationsList() {
                         {isLoading ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {[1, 2, 3].map(i => (
-                                    <Skeleton key={i} className="h-[180px] w-full" />
+                                    <Skeleton key={i} className="h-45 w-full" />
                                 ))}
                             </div>
                         ) : filteredApplications.length === 0 ? (

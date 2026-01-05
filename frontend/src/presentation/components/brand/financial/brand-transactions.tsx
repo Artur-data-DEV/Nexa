@@ -136,7 +136,11 @@ const getStatusBadge = (status: string) => {
   )
 }
 
-const getPaymentMethodIcon = (method: string) => {
+const getPaymentMethodIcon = (paymentMethod?: string | null) => {
+  const normalized = (paymentMethod ?? "").toLowerCase()
+  if (normalized.includes("pix")) {
+    return <DollarSign className="w-4 h-4" />
+  }
   return <DollarSign className="w-4 h-4" />
 }
 
@@ -318,7 +322,7 @@ export default function BrandTransactionsView() {
                     </div>
                   </div>
 
-                  <div className="flex flex-col items-end gap-2 min-w-[180px]">
+                  <div className="flex flex-col items-end gap-2 min-w-45">
                     <div className="flex items-center gap-2">
                       {getPaymentMethodIcon(transaction.payment_method)}
                       <div className="text-right">

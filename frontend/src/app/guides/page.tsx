@@ -3,13 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/presentation/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/presentation/components/ui/card";
-import { Badge } from "@/presentation/components/ui/badge";
 import { AspectRatio } from "@/presentation/components/ui/aspect-ratio";
 import { Separator } from "@/presentation/components/ui/separator";
 import { Navbar } from "@/presentation/components/landing/navbar";
 import { Footer } from "@/presentation/components/landing/footer";
 import { Button } from "@/presentation/components/ui/button";
-import { Loader2, Play, AlertCircle, BookOpen, Users, Target, TrendingUp, Image as ImageIcon, ChevronLeft, ChevronRight, CheckCircle2 } from "lucide-react";
+import { Loader2, Play, AlertCircle, BookOpen, Users, Target, TrendingUp, Image as ImageIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { Guide, GuideStep } from "@/domain/entities/guide";
 import { ApiGuideRepository } from "@/infrastructure/repositories/guide-repository";
 import { api } from "@/infrastructure/api/axios-adapter";
@@ -17,7 +16,7 @@ import { cn } from "@/lib/utils";
 
 const guideRepository = new ApiGuideRepository(api);
 
-const MediaSlot = ({ step, label }: { step: GuideStep; label: string }) => {
+const MediaSlot = ({ step, label }: { step: GuideStep; label?: string }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentScreenshot, setCurrentScreenshot] = useState(0);
@@ -31,13 +30,13 @@ const MediaSlot = ({ step, label }: { step: GuideStep; label: string }) => {
   });
 
   // Effect to update mediaType if props change (optional, depending on if steps change dynamically)
-  useEffect(() => {
-    if (hasScreenshots) {
-      setMediaType('screenshots');
-    } else if (hasVideo) {
-      setMediaType('video');
-    }
-  }, [hasScreenshots, hasVideo]);
+  // useEffect(() => {
+  //   if (hasScreenshots && mediaType !== 'screenshots') {
+  //     setMediaType('screenshots');
+  //   } else if (hasVideo && !hasScreenshots && mediaType !== 'video') {
+  //     setMediaType('video');
+  //   }
+  // }, [hasScreenshots, hasVideo, mediaType]);
 
   const nextScreenshot = () => {
     if (step.screenshot_urls && currentScreenshot < step.screenshot_urls.length - 1) {
@@ -53,7 +52,7 @@ const MediaSlot = ({ step, label }: { step: GuideStep; label: string }) => {
 
   if (!hasVideo && !hasScreenshots) {
     return (
-      <div className="flex items-center justify-center h-full min-h-[200px] bg-muted rounded-lg">
+      <div className="flex items-center justify-center h-full min-h-52 bg-muted rounded-lg">
         <div className="text-center text-muted-foreground">
           <BookOpen className="h-12 w-12 mx-auto mb-2 opacity-50" />
           <p className="text-sm">No media available</p>
@@ -89,7 +88,7 @@ const MediaSlot = ({ step, label }: { step: GuideStep; label: string }) => {
       )}
 
       <AspectRatio ratio={16 / 9} className="h-full">
-        <div className="relative w-full h-full bg-muted rounded-lg overflow-hidden">
+        <div className="relative w-full h-full bg-muted rounded-lg overflow-hidden" aria-label={label}>
           {mediaType === 'video' && hasVideo ? (
             <>
               {!isPlaying ? (
@@ -266,7 +265,7 @@ export default function Guides() {
     return (
       <>
         <Navbar />
-        <div className="flex items-center justify-center min-h-screen mt-[88px]">
+        <div className="flex items-center justify-center min-h-screen mt-24">
           <div className="text-center space-y-4">
             <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
             <div>

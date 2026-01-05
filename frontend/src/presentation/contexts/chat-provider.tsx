@@ -13,6 +13,7 @@ import { useAuth } from "@/presentation/contexts/auth-provider"
 import { ApiChatRepository } from "@/infrastructure/repositories/chat-repository"
 import { api } from "@/infrastructure/api/axios-adapter"
 import { toast } from "sonner"
+import type { AxiosError } from "axios"
 
 interface ChatContextType {
   chats: Chat[]
@@ -192,10 +193,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       } catch (error) {
         setMessages(prev => prev.filter(msg => msg.id !== tempId))
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const anyError = error as any
+        const axiosError = error as AxiosError<{ message?: string }>
         const errorMessage =
-          anyError?.response?.data?.message || "Erro desconhecido ao enviar mensagem"
+          axiosError.response?.data?.message || "Erro desconhecido ao enviar mensagem"
         toast.error(`Erro ao enviar: ${errorMessage}`)
       }
     },
@@ -283,7 +283,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     if (chats.length === 0) return
     const userId = user?.id ? String(user.id) : "anon"
     localStorage.setItem(`chat_list_cache_v1_user_${userId}`, JSON.stringify(chats))
-  }, [chats])
+  }, [chats, user?.id])
 
   useEffect(() => {
     if (!selectedChat) return

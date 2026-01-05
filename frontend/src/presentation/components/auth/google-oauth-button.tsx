@@ -39,8 +39,10 @@ export function GoogleOAuthButton({
       }
 
       window.location.href = redirectUrl
-    } catch (error: any) {
-      const message = error?.message || "Falha ao iniciar login com Google"
+    } catch (error: unknown) {
+      const message = typeof error === "object" && error && "message" in error
+        ? String((error as { message?: string }).message)
+        : "Falha ao iniciar login com Google"
       toast.error(message)
     } finally {
       setLoading(false)

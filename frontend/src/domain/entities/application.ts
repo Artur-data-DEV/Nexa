@@ -6,5 +6,8 @@ export interface Application {
   proposal: string
   budget?: number
   delivery_days?: number
+  proposed_budget?: number | null
+  estimated_delivery_days?: number | null
+  portfolio_links?: string[] | null
   created_at: string
 }

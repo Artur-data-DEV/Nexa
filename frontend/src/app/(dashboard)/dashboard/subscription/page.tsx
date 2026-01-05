@@ -4,7 +4,7 @@ import React, { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/presentation/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/presentation/components/ui/card";
-import { Loader2, ArrowLeft, CreditCard, Shield, CheckCircle2, Star, Calendar, AlertCircle } from "lucide-react";
+import { Loader2, ArrowLeft, CreditCard, Shield, CheckCircle2, Star, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/presentation/contexts/auth-provider";
 import { ApiPaymentRepository } from "@/infrastructure/repositories/payment-repository";
@@ -77,12 +77,17 @@ function SubscriptionForm({ plan }: { plan: SubscriptionPlan }) {
     try {
       if ((plan.duration_months || 0) >= 12) {
         const config = await stripeRepository.checkConfiguration();
+        const cfg = config as {
+          success?: boolean;
+          configuration?: {
+            stripe_secret_configured?: boolean;
+            stripe_publishable_configured?: boolean;
+          };
+        };
         const isConfigured =
-          !!config &&
-          !!config.success &&
-          !!config.configuration &&
-          !!config.configuration.stripe_secret_configured &&
-          !!config.configuration.stripe_publishable_configured;
+          !!cfg?.success &&
+          !!cfg.configuration?.stripe_secret_configured &&
+          !!cfg.configuration?.stripe_publishable_configured;
         if (!isConfigured) {
           toast.error("Stripe não configurado", {
             description: "Configure o Stripe antes de assinar o plano anual.",

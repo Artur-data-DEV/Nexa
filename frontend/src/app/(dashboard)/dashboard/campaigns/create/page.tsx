@@ -1,15 +1,13 @@
 "use client"
 
 import React, { useRef, useState, useCallback } from "react"
-import { useRouter } from "next/navigation"
 import { Input } from "@/presentation/components/ui/input"
 import { Textarea } from "@/presentation/components/ui/textarea"
 import { Button } from "@/presentation/components/ui/button"
 import { Card } from "@/presentation/components/ui/card"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
-import { Calendar as CalendarIcon, UploadCloud, X, PlusCircle } from "lucide-react"
-import { format } from "date-fns"
+import { UploadCloud, X, PlusCircle } from "lucide-react"
 import { ptBR } from "date-fns/locale"
 import { CreateCampaignUseCase } from "@/application/use-cases/create-campaign.use-case"
 import { ApiCampaignRepository } from "@/infrastructure/repositories/campaign-repository"
@@ -18,7 +16,9 @@ import NICHES from "@/lib/niches"
 import Image from "next/image"
 import DatePicker, { registerLocale } from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
-typeof registerLocale === "function" && registerLocale("pt-BR", ptBR)
+if (typeof registerLocale === "function") {
+  registerLocale("pt-BR", ptBR)
+}
 
 const campaignRepository = new ApiCampaignRepository(api)
 const createCampaignUseCase = new CreateCampaignUseCase(campaignRepository)
@@ -34,8 +34,6 @@ const BRAZILIAN_STATES = [
 const CAMPAIGN_TYPES = NICHES
 
 export default function CreateCampaignPage() {
-  const router = useRouter()
-
   // Form State
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
@@ -292,7 +290,7 @@ export default function CreateCampaignPage() {
               value={description}
               onChange={e => setDescription(e.target.value)}
               placeholder="Queremos conteúdo autêntico sobre moda verão"
-              className="min-h-[90px]"
+              className="min-h-24"
               required
             />
           </div>
@@ -497,7 +495,7 @@ export default function CreateCampaignPage() {
             <label className="block text-xs font-medium text-muted-foreground mb-1">Logo da Campanha (upload imagem)</label>
             <div
               className={cn(
-                "flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition bg-background min-h-[90px]",
+                "flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition bg-background min-h-24",
                 dragActive && "border-pink-500 bg-pink-50 dark:bg-pink-900/20"
               )}
               onClick={() => fileInputRef.current?.click()}
@@ -541,7 +539,7 @@ export default function CreateCampaignPage() {
           <div className="mb-5">
             <label className="block text-xs font-medium text-muted-foreground mb-1">Anexos (opcional)</label>
             <div
-              className="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition bg-background min-h-[90px]"
+              className="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition bg-background min-h-24"
               onClick={() => attachmentInputRef.current?.click()}
             >
               <UploadCloud className="w-8 h-8 mb-2 text-muted-foreground" />
@@ -566,7 +564,7 @@ export default function CreateCampaignPage() {
                         </span>
                       </div>
                       <div>
-                        <p className="text-sm font-medium truncate max-w-[200px]">{attachment.name}</p>
+                        <p className="text-sm font-medium truncate w-52">{attachment.name}</p>
                         <p className="text-xs text-muted-foreground">{(attachment.size / 1024 / 1024).toFixed(2)} MB</p>
                       </div>
                     </div>

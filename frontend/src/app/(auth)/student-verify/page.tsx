@@ -11,6 +11,7 @@ import { ApiAuthRepository } from "@/infrastructure/repositories/auth-repository
 import { api } from "@/infrastructure/api/axios-adapter"
 import { toast } from "sonner"
 import { Info } from "lucide-react"
+import { User } from "@/domain/entities/user"
 
 const authRepository = new ApiAuthRepository(api)
 
@@ -48,8 +49,9 @@ function StudentVerifyInner() {
   }, [user, isInsideCreatorDashboard, router])
 
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if ((user as any)?.student_verified) {
+    const studentVerified =
+      ((user as Partial<User> & { student_verified?: boolean })?.student_verified) === true
+    if (studentVerified) {
       toast.success("Você já está verificado como aluno!")
       if (!isInsideCreatorDashboard) {
         setTimeout(() => {
@@ -74,8 +76,9 @@ function StudentVerifyInner() {
 
     if (isSubmitting) return
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if ((user as any)?.student_verified) {
+    const studentVerified =
+      ((user as Partial<User> & { student_verified?: boolean })?.student_verified) === true
+    if (studentVerified) {
       toast.info("Você já está verificado como aluno!")
       router.push("/dashboard")
       return
@@ -99,50 +102,44 @@ function StudentVerifyInner() {
         return
       }
 
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const res: any = await authRepository.verifyStudent({
-          email: form.email,
-          username: form.username,
-          courseName: "Build Creators"
-        })
+      const res = await authRepository.verifyStudent({
+        email: form.email,
+        username: form.username,
+        courseName: "Build Creators"
+      })
 
-        const data = res?.data || res || {}
+      const data = (res as unknown as { data?: unknown; success?: boolean; message?: string })
+      const payload = (data.data ?? data) as { success?: boolean; message?: string }
 
-        if (data?.success) {
-          toast.success(data?.message || "Solicitação registrada com sucesso! Aguarde a aprovação do administrador.")
+      if (payload?.success) {
+        toast.success(payload?.message || "Solicitação registrada com sucesso! Aguarde a aprovação do administrador.")
 
-          setTimeout(() => {
-            router.push("/dashboard")
-          }, 1500)
-        } else {
-          toast.info(data?.message || "Solicitação registrada. Nossa equipe validará seu acesso de aluno.")
-        }
-      } catch (e: any) {
-        const errorMessage = e?.response?.data?.message || "Erro ao verificar. Tente novamente."
-
-        if (e?.response?.status === 422) {
-          setError(errorMessage)
-        } else {
-          toast.error(errorMessage)
-        }
+        setTimeout(() => {
+          router.push("/dashboard")
+        }, 1500)
+      } else {
+        toast.info(payload?.message || "Solicitação registrada. Nossa equipe validará seu acesso de aluno.")
       }
-    } catch (err: any) {
-      console.error("Student verification error:", err)
+    } catch (e: unknown) {
+      console.error("Student verification error:", e)
+      const resp = (e as { response?: { data?: { message?: string; error?: string }; status?: number } }).response
+      const errorMessage: string = resp?.data?.message ?? resp?.data?.error ?? "Erro ao verificar. Tente novamente."
 
-      if (err.response) {
-        const errorMessage = err.response.data?.message || err.response.data?.error || "Erro do servidor"
+      const status = resp?.status
+
+      if (status === 422) {
         setError(errorMessage)
       } else {
-        setError(err.message || "Erro ao verificar status de aluno. Tente novamente.")
+        // For other errors, show toast or set error
+        setError(errorMessage)
       }
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const isVerified = (user as any)?.student_verified
+  const isVerified =
+    ((user as Partial<User> & { student_verified?: boolean })?.student_verified) === true
 
   return (
     <div className={isInsideCreatorDashboard ? "p-6 w-full min-h-[92vh] flex justify-center items-center" : "min-h-screen flex items-center justify-center bg-muted py-8 px-2 dark:bg-background relative"}>

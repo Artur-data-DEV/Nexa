@@ -1,6 +1,11 @@
 import { test, expect } from '@playwright/test';
-import { testUsers, stripeTestCards, selectors, timeouts } from '../fixtures/test-data';
-import { loginAs, fillStripeCard, navigateTo } from '../helpers/auth';
+import {
+    // testUsers,
+    stripeTestCards,
+    selectors,
+    timeouts
+} from '../fixtures/test-data';
+import { loginAs, fillStripeCard } from '../helpers/auth';
 
 test.describe('Payment Flows', () => {
 

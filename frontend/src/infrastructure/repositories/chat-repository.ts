@@ -2,29 +2,32 @@ import { ChatRepository } from "@/domain/repositories/chat-repository.interface"
 import { Chat, ChatMessagesResponse, ChatRoomSummary, Message } from "@/domain/entities/chat"
 import { HttpClient } from "../api/axios-adapter"
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null
+
 export class ApiChatRepository implements ChatRepository {
   constructor(private http: HttpClient) {}
 
   async getChats(): Promise<Chat[]> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const response: any = await this.http.get<any>("/chat/rooms")
+    const response = await this.http.get<unknown>("/chat/rooms")
 
-    if (response && Array.isArray(response.data)) {
-      return response.data as Chat[]
+    if (isRecord(response) && Array.isArray(response["data"])) {
+      return response["data"] as Chat[]
     }
 
     return Array.isArray(response) ? (response as Chat[]) : []
   }
 
   async getMessages(roomId: string): Promise<ChatMessagesResponse> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const response: any = await this.http.get<any>(`/chat/rooms/${roomId}/messages`)
+    const response = await this.http.get<unknown>(`/chat/rooms/${roomId}/messages`)
 
-    if (response && response.data) {
-      const { room, messages } = response.data
+    if (isRecord(response) && isRecord(response["data"])) {
+      const data = response["data"]
+      const room = isRecord(data) ? data["room"] : undefined
+      const messages = isRecord(data) ? data["messages"] : undefined
       return {
         room: room as ChatRoomSummary,
-        messages: messages as Message[],
+        messages: (Array.isArray(messages) ? messages : []) as Message[],
       }
     }
 
@@ -40,14 +43,13 @@ export class ApiChatRepository implements ChatRepository {
   }
 
   async sendMessage(roomId: string, content: string): Promise<Message> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const response: any = await this.http.post<any>("/chat/messages", {
+    const response = await this.http.post<unknown, { room_id: string; message: string }>("/chat/messages", {
       room_id: roomId,
       message: content,
     })
 
-    if (response && response.data) {
-      return response.data as Message
+    if (isRecord(response) && isRecord(response["data"])) {
+      return response["data"] as unknown as Message
     }
 
     return response as Message
@@ -62,11 +64,10 @@ export class ApiChatRepository implements ChatRepository {
       formData.append("message", message.trim())
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const response: any = await this.http.post<any>("/chat/messages", formData)
+    const response = await this.http.post<unknown, FormData>("/chat/messages", formData)
 
-    if (response && response.data) {
-      return response.data as Message
+    if (isRecord(response) && isRecord(response["data"])) {
+      return response["data"] as unknown as Message
     }
 
     return response as Message

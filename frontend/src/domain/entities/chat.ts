@@ -15,8 +15,7 @@ export interface Message {
   file_url?: string | null
   formatted_file_size?: string | null
   read_at?: string | null
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  offer_data?: any
+  offer_data?: Record<string, unknown> | null
 }
 
 export interface ChatLastMessage {

@@ -1,5 +1,9 @@
 import { test, expect } from '@playwright/test';
-import { testUsers, selectors, timeouts } from '../fixtures/test-data';
+import {
+    // testUsers,
+    // selectors,
+    // timeouts
+} from '../fixtures/test-data';
 import { loginAs } from '../helpers/auth';
 import { execSync } from 'child_process';
 import path from 'path';
@@ -87,7 +91,7 @@ import path from 'path';
                 // Wait for redirect or success - Make soft to allow verification in next step - Make soft to allow verification in next step
                 try {
                     await expect(brandPage.getByText(/Campanha Criada|sucesso/i).or(brandPage.getByText('Campanhas'))).toBeVisible({ timeout: 20000 });
-                } catch (e) {
+                } catch {
                     console.log('Warn: Success message missed, checking next step...');
                 }
 
@@ -261,7 +265,7 @@ import path from 'path';
 
                 // Monitor network for approval request
                 const [approveResponse] = await Promise.all([
-                    brandPage.waitForResponse(res => res.url().includes('/approve') && res.request().method() === 'POST', { timeout: 10000 }).catch(() => [null]),
+                    brandPage.waitForResponse(res => res.url().includes('/approve') && res.request().method() === 'POST', { timeout: 10000 }).catch(() => null),
                     approveBtn.click()
                 ]);
 
@@ -273,7 +277,7 @@ import path from 'path';
                         try {
                             await brandPage.waitForLoadState('networkidle');
                             await expect(brandPage).toHaveURL(/payment-methods|checkout\.stripe\.com/, { timeout: 30000 });
-                        } catch (e) {
+                        } catch {
                             console.warn('Redirect did not happen as expected within timeout.');
                         }
                         
@@ -452,11 +456,11 @@ import path from 'path';
                                 const skipBtn = popup.locator(combinedSelector).first();
                                 
                                 try {
-                                    await expect(skipBtn).toBeVisible({ timeout: 10000 });
-                                    await skipBtn.click();
-                                    console.log('Clicked Stripe Test Mode button on Popup.');
-                                } catch (e) {
-                                    console.log('Skip button not found. Checking for inputs...');
+                                        await expect(skipBtn).toBeVisible({ timeout: 10000 });
+                                        await skipBtn.click();
+                                        console.log('Clicked Stripe Test Mode button on Popup.');
+                                    } catch {
+                                        console.log('Skip button not found. Checking for inputs...');
                                     
                                     const phoneInput = popup.locator('input[type="tel"], input[name="phone"]');
                                     if (await phoneInput.isVisible()) {
@@ -565,7 +569,7 @@ import path from 'path';
                         const finalResponse = await brandPage.waitForResponse(res => res.url().includes('/approve') && res.request().method() === 'POST', { timeout: 5000 }).catch(() => null);
                         if (finalResponse) console.log(`Confirmation Response: ${finalResponse.status()}`);
                     }
-                } catch (e) {
+                } catch {
                     console.log('No confirmation dialog appeared or button not clickable.');
                 }
 

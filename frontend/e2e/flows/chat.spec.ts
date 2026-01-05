@@ -1,5 +1,5 @@
-import { test, expect, Browser, BrowserContext, Page } from '@playwright/test';
-import { testUsers, selectors, timeouts, testMessages } from '../fixtures/test-data';
+import { test, expect, BrowserContext, Page } from '@playwright/test';
+import { selectors, timeouts } from '../fixtures/test-data';
 import { loginAs, waitForWebSocketConnection, sendChatMessage } from '../helpers/auth';
 
 test.describe('Chat Real-Time Flows', () => {

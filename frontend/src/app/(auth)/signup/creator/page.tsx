@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { Check, Loader2, ArrowRight, ArrowLeft, Smartphone, Mail } from "lucide-react"
+import { Check, Loader2, ArrowRight, Smartphone, Mail } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/presentation/components/ui/button"
@@ -16,7 +16,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/presentation/components/ui/card"
@@ -30,7 +29,7 @@ import {
   FormMessage,
 } from "@/presentation/components/ui/form"
 import { PhoneInput } from "@/presentation/components/ui/phone-input"
-import { Alert, AlertDescription, AlertTitle } from "@/presentation/components/ui/alert"
+import { Alert, AlertDescription } from "@/presentation/components/ui/alert"
 import { Logo } from "@/presentation/components/logo"
 import { GoogleOAuthButton } from "@/presentation/components/auth/google-oauth-button"
 

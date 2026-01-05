@@ -5,7 +5,6 @@ import { Menu, UserStar, Building2 } from "lucide-react"
 import { Button } from "@/presentation/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/presentation/components/ui/sheet"
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
-import { ThemeToggle } from "@/presentation/components/theme-toggle"
 import { Logo } from "@/presentation/components/logo"
 import { usePathname } from "next/navigation"
 import {
@@ -33,7 +32,7 @@ const MobileMenu = () => {
                     <Menu className="h-6 w-6" />
                 </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[280px] bg-background/98 backdrop-blur-xl border-l border-white/10 p-0">
+            <SheetContent side="right" className="w-70 bg-background/98 backdrop-blur-xl border-l border-white/10 p-0">
                 <VisuallyHidden>
                     <SheetTitle>Menu de navegação</SheetTitle>
                     <SheetDescription>Opções de navegação para dispositivos móveis</SheetDescription>

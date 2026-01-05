@@ -1,16 +1,16 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/presentation/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/presentation/components/ui/card';
 import { Alert, AlertDescription } from '@/presentation/components/ui/alert';
 import { Badge } from '@/presentation/components/ui/badge';
-import { Loader2, CheckCircle, AlertCircle, ExternalLink, RefreshCw, CreditCard, Building2 } from 'lucide-react';
+import { Loader2, CheckCircle, AlertCircle, RefreshCw, Building2, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { ApiStripeRepository } from '@/infrastructure/repositories/stripe-repository';
 import { api } from '@/infrastructure/api/axios-adapter';
 import { StripeAccountStatus } from '@/domain/repositories/stripe-repository.interface';
+import type { AxiosError } from "axios";
 
 const stripeRepository = new ApiStripeRepository(api);
 
@@ -25,31 +25,30 @@ export const StripeConnectOnboarding: React.FC<StripeConnectOnboardingProps> = (
   onError,
   className = ''
 }) => {
-  // const router = useRouter();
   const [accountStatus, setAccountStatus] = useState<StripeAccountStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreatingLink, setIsCreatingLink] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [imageError, setImageError] = useState(false);
 
-  useEffect(() => {
-    loadAccountStatus();
-  }, []);
-
-  const loadAccountStatus = async () => {
+  const loadAccountStatus = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
       const status = await stripeRepository.getAccountStatus();
       setAccountStatus(status);
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Erro ao carregar status da conta Stripe';
+    } catch (err: unknown) {
+      const axiosError = err as AxiosError<{ message?: string }>
+      const errorMessage = axiosError.response?.data?.message || axiosError.message || 'Erro ao carregar status da conta Stripe';
       setError(errorMessage);
       onError?.(errorMessage);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [onError]);
+
+  useEffect(() => {
+    loadAccountStatus();
+  }, [loadAccountStatus]);
 
   const handleCreateAccountLink = async () => {
     try {
@@ -70,7 +69,7 @@ export const StripeConnectOnboarding: React.FC<StripeConnectOnboardingProps> = (
           url.searchParams.set('locale', locale);
           stripeUrl = url.toString();
         }
-      } catch (e) {
+      } catch {
         stripeUrl = stripeUrl.includes('?')
           ? `${stripeUrl}&locale=${locale}`
           : `${stripeUrl}?locale=${locale}`;
@@ -104,8 +103,9 @@ export const StripeConnectOnboarding: React.FC<StripeConnectOnboardingProps> = (
         }
       }, 600000);
 
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || 'Erro ao criar link de onboarding';
+    } catch (err: unknown) {
+      const axiosError = err as AxiosError<{ message?: string }>
+      const errorMessage = axiosError.response?.data?.message || axiosError.message || 'Erro ao criar link de onboarding';
       setError(errorMessage);
       onError?.(errorMessage);
       toast.error(errorMessage);
@@ -113,6 +113,7 @@ export const StripeConnectOnboarding: React.FC<StripeConnectOnboardingProps> = (
       setIsCreatingLink(false);
     }
   };
+
 
   const getStatusBadge = (status?: string) => {
     switch (status) {
@@ -210,7 +211,7 @@ export const StripeConnectOnboarding: React.FC<StripeConnectOnboardingProps> = (
             ))}
           </ul>
           <p className="text-xs text-muted-foreground mt-2">
-            Clique em "Completar Configuração" para preencher essas informações.
+            Clique em &quot;Completar Configuração&quot; para preencher essas informações.
           </p>
         </div>
       );

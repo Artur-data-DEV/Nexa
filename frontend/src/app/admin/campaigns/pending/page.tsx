@@ -17,6 +17,7 @@ import { ApiCampaignRepository } from "@/infrastructure/repositories/campaign-re
 import { api } from "@/infrastructure/api/axios-adapter"
 import { Campaign } from "@/domain/entities/campaign"
 import { ListPendingCampaignsUseCase } from "@/application/use-cases/list-pending-campaigns.use-case"
+import type { AxiosError } from "axios"
 
 const campaignRepository = new ApiCampaignRepository(api)
 const listPendingCampaignsUseCase = new ListPendingCampaignsUseCase(campaignRepository)
@@ -56,10 +57,12 @@ export default function AdminPendingCampaignsPage() {
       try {
         const data = await listPendingCampaignsUseCase.execute()
         setCampaigns(data)
-      } catch (err: any) {
+      } catch (err: unknown) {
+        const axiosError = err as AxiosError<{ message?: string; error?: string }>
         const message =
-          err?.response?.data?.message ||
-          err?.response?.data?.error ||
+          axiosError.response?.data?.message ||
+          axiosError.response?.data?.error ||
+          axiosError.message ||
           "Não foi possível carregar as campanhas pendentes."
         setError(message)
       } finally {
@@ -76,10 +79,12 @@ export default function AdminPendingCampaignsPage() {
     try {
       await api.patch(`/campaigns/${id}/approve`)
       setCampaigns(prev => prev.filter(campaign => campaign.id !== id))
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const axiosError = err as AxiosError<{ message?: string; error?: string }>
       const message =
-        err?.response?.data?.message ||
-        err?.response?.data?.error ||
+        axiosError.response?.data?.message ||
+        axiosError.response?.data?.error ||
+        axiosError.message ||
         "Erro ao aprovar campanha."
       setError(message)
     } finally {
@@ -93,10 +98,12 @@ export default function AdminPendingCampaignsPage() {
     try {
       await api.patch(`/campaigns/${id}/reject`, { rejection_reason: null })
       setCampaigns(prev => prev.filter(campaign => campaign.id !== id))
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const axiosError = err as AxiosError<{ message?: string; error?: string }>
       const message =
-        err?.response?.data?.message ||
-        err?.response?.data?.error ||
+        axiosError.response?.data?.message ||
+        axiosError.response?.data?.error ||
+        axiosError.message ||
         "Erro ao rejeitar campanha."
       setError(message)
     } finally {
