@@ -22,7 +22,7 @@ services:
       - local
       - homolog
       - prod
-    command: ["redis-server", "--appendonly", "yes"]
+    command: [ "redis-server", "--appendonly", "yes" ]
     ports:
       - "6379:6379"
     volumes:
@@ -65,8 +65,7 @@ services:
       GOOGLE_REDIRECT_URI: http://localhost:3000/auth/google/callback
     volumes:
       - ./backend:/var/www/html
-    working_dir:
-      /var/www/html
+    working_dir: /var/www/html
     command: >
       sh -c "mkdir -p bootstrap/cache storage/logs &&
              chmod -R 777 bootstrap/cache storage &&
@@ -98,8 +97,7 @@ services:
       REVERB_PORT: 8080
     volumes:
       - ./backend:/var/www/html
-    working_dir:
-      /var/www/html
+    working_dir: /var/www/html
     command: >
       sh -c "mkdir -p bootstrap/cache storage/logs &&
              chmod -R 777 bootstrap/cache storage &&
@@ -124,12 +122,11 @@ services:
       NEXT_PUBLIC_REVERB_HOST: localhost
       NEXT_PUBLIC_REVERB_PORT: 8080
       NEXT_PUBLIC_REVERB_SCHEME: http
-      NEXT_PUBLIC_REVERB_APP_KEY: local_key
+      NEXT_PUBLIC_REVERB_APP_KEY: nexa_reverb_key
     volumes:
       - ./frontend:/usr/src/app
       - frontend_node_modules:/usr/src/app/node_modules
-    working_dir:
-      /usr/src/app
+    working_dir: /usr/src/app
     command: >
       sh -c "if [ ! -f node_modules/.bin/next ]; then npm ci; fi &&
              npm run dev -- -p 3000 -H 0.0.0.0"

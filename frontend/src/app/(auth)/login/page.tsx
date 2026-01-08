@@ -115,7 +115,8 @@ function LoginInner() {
           : null
 
       if (typeof window !== "undefined") {
-        console.error("Login error", {
+        console.error("DEBUG: Full Axios Error Object:", error)
+        console.error("Login error details:", {
           message: axiosError.message,
           code,
           status,

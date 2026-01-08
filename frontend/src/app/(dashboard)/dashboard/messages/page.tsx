@@ -99,7 +99,7 @@ const toOfferData = (data: Record<string, unknown>): OfferData => {
 
 export default function MessagesPage() {
     const { user } = useAuth()
-    const { echo} = useEcho()
+    const { echo } = useEcho()
     const searchParams = useSearchParams()
     const router = useRouter()
     const {
@@ -859,14 +859,14 @@ export default function MessagesPage() {
                                                 <div
                                                     key={index}
                                                     className={cn(
-                                                        "flex w-max max-w-[75%] flex-col gap-2 rounded-lg px-3 py-2 text-sm",
+                                                        "flex w-fit max-w-[85%] flex-col gap-1 rounded-lg px-3 py-2 text-sm shadow-sm",
                                                         isMe
-                                                            ? "ml-auto bg-primary text-primary-foreground"
-                                                            : "bg-muted"
+                                                            ? "ml-auto bg-primary text-primary-foreground rounded-br-none"
+                                                            : "bg-muted rounded-bl-none"
                                                     )}
                                                 >
                                                     {isImageMessage && msg.file_url ? (
-                                                        <div className="space-y-1 w-52 sm:w-72">
+                                                        <div className="space-y-1 w-full max-w-[280px]">
                                                             {/* eslint-disable-next-line @next/next/no-img-element */}
                                                             <img
                                                                 src={msg.file_url}
@@ -885,11 +885,11 @@ export default function MessagesPage() {
                                                         <div className="space-y-1">
                                                             <div className="flex items-center gap-2">
                                                                 <FileText className="h-4 w-4" />
-                                                                <span className="text-sm font-medium truncate inline-block w-44">
+                                                                <span className="text-sm font-medium truncate inline-block max-w-[150px]">
                                                                     {msg.file_name || "Arquivo"}
                                                                 </span>
                                                                 {msg.formatted_file_size && (
-                                                                    <span className="text-[11px] text-muted-foreground">
+                                                                    <span className="text-[11px] opacity-70">
                                                                         {msg.formatted_file_size}
                                                                     </span>
                                                                 )}
@@ -911,9 +911,20 @@ export default function MessagesPage() {
                                                             )}
                                                         </div>
                                                     ) : (
-                                                        <>{msg.message}</>
+                                                        <div className="whitespace-pre-wrap wrap-break-word leading-relaxed">
+                                                            {(() => {
+                                                                // Simple formatter for bold text (**text**)
+                                                                const parts = (msg.message || "").split(/(\*\*.*?\*\*)/g);
+                                                                return parts.map((part, i) => {
+                                                                    if (part.startsWith('**') && part.endsWith('**')) {
+                                                                        return <strong key={i}>{part.slice(2, -2)}</strong>;
+                                                                    }
+                                                                    return part;
+                                                                });
+                                                            })()}
+                                                        </div>
                                                     )}
-                                                    <span className={cn("text-[10px] self-end flex items-center gap-1", isMe ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                                                    <span className={cn("text-[10px] self-end flex items-center gap-1 opacity-70 select-none", isMe ? "text-primary-foreground" : "text-muted-foreground")}>
                                                         {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                                                         {isMe && (
                                                             msg.is_read ? <CheckCheck className="h-3 w-3" /> : <Check className="h-3 w-3" />

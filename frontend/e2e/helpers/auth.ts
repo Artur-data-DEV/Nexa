@@ -177,7 +177,7 @@ export async function sendChatMessage(page: Page, message: string): Promise<void
     await page.click(selectors.chat.sendButton);
 
     // Wait for message to appear in the chat
-    await expect(page.locator(`${selectors.chat.messageItem}:has-text("${message}")`))
+    await expect(page.locator(`${selectors.chat.room}:has-text("${message}")`))
         .toBeVisible({ timeout: timeouts.websocket });
 }
 

@@ -19,7 +19,7 @@ export class AxiosAdapter implements HttpClient {
         "Accept": "application/json",
       },
       withCredentials: true, // Necessary for Laravel Sanctum
-      timeout: 30000,
+      timeout: 60000,
     })
 
     this.setupInterceptors()
@@ -67,9 +67,9 @@ export class AxiosAdapter implements HttpClient {
       (error) => {
         if (error.response?.status === 401) {
           if (typeof window !== "undefined") {
-             // Optional: Dispatch event or clear storage
-             // localStorage.removeItem("auth_token");
-             // window.location.href = "/login";
+            // Optional: Dispatch event or clear storage
+            // localStorage.removeItem("auth_token");
+            // window.location.href = "/login";
           }
         }
         return Promise.reject(error)

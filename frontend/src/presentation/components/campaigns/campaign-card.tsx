@@ -14,21 +14,28 @@ const fallbackImages = [
   "https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=800&q=80",
 ]
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL?.replace('/api', '') || 'http://localhost:8000';
+
 function getCampaignImage(campaign: Campaign) {
+  let imageUrl: string | null = null;
+
   if (campaign.attach_file && campaign.attach_file.length > 0) {
-    return campaign.attach_file[0]
+    imageUrl = campaign.attach_file[0];
+  } else if (campaign.image_url && !campaign.image_url.includes('via.placeholder.com')) {
+    imageUrl = campaign.image_url;
+  } else if (campaign.brand?.avatar && !campaign.brand.avatar.includes('via.placeholder.com')) {
+    imageUrl = campaign.brand.avatar;
   }
 
-  if (campaign.image_url) {
-    return campaign.image_url
+  if (imageUrl) {
+    if (imageUrl.startsWith('/')) {
+      return `${BACKEND_URL}${imageUrl}`;
+    }
+    return imageUrl;
   }
 
-  if (campaign.brand?.avatar) {
-    return campaign.brand.avatar
-  }
-
-  const index = campaign.id % fallbackImages.length
-  return fallbackImages[index]
+  const index = campaign.id % fallbackImages.length;
+  return fallbackImages[index];
 }
 
 interface CampaignCardProps {
