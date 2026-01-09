@@ -38,12 +38,17 @@ function getCampaignImage(campaign: Campaign) {
   return fallbackImages[index];
 }
 
+function isSafeUrl(url?: string | null): boolean {
+  return !!url && !url.includes('via.placeholder.com');
+}
+
 interface CampaignCardProps {
   campaign: Campaign
 }
 
 export function CampaignCard({ campaign }: CampaignCardProps) {
   const imageSrc = getCampaignImage(campaign)
+  const brandAvatar = isSafeUrl(campaign.brand?.avatar) ? campaign.brand?.avatar : undefined;
 
   return (
     <Card className="flex flex-col h-full overflow-hidden hover:shadow-md transition-shadow">
@@ -61,7 +66,7 @@ export function CampaignCard({ campaign }: CampaignCardProps) {
           )}
           <div className="absolute -bottom-6 left-4">
             <Avatar className="h-12 w-12 border-2 border-background">
-              <AvatarImage src={campaign.brand?.avatar} />
+              <AvatarImage src={brandAvatar} />
               <AvatarFallback>{campaign.brand?.name?.substring(0, 2).toUpperCase() || "B"}</AvatarFallback>
             </Avatar>
           </div>

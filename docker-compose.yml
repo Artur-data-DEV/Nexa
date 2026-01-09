@@ -99,12 +99,7 @@ services:
       - ./backend:/var/www/html
     working_dir: /var/www/html
     command: >
-      sh -c "mkdir -p bootstrap/cache storage/logs &&
-             chmod -R 777 bootstrap/cache storage &&
-             composer install &&
-             composer require laravel/reverb:^1.1 --no-interaction --no-dev &&
-             php artisan reverb:install &&
-             php artisan reverb:start --host=0.0.0.0 --port=8080"
+      sh -c "php artisan reverb:start --host=0.0.0.0 --port=8080"
     ports:
       - "8080:8080"
 

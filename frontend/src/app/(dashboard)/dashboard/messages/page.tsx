@@ -353,11 +353,19 @@ export default function MessagesPage() {
                     window.location.href = redirectUrl
                 }
             } else {
-                const message =
-                    axiosError.response?.data?.message ||
-                    (error instanceof Error ? error.message : undefined) ||
-                    "Erro ao enviar oferta"
-                toast.error(message)
+                const responseData = axiosError.response?.data as { errors?: Record<string, string[]>, message?: string };
+
+                if (responseData?.errors) {
+                    Object.values(responseData.errors).flat().forEach((msg) => {
+                        toast.error(String(msg));
+                    });
+                } else {
+                    const message =
+                        axiosError.response?.data?.message ||
+                        (error instanceof Error ? error.message : undefined) ||
+                        "Erro ao enviar oferta"
+                    toast.error(message)
+                }
             }
         } finally {
             setIsSubmittingOffer(false)
@@ -381,9 +389,7 @@ export default function MessagesPage() {
         const channel = echo.private(`chat.${selectedChat.room_id}`)
 
         // Bind all events similar to useSocket.ts
-        console.log(`Subscribing to channel: chat.${selectedChat.room_id}`)
         channel.listen('.new_message', (e: NewMessageEvent) => {
-            console.log('EVENT RECEIVED: .new_message', e)
             const incoming: Message = {
                 id: e.messageId || Date.now(),
                 message: e.message || "",
@@ -402,15 +408,10 @@ export default function MessagesPage() {
                 offer_data: e.offerData,
             }
 
-            console.log('INCOMING MESSAGE:', incoming)
-            console.log('is_sender:', incoming.is_sender, 'user?.id:', user?.id, 'senderId:', e.senderId)
-
             setMessages((prev) => {
-                console.log('PREV MESSAGES COUNT:', prev.length)
 
                 // Se a mensagem já existe (por ID ou ID temporário que virou real), ignora
                 const alreadyExists = prev.some(m => m.id === incoming.id)
-                console.log('Already exists by ID?', alreadyExists)
                 if (alreadyExists) return prev
 
                 // Se a mensagem é minha e chegou via socket, preciso remover a otimista se ela ainda estiver lá (embora o fluxo de envio já deva ter tratado)
@@ -423,15 +424,12 @@ export default function MessagesPage() {
                         (m.id > 1000000000000 && m.message === incoming.message) || // ID grande = otimista
                         m.id === incoming.id
                     )
-                    console.log('Is duplicate optimistic?', isDuplicateOptimistic)
                     if (isDuplicateOptimistic) {
                         // Se achou otimista, substitui pela real
-                        console.log('Replacing optimistic message')
                         return prev.map(m => (m.id > 1000000000000 && m.message === incoming.message) ? incoming : m)
                     }
                 }
 
-                console.log('ADDING NEW MESSAGE TO LIST')
                 return [...prev, incoming]
             })
             updateChatList(selectedChat.room_id, incoming)
@@ -450,7 +448,6 @@ export default function MessagesPage() {
             userName: string
             isTyping: boolean
         }) => {
-            console.log('EVENT RECEIVED: .user_typing', e)
             if (e.userId !== user?.id) {
                 setRemoteTyping(e.isTyping)
                 // Auto-clear typing status after 3 seconds just in case we miss the false event
@@ -866,7 +863,7 @@ export default function MessagesPage() {
                                                     )}
                                                 >
                                                     {isImageMessage && msg.file_url ? (
-                                                        <div className="space-y-1 w-full max-w-[280px]">
+                                                        <div className="space-y-1 w-full">
                                                             {/* eslint-disable-next-line @next/next/no-img-element */}
                                                             <img
                                                                 src={msg.file_url}
@@ -885,7 +882,7 @@ export default function MessagesPage() {
                                                         <div className="space-y-1">
                                                             <div className="flex items-center gap-2">
                                                                 <FileText className="h-4 w-4" />
-                                                                <span className="text-sm font-medium truncate inline-block max-w-[150px]">
+                                                                <span className="text-sm font-medium truncate inline-block max-w-37.5">
                                                                     {msg.file_name || "Arquivo"}
                                                                 </span>
                                                                 {msg.formatted_file_size && (
@@ -915,7 +912,7 @@ export default function MessagesPage() {
                                                             {(() => {
                                                                 // Simple formatter for bold text (**text**)
                                                                 const parts = (msg.message || "").split(/(\*\*.*?\*\*)/g);
-                                                                return parts.map((part, i) => {
+                                                                return parts.map((part: string, i: number) => {
                                                                     if (part.startsWith('**') && part.endsWith('**')) {
                                                                         return <strong key={i}>{part.slice(2, -2)}</strong>;
                                                                     }

@@ -17,9 +17,23 @@ export const createEcho = (token: string): InstanceType<typeof Echo> | null => {
     'https://nexa-backend2-1044548850970.southamerica-east1.run.app/api'
   const backendRootUrl = backendApiUrl.replace(/\/api\/?$/, '')
 
+  // Dynamic configuration to support both Local and Production environments
+  // specific defaults based on the host value.
   const wsHost = process.env.NEXT_PUBLIC_REVERB_HOST || 'nexa-chat-bwld7w5onq-rj.a.run.app'
-  const wsPort = Number(process.env.NEXT_PUBLIC_REVERB_PORT || 443)
-  const scheme = process.env.NEXT_PUBLIC_REVERB_SCHEME || 'https'
+
+  // Clean defaults: if localhost, use 8080/http. If production, use 443/https.
+  // This allows missing .env variables in local dev to still work if HOST is set, 
+  // or defaults completely to prod if nothing is set.
+  const isLocal = wsHost === 'localhost' || wsHost === '127.0.0.1'
+
+  const wsPort = process.env.NEXT_PUBLIC_REVERB_PORT
+    ? Number(process.env.NEXT_PUBLIC_REVERB_PORT)
+    : (isLocal ? 8080 : 443)
+
+  const scheme = process.env.NEXT_PUBLIC_REVERB_SCHEME
+    ? process.env.NEXT_PUBLIC_REVERB_SCHEME
+    : (isLocal ? 'http' : 'https')
+
   const forceTLS = scheme === 'https'
   const appKey = process.env.NEXT_PUBLIC_REVERB_APP_KEY
 

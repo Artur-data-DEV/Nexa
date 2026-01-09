@@ -41,11 +41,6 @@ const nextConfig: NextConfig = {
         hostname: "storage.googleapis.com",
         pathname: "/nexa-uploads-prod/**",
       },
-      {
-        protocol: "https",
-        hostname: "via.placeholder.com",
-        pathname: "/**",
-      },
     ],
   },
   async redirects() {
