@@ -54,7 +54,7 @@ export class ApiPortfolioRepository implements PortfolioRepository {
   }
 
   async updateProfile(data: FormData): Promise<Portfolio> {
-    const response = await this.http.post<{ data: Portfolio }>("/portfolio/profile", data)
+    const response = await this.http.post<{ data: { portfolio: any, user: any } }>("/portfolio/profile", data)
     const backendUrl =
       process.env.NEXT_PUBLIC_BACKEND_URL ||
       "https://nexa-backend2-1044548850970.southamerica-east1.run.app/api"
@@ -63,11 +63,30 @@ export class ApiPortfolioRepository implements PortfolioRepository {
       if (!path) return undefined
       return path.startsWith("/") ? `${rootUrl}${path}` : path || undefined
     }
-    const updated = response.data
-    const profilePicturePath = (updated as unknown as { profile_picture?: string | null }).profile_picture
+
+    // Handle new backend response format { portfolio: ..., user: ... }
+    // @ts-ignore
+    const updatedData = response.data?.portfolio || response.data
+    // @ts-ignore
+    const updatedUser = response.data?.user
+
+    // If updatedData has the nested structure, extract from it
+    const apiPortfolio = updatedData.portfolio || updatedData
+
     return {
-      ...updated,
-      profile_picture_url: resolveUrl(profilePicturePath ?? updated.profile_picture_url ?? null),
+      user_id: apiPortfolio.user_id,
+      id: apiPortfolio.id,
+      title: apiPortfolio.title || "",
+      bio: apiPortfolio.bio || "",
+      profile_picture_url: resolveUrl(apiPortfolio.profile_picture),
+      project_links: apiPortfolio.project_links || [],
+      items: apiPortfolio.items ? apiPortfolio.items.map((item: any) => ({
+        id: item.id,
+        file_url: item.file_url,
+        media_type: item.media_type,
+        title: item.title || undefined,
+        order: item.order,
+      })) : [],
     }
   }
 

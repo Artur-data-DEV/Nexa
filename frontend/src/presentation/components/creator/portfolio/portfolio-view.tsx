@@ -143,11 +143,20 @@ export default function PortfolioView() {
             const updated = await updatePortfolioProfileUseCase.execute(formData)
             const bust = typeof window !== "undefined" ? `?t=${Date.now()}` : ""
             const updatedAvatarUrl = updated.profile_picture_url ? `${updated.profile_picture_url}${bust}` : undefined
+            
+            // Update local portfolio state
             setPortfolio({ ...updated, profile_picture_url: updatedAvatarUrl || updated.profile_picture_url })
+            
+            // Update auth context user state immediately
             if (user) {
-                const nextUser = { ...user, avatar: updatedAvatarUrl || user.avatar }
+                const nextUser = { 
+                    ...user, 
+                    avatar: updatedAvatarUrl || user.avatar,
+                    bio: updated.bio || user.bio
+                }
                 updateUser(nextUser)
             }
+            
             setIsEditOpen(false)
             toast.success("Perfil atualizado!")
         } catch (error) {

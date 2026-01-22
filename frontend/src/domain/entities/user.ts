@@ -10,6 +10,7 @@ export interface User {
   updated_at: string
   
   // Extended Profile Fields
+  bio?: string
   location?: string
   state?: string
   gender?: string
