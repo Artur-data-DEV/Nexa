@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { testUsers, selectors, timeouts } from '../fixtures/test-data';
 
 test.describe('Authentication Flows', () => {
@@ -64,9 +64,7 @@ test.describe('Authentication Flows', () => {
             expect(page.url()).toContain('/login');
         });
 
-        test.skip('should redirect to dashboard if already logged in', async ({ page }) => {
-            // This test requires a pre-logged-in state which is complex to set up
-        });
+   
 
     });
 
@@ -153,14 +151,6 @@ test.describe('Authentication Flows', () => {
             }
         });
 
-        test.skip('should verify valid OTP', async ({ page }) => {
-            // This test requires OTP mocking which is complex
-        });
-
-        test.skip('should show error for invalid OTP', async ({ page }) => {
-            // This test requires OTP flow setup
-        });
-
     });
 
     test.describe('Protected Routes', () => {
@@ -170,10 +160,6 @@ test.describe('Authentication Flows', () => {
 
             // Should redirect to login
             await expect(page).toHaveURL(/login/, { timeout: timeouts.pageLoad });
-        });
-
-        test.skip('should redirect to login when accessing chat without auth', async ({ page }) => {
-            // Similar to above
         });
 
     });

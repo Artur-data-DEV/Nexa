@@ -19,10 +19,10 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL?.replace('/api', '') || 
 function getCampaignImage(campaign: Campaign) {
   let imageUrl: string | null = null;
 
-  if (campaign.attach_file && campaign.attach_file.length > 0) {
-    imageUrl = campaign.attach_file[0];
-  } else if (campaign.image_url && !campaign.image_url.includes('via.placeholder.com')) {
+  if (campaign.image_url && !campaign.image_url.includes('via.placeholder.com')) {
     imageUrl = campaign.image_url;
+  } else if (campaign.logo) {
+    imageUrl = campaign.logo;
   } else if (campaign.brand?.avatar && !campaign.brand.avatar.includes('via.placeholder.com')) {
     imageUrl = campaign.brand.avatar;
   }

@@ -20,11 +20,11 @@ export function ThemeToggle() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
+    <div className="fixed bottom-1 right-1 z-100">
       <Button
         variant="outline"
         size="icon"
-        className="h-10 w-10 rounded-full bg-background/50 backdrop-blur-sm border-border hover:bg-background/80 shadow-md transition-all hover:scale-105 active:scale-95 group"
+        className="h-9 w-9 rounded-full bg-background/80 backdrop-blur-sm border-border hover:bg-background/90 shadow-lg transition-all hover:scale-105 active:scale-95 group"
         onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
       >
         <AnimatePresence mode="wait" initial={false}>
@@ -36,7 +36,7 @@ export function ThemeToggle() {
               exit={{ scale: 0, rotate: 90 }}
               transition={{ duration: 0.2 }}
             >
-              <Moon className="h-[1.2rem] w-[1.2rem] text-primary group-hover:text-primary/80" />
+              <Moon className="h-[1.1rem] w-[1.1rem] text-primary group-hover:text-primary/80" />
             </motion.div>
           ) : (
             <motion.div
@@ -46,7 +46,7 @@ export function ThemeToggle() {
               exit={{ scale: 0, rotate: -90 }}
               transition={{ duration: 0.2 }}
             >
-              <Sun className="h-[1.2rem] w-[1.2rem] text-orange-500 group-hover:text-orange-600" />
+              <Sun className="h-[1.1rem] w-[1.1rem] text-orange-500 group-hover:text-orange-600" />
             </motion.div>
           )}
         </AnimatePresence>

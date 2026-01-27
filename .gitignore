@@ -42,3 +42,6 @@ root_Nexa-Backend.env
 **/test-results/
 **/playwright-report/
 **/blob-report/
+
+
+/old

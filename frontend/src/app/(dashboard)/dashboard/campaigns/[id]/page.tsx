@@ -20,6 +20,8 @@ import { ApplyButton } from "@/presentation/components/campaigns/apply-button"
 
 const campaignRepository = new ApiCampaignRepository(api)
 const getCampaignByIdUseCase = new GetCampaignByIdUseCase(campaignRepository)
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL?.replace('/api', '') || 'http://localhost:8000';
+const resolveUrl = (url: string) => (url?.startsWith('/') ? `${BACKEND_URL}${url}` : url)
 
 export default function CampaignDetailsPage() {
   const params = useParams()
@@ -96,7 +98,7 @@ export default function CampaignDetailsPage() {
       <div className="relative w-full h-64 md:h-80 bg-muted rounded-xl overflow-hidden">
         {campaign.image_url ? (
              <Image 
-               src={campaign.image_url} 
+               src={resolveUrl(campaign.image_url)} 
                alt={campaign.title} 
                fill
                className="object-cover"
