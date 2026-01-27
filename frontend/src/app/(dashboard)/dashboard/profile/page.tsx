@@ -31,7 +31,7 @@ export default function ProfilePage() {
         setIsLoading(true)
         try {
             const form = new FormData()
-            
+
             // Handle avatar image separately
             if (updatedProfile.image instanceof Blob) {
                 form.append('avatar', updatedProfile.image)
@@ -44,7 +44,7 @@ export default function ProfilePage() {
                 if (excludedFields.includes(key)) return
 
                 const val = (updatedProfile as unknown as unknown as unknown as Record<string, unknown>)[key]
-                
+
                 if (key === 'languages' && Array.isArray(val)) {
                     form.append('languages', JSON.stringify(val))
                 } else if (val !== undefined && val !== null) {
@@ -57,12 +57,12 @@ export default function ProfilePage() {
                         // we should only send if it has value OR if we intend to clear.
                         // For 'required' fields, sending empty string will fail validation.
                         // So let's skip empty strings.
-                        return 
+                        return
                     }
                     form.append(key, String(val as unknown as string))
                 }
             })
-            
+
             const newUser = await updateProfileUseCase.execute(form)
             const bust = typeof window !== "undefined" ? `?t=${Date.now()}` : ""
             const nextUser = {
@@ -128,9 +128,9 @@ export default function ProfilePage() {
                             )}
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <Mail className="h-4 w-4" />
-                                <span className="truncate">{user.email}</span>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
+                                <Mail className="h-4 w-4 shrink-0" />
+                                <span className="truncate" title={user.email}>{user.email}</span>
                             </div>
                             {user.location || user.state && (
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -165,9 +165,9 @@ export default function ProfilePage() {
                                     <label className="text-xs font-medium text-muted-foreground uppercase">Nome Completo</label>
                                     <div className="font-medium truncate" title={user.name}>{user.name}</div>
                                 </div>
-                                <div className="space-y-1">
+                                <div className="space-y-1 min-w-0">
                                     <label className="text-xs font-medium text-muted-foreground uppercase">Email</label>
-                                    <div className="font-medium">{user.email}</div>
+                                    <div className="font-medium truncate" title={user.email}>{user.email}</div>
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-xs font-medium text-muted-foreground uppercase">WhatsApp</label>

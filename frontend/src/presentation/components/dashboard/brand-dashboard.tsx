@@ -106,8 +106,15 @@ export default function BrandDashboard() {
                                 <Card key={campaign.id} className="hover:shadow-lg transition-all">
                                     <CardHeader className="pb-2">
                                         <div className="flex justify-between items-start">
-                                            <Badge variant={campaign.status === 'active' ? 'default' : 'secondary'} className="mb-2">
-                                                {campaign.status === 'active' ? 'Ativa' : 'Pendente'}
+                                            <Badge
+                                                variant={campaign.status === 'active' || campaign.status === 'approved' ? 'default' : 'secondary'}
+                                                className="mb-2"
+                                            >
+                                                {campaign.status === 'active' ? 'Ativa' :
+                                                    campaign.status === 'approved' ? 'Aberta' :
+                                                        campaign.status === 'pending' ? 'Pendente' :
+                                                            campaign.status === 'rejected' ? 'Rejeitada' :
+                                                                campaign.status === 'archived' ? 'Arquivada' : campaign.status}
                                             </Badge>
                                             <span className="text-xs text-muted-foreground">
                                                 {new Date(campaign.created_at).toLocaleDateString()}
