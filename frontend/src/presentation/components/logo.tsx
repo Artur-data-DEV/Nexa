@@ -3,7 +3,7 @@
 import { useTheme } from "next-themes"
 import Image, { type ImageProps } from "next/image"
 
-import { useEffect, useState } from "react"
+import { useSyncExternalStore } from "react"
 
 import { cn } from "@/lib/utils"
 
@@ -11,17 +11,19 @@ interface LogoProps extends Omit<ImageProps, "src" | "alt"> {
   fallbackAsText?: boolean
 }
 
+// Helper to track client-side mounting without setState in effect
+const emptySubscribe = () => () => { }
+const getSnapshot = () => true
+const getServerSnapshot = () => false
+
 export function Logo({
   className,
   fallbackAsText = true,
   ...props
 }: LogoProps) {
   const { theme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  // useSyncExternalStore is the recommended way to handle hydration-aware client values
+  const mounted = useSyncExternalStore(emptySubscribe, getSnapshot, getServerSnapshot)
 
   if (!mounted && fallbackAsText) {
     return (
@@ -49,4 +51,3 @@ export function Logo({
     />
   )
 }
-
