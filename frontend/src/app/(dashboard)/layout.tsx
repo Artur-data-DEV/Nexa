@@ -17,7 +17,8 @@ import {
   Menu,
   Briefcase,
   CreditCard,
-  GraduationCap
+  GraduationCap,
+  Shield
 } from "lucide-react"
 
 import { Button } from "@/presentation/components/ui/button"
@@ -131,6 +132,19 @@ export default function DashboardLayout({
                       })}
                     </nav>
                   </div>
+                  {user?.role === "admin" && (
+                    <div className="px-2 mt-auto pb-4">
+                      <div className="border-t pt-4">
+                        <Link
+                          href="/admin"
+                          className="flex items-center gap-3 rounded-lg px-3 py-2 text-amber-600 font-medium transition-all hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                        >
+                          <Shield className="h-4 w-4" />
+                          Painel Admin
+                        </Link>
+                      </div>
+                    </div>
+                  )}
                   {user?.role !== "brand" && (
                     <div className="px-4 pb-4">
                       <div className="text-xs rounded-md bg-pink-50 dark:bg-pink-900/40 text-pink-700 dark:text-pink-200 p-3">
@@ -179,6 +193,19 @@ export default function DashboardLayout({
                               )
                             })}
                           </nav>
+                          {user?.role === "admin" && (
+                            <div className="border-t p-2 mt-2">
+                              <SheetClose asChild>
+                                <Link
+                                  href="/admin"
+                                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-amber-600 font-medium transition-all hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                                >
+                                  <Shield className="h-4 w-4" />
+                                  Painel Admin
+                                </Link>
+                              </SheetClose>
+                            </div>
+                          )}
                         </SheetContent>
                       </Sheet>
                     </div>

@@ -145,8 +145,8 @@ export default function AdminLayout({
                                                 key={item.href}
                                                 href={item.href}
                                                 className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${isActive
-                                                        ? "bg-pink-100 text-pink-600 dark:bg-pink-900/40 dark:text-pink-300"
-                                                        : "text-muted-foreground hover:bg-muted"
+                                                    ? "bg-pink-100 text-pink-600 dark:bg-pink-900/40 dark:text-pink-300"
+                                                    : "text-muted-foreground hover:bg-muted"
                                                     }`}
                                             >
                                                 <Icon className="h-4 w-4" />
@@ -154,6 +154,15 @@ export default function AdminLayout({
                                             </Link>
                                         )
                                     })}
+                                    <div className="border-t mt-2 pt-2">
+                                        <Link
+                                            href="/dashboard"
+                                            className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-muted"
+                                        >
+                                            <LogOut className="h-4 w-4 rotate-180" />
+                                            Voltar ao App
+                                        </Link>
+                                    </div>
                                 </nav>
                             </div>
                             <div className="px-4 pb-4">
@@ -194,8 +203,8 @@ export default function AdminLayout({
                                                             <Link
                                                                 href={item.href}
                                                                 className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${isActive
-                                                                        ? "bg-pink-100 text-pink-600 dark:bg-pink-900/40 dark:text-pink-300"
-                                                                        : "text-muted-foreground"
+                                                                    ? "bg-pink-100 text-pink-600 dark:bg-pink-900/40 dark:text-pink-300"
+                                                                    : "text-muted-foreground"
                                                                     }`}
                                                             >
                                                                 <Icon className="h-4 w-4" />
@@ -204,6 +213,17 @@ export default function AdminLayout({
                                                         </SheetClose>
                                                     )
                                                 })}
+                                                <div className="border-t mt-2 pt-2">
+                                                    <SheetClose asChild>
+                                                        <Link
+                                                            href="/dashboard"
+                                                            className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-muted"
+                                                        >
+                                                            <LogOut className="h-4 w-4 rotate-180" />
+                                                            Voltar ao App
+                                                        </Link>
+                                                    </SheetClose>
+                                                </div>
                                             </nav>
                                         </SheetContent>
                                     </Sheet>
