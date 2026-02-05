@@ -7,7 +7,7 @@ import { Button } from "@/presentation/components/ui/button"
 import { Card } from "@/presentation/components/ui/card"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
-import { UploadCloud, X, PlusCircle, ArrowRight, ArrowLeft, Check, Play, List, Image as ImageIcon, Filter, DollarSign, Calendar, Wand2, FileText, Stars } from "lucide-react"
+import { UploadCloud, X, PlusCircle, ArrowRight, ArrowLeft, Check, Play, List, Image as ImageIcon, Filter, DollarSign, Calendar, Wand2, FileText, Stars, User } from "lucide-react"
 import { ptBR } from "date-fns/locale"
 import { CreateCampaignUseCase } from "@/application/use-cases/create-campaign.use-case"
 import { ApiCampaignRepository } from "@/infrastructure/repositories/campaign-repository"
@@ -19,7 +19,8 @@ import DatePicker, { registerLocale } from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
 import { TermsModal } from "@/presentation/components/terms/terms-modal"
 import { TERMS_CONTENT } from "@/presentation/components/terms/terms-content"
-import { useAuth } from "@/presentation/contexts/auth-provider"
+import { ApiBrandProfileRepository } from "@/infrastructure/repositories/brand-profile-repository"
+import Link from "next/link"
 
 if (typeof registerLocale === "function") {
   registerLocale("pt-BR", ptBR)
@@ -28,6 +29,7 @@ if (typeof registerLocale === "function") {
 const campaignRepository = new ApiCampaignRepository(api)
 const createCampaignUseCase = new CreateCampaignUseCase(campaignRepository)
 const termsRepository = new ApiTermsRepository(api)
+const brandProfileRepository = new ApiBrandProfileRepository(api)
 
 const BRAZILIAN_STATES = [
   "Acre", "Alagoas", "Amapá", "Amazonas", "Bahia", "Ceará", "Distrito Federal",
@@ -49,9 +51,15 @@ const STEPS = [
     { id: 7, label: "Revisar", icon: FileText },
 ]
 
+import { useAuth } from "@/presentation/contexts/auth-provider"
+
 export default function CreateCampaignPage() {
   const { user } = useAuth()
   
+  // Profile State
+  const [checkingProfile, setCheckingProfile] = useState(true)
+  const [profileComplete, setProfileComplete] = useState(true)
+
   // Terms State
   const [showTerms, setShowTerms] = useState(false)
   const [termsAccepted, setTermsAccepted] = useState(false)
@@ -84,6 +92,31 @@ export default function CreateCampaignPage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const attachmentInputRef = useRef<HTMLInputElement>(null)
+
+  // Check Profile on Mount
+  useEffect(() => {
+      const checkProfile = async () => {
+          if (!user || user.role !== 'brand') {
+              setCheckingProfile(false)
+              return
+          }
+          try {
+              const profile = await brandProfileRepository.getProfile()
+              // Check required fields: company_name, description (sobre), niche, address
+              // You can add more like 'cnpj' if available in the model
+              const requiredFields = ['company_name', 'description', 'niche', 'address']
+              // @ts-ignore
+              const isComplete = requiredFields.every(field => !!profile[field])
+              
+              setProfileComplete(isComplete)
+          } catch (e) {
+              console.error("Error checking profile", e)
+          } finally {
+              setCheckingProfile(false)
+          }
+      }
+      checkProfile()
+  }, [user])
 
   // Check Terms on Mount
   useEffect(() => {
@@ -332,8 +365,30 @@ export default function CreateCampaignPage() {
     }
   }
 
-  if (checkingTerms) {
+  if (checkingTerms || checkingProfile) {
       return <div className="min-h-[92vh] flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>
+  }
+
+  if (!profileComplete) {
+      return (
+        <div className="min-h-[92vh] flex flex-col items-center justify-center py-4 px-2 sm:px-10">
+            <Card className="w-full max-w-md p-8 text-center">
+                <div className="w-16 h-16 mx-auto mb-4 bg-yellow-100 dark:bg-yellow-900/20 rounded-full flex items-center justify-center">
+                    <User className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
+                </div>
+                <h2 className="text-2xl font-bold mb-2">Perfil Incompleto</h2>
+                <p className="text-muted-foreground mb-6">
+                    Para criar uma campanha, você precisa preencher as informações da sua empresa (Sobre, Nicho, Endereço).
+                    Isso ajuda os criadores a conhecerem melhor sua marca.
+                </p>
+                <Link href="/dashboard/profile">
+                    <Button className="w-full">
+                        Completar Perfil
+                    </Button>
+                </Link>
+            </Card>
+        </div>
+      )
   }
 
   if (isSubmitted) {

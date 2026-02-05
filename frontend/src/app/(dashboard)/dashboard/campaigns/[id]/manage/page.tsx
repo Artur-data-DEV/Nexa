@@ -103,33 +103,13 @@ export default function ManageCandidatesPage() {
         try {
             await applicationRepository.updateStatus(applicationId, status)
             
-            // Automatic contract generation on approval
-            if (status === 'approved' && campaign) {
-                const application = applications.find(app => app.id === applicationId)
-                if (application) {
-                    try {
-                        await contractRepository.create({
-                            campaign_id: campaign.id,
-                            creator_id: application.creator_id,
-                            brand_id: campaign.brand_id,
-                            amount: application.budget || campaign.budget,
-                            title: `Contrato: ${campaign.title}`,
-                            status: 'pending',
-                            description: `Contrato gerado automaticamente para a campanha ${campaign.title}`
-                        })
-                        toast.success("Contrato gerado automaticamente!")
-                    } catch (contractError) {
-                        console.error("Failed to create contract", contractError)
-                        toast.error("Candidato aprovado, mas houve erro ao gerar contrato.")
-                    }
-                }
-            }
-
             setApplications(prev => prev.map(app => 
                 app.id === applicationId ? { ...app, status } : app
             ))
             
-            if (status !== 'approved') {
+            if (status === 'approved') {
+                toast.success("Candidato aprovado! O chat foi iniciado automaticamente.")
+            } else {
                 toast.success(`Candidato ${status === 'rejected' ? 'rejeitado' : 'atualizado'} com sucesso!`)
             }
         } catch (error) {
