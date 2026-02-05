@@ -1,15 +1,17 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useAuth } from "@/presentation/contexts/auth-provider"
 import { Card, CardContent, CardHeader, CardTitle } from "@/presentation/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/presentation/components/ui/avatar"
 import { Badge } from "@/presentation/components/ui/badge"
 import { Button } from "@/presentation/components/ui/button"
-import { Mail, MapPin, Calendar, Edit2 } from "lucide-react"
+import { Mail, MapPin, Calendar, Edit2, Globe, Building2 } from "lucide-react"
 import { EditProfile } from "@/presentation/components/creator/edit-profile"
+import { EditBrandProfile } from "@/presentation/components/brand/edit-brand-profile"
 import { UpdateProfileUseCase } from "@/application/use-cases/update-profile.use-case"
 import { ApiAuthRepository } from "@/infrastructure/repositories/auth-repository"
+import { ApiBrandProfileRepository, BrandProfile } from "@/infrastructure/repositories/brand-profile-repository"
 import { api } from "@/infrastructure/api/axios-adapter"
 import { toast } from "sonner"
 import { MdOutlineVerified } from "react-icons/md";
@@ -18,14 +20,69 @@ import { User } from "@/domain/entities/user"
 
 
 const authRepository = new ApiAuthRepository(api)
+const brandProfileRepository = new ApiBrandProfileRepository(api)
 const updateProfileUseCase = new UpdateProfileUseCase(authRepository)
 
 export default function ProfilePage() {
     const { user, updateUser } = useAuth()
     const [isEditing, setIsEditing] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
+    const [brandProfile, setBrandProfile] = useState<BrandProfile | null>(null)
+
+    useEffect(() => {
+        if (user?.role === 'brand') {
+            brandProfileRepository.getProfile()
+                .then(setBrandProfile)
+                .catch(console.error)
+        }
+    }, [user?.role])
 
     if (!user) return null
+
+    const handleSaveBrandProfile = async (updatedProfile: BrandProfile & { image?: File | null }) => {
+        setIsLoading(true)
+        try {
+            // Update brand profile data
+            const { image, ...data } = updatedProfile
+            const savedProfile = await brandProfileRepository.updateProfile(data)
+            setBrandProfile(savedProfile)
+
+            // If there's an image, we might need to upload it via a separate endpoint or user update
+            // For now, let's assume image update is handled via user profile update for avatar
+            // or we need to implement image upload for brand profile specifically if backend supports it.
+            // As a fallback/hybrid, if image is provided, we update the user avatar too.
+            if (image) {
+                const form = new FormData()
+                form.append('avatar', image)
+                const newUser = await updateProfileUseCase.execute(form)
+                const bust = typeof window !== "undefined" ? `?t=${Date.now()}` : ""
+                updateUser({
+                    ...newUser,
+                    avatar: newUser.avatar ? `${newUser.avatar}${bust}` : newUser.avatar
+                })
+            }
+             
+            // Also update user name if company name changed
+            if (updatedProfile.company_name !== user.name) {
+                 // We could trigger a user update here if needed, but let's rely on backend syncing or manual update if separate.
+                 // For now, just update local user state to reflect change immediately if we want consistency
+                 // But strictly speaking, User Name and Brand Company Name might be distinct in some systems.
+                 // Assuming they should match:
+                 const form = new FormData()
+                 form.append('name', updatedProfile.company_name || '')
+                 const newUser = await updateProfileUseCase.execute(form)
+                 updateUser(newUser)
+            }
+
+            setIsEditing(false)
+            toast.success("Perfil da marca atualizado com sucesso!")
+        } catch (error) {
+            console.error("Failed to update brand profile", error)
+            toast.error("Falha ao atualizar perfil da marca")
+        } finally {
+            setIsLoading(false)
+        }
+    }
 
     const handleSaveProfile = async (updatedProfile: User & { image?: File | null }) => {
         setIsLoading(true)
@@ -48,15 +105,7 @@ export default function ProfilePage() {
                 if (key === 'languages' && Array.isArray(val)) {
                     form.append('languages', JSON.stringify(val))
                 } else if (val !== undefined && val !== null) {
-                    // Only append non-empty strings for optional fields to avoid 422 errors
-                    // unless it's a field that needs to be explicitly cleared (which backend supports via nullable)
                     if (typeof val === 'string' && val.trim() === '') {
-                        // Backend now supports nullable, so we can send empty string if we want to clear it,
-                        // but generally empty string -> null in Laravel middleware.
-                        // However, to be safe against 'required' rules if any remain (like instagram for influencers),
-                        // we should only send if it has value OR if we intend to clear.
-                        // For 'required' fields, sending empty string will fail validation.
-                        // So let's skip empty strings.
                         return
                     }
                     form.append(key, String(val as unknown as string))
@@ -81,6 +130,16 @@ export default function ProfilePage() {
     }
 
     if (isEditing) {
+        if (user.role === 'brand' && brandProfile) {
+            return (
+                <EditBrandProfile
+                    initialProfile={brandProfile}
+                    onCancel={() => setIsEditing(false)}
+                    onSave={handleSaveBrandProfile}
+                    isLoading={isLoading}
+                />
+            )
+        }
         return (
             <EditProfile
                 initialProfile={user}
@@ -88,6 +147,92 @@ export default function ProfilePage() {
                 onSave={handleSaveProfile}
                 isLoading={isLoading}
             />
+        )
+    }
+
+    if (user.role === 'brand' && brandProfile) {
+        return (
+            <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-2">
+                    <h1 className="text-3xl font-bold tracking-tight">Perfil da Marca</h1>
+                    <p className="text-muted-foreground">
+                        Gerencie as informações da sua empresa.
+                    </p>
+                </div>
+
+                <div className="grid gap-6 md:grid-cols-[300px_1fr]">
+                    <div className="space-y-6">
+                        <Card className="h-fit">
+                            <CardHeader className="items-center text-center">
+                                <Avatar className="h-32 w-32">
+                                    <AvatarImage src={user.avatar || brandProfile.logo_url} />
+                                    <AvatarFallback className="text-4xl">{brandProfile.company_name?.substring(0, 2).toUpperCase() || user.name?.substring(0, 2).toUpperCase()}</AvatarFallback>
+                                </Avatar>
+                                <CardTitle className="mt-4">{brandProfile.company_name}</CardTitle>
+                                <Badge variant="secondary" className="mt-2 capitalize">Marca</Badge>
+                                
+                                {user.has_premium && (
+                                    <Badge className="mt-1 bg-linear-to-r from-yellow-400 to-orange-500">PRO</Badge>
+                                )}
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
+                                    <Mail className="h-4 w-4 shrink-0" />
+                                    <span className="truncate" title={user.email}>{user.email}</span>
+                                </div>
+                                {(brandProfile.city || brandProfile.state) && (
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                        <MapPin className="h-4 w-4" />
+                                        <span>{brandProfile.city ? `${brandProfile.city}, ` : ''}{brandProfile.state}</span>
+                                    </div>
+                                )}
+                                {brandProfile.website && (
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                        <Globe className="h-4 w-4" />
+                                        <a href={brandProfile.website} target="_blank" rel="noopener noreferrer" className="hover:underline truncate">{brandProfile.website}</a>
+                                    </div>
+                                )}
+                                <Button className="w-full" variant="outline" onClick={() => setIsEditing(true)}>
+                                    <Edit2 className="mr-2 h-4 w-4" />
+                                    Editar Perfil
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <div className="space-y-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Detalhes da Empresa</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-8">
+                                <div className="grid gap-6 md:grid-cols-2">
+                                    <div className="space-y-1 md:col-span-2">
+                                        <label className="text-xs font-medium text-muted-foreground uppercase">Sobre</label>
+                                        <div className="whitespace-pre-wrap">{brandProfile.description || "Não informado"}</div>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-medium text-muted-foreground uppercase">Nome da Empresa</label>
+                                        <div className="font-medium">{brandProfile.company_name}</div>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-medium text-muted-foreground uppercase">CNPJ</label>
+                                        <div className="font-medium">{brandProfile.cnpj || "Não informado"}</div>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-medium text-muted-foreground uppercase">Nicho</label>
+                                        <div className="font-medium">{brandProfile.niche || "Não informado"}</div>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-medium text-muted-foreground uppercase">Endereço</label>
+                                        <div className="font-medium">{brandProfile.address || "Não informado"}</div>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+            </div>
         )
     }
 
