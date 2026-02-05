@@ -23,10 +23,12 @@ export class ApiBrandProfileRepository implements BrandProfileRepository {
     constructor(private http: HttpClient) {}
 
     async getProfile(): Promise<BrandProfile> {
-        return this.http.get<BrandProfile>("/brand-profile")
+        const response = await this.http.get<{ data: BrandProfile }>("/brand-profile")
+        return response.data
     }
 
     async updateProfile(data: Partial<BrandProfile>): Promise<BrandProfile> {
-        return this.http.put<BrandProfile>("/brand-profile", data)
+        const response = await this.http.put<{ data: BrandProfile }>("/brand-profile", data)
+        return response.data
     }
 }
