@@ -422,7 +422,7 @@ export default function CreateCampaignPage() {
         </div>
 
         {/* Form Content */}
-        <div className="rounded-2xl border bg-background shadow-sm p-4 md:p-8 w-full min-h-[400px]">
+        <div className="rounded-2xl border bg-background shadow-sm p-4 md:p-8 w-full min-h-100">
             
             {currentStep === 1 && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
@@ -448,7 +448,7 @@ export default function CreateCampaignPage() {
                             value={objective}
                             onChange={(e) => setObjective(e.target.value)}
                             placeholder="Ex: Aumentar reconhecimento de marca, Gerar vendas, Criar conteúdo UGC..."
-                            className="bg-muted/30 min-h-[120px]"
+                            className="bg-muted/30 min-h-30"
                         />
                     </div>
                 </div>
@@ -517,7 +517,7 @@ export default function CreateCampaignPage() {
                         </div>
                         {imagePreview && (
                             <div className="flex flex-col items-center mt-4 bg-muted p-4 rounded-lg">
-                                <div className="relative w-full max-w-[200px] h-40">
+                                <div className="relative w-full max-w-50 h-40">
                                     <Image
                                         src={imagePreview}
                                         alt="Logo Preview"
@@ -566,7 +566,7 @@ export default function CreateCampaignPage() {
                                                 </span>
                                             </div>
                                             <div>
-                                                <p className="text-sm font-medium truncate max-w-[200px]">{attachment.name}</p>
+                                                <p className="text-sm font-medium truncate max-w-50">{attachment.name}</p>
                                                 <p className="text-xs text-muted-foreground">{(attachment.size / 1024 / 1024).toFixed(2)} MB</p>
                                             </div>
                                         </div>
@@ -865,7 +865,7 @@ export default function CreateCampaignPage() {
                     </div>
 
                     <div className="flex items-center gap-2 p-4 bg-yellow-50 dark:bg-yellow-900/10 text-yellow-800 dark:text-yellow-200 rounded-lg text-sm">
-                        <Wand2 className="h-5 w-5 flex-shrink-0" />
+                        <Wand2 className="h-5 w-5 shrink-0" />
                         <p>Nossa IA analisará sua campanha e gerará um briefing detalhado para os criadores aprovados.</p>
                     </div>
                 </div>
@@ -890,7 +890,7 @@ export default function CreateCampaignPage() {
                     <Button 
                         onClick={handleSubmit} 
                         disabled={isCreating}
-                        className="bg-green-600 hover:bg-green-700 text-white min-w-[150px]"
+                        className="bg-green-600 hover:bg-green-700 text-white min-w-37.5"
                     >
                         {isCreating ? (
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

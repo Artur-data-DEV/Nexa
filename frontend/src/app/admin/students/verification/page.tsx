@@ -231,11 +231,11 @@ export default function AdminStudentVerificationPage() {
                             {selectedRequest?.user_name} - {selectedRequest?.institution_name}
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="flex-1 bg-muted rounded-md overflow-auto min-h-[400px] flex items-center justify-center">
+                    <div className="flex-1 bg-muted rounded-md overflow-auto min-h-100 flex items-center justify-center">
                         {selectedRequest?.document_url ? (
                             <iframe
                                 src={selectedRequest.document_url}
-                                className="w-full h-full min-h-[500px]"
+                                className="w-full h-full min-h-125"
                                 title="Documento"
                             />
                         ) : (
@@ -287,7 +287,7 @@ export default function AdminStudentVerificationPage() {
                             placeholder="Ex: Documento ilegível ou data de validade expirada..."
                             value={rejectReason}
                             onChange={(e) => setRejectReason(e.target.value)}
-                            className="min-h-[100px]"
+                            className="min-h-25"
                         />
                     </div>
                     <DialogFooter>

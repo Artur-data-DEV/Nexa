@@ -63,7 +63,7 @@ export function TermsModal({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[600px] h-[80vh] flex flex-col">
+            <DialogContent className="sm:max-w-150 h-[80vh] flex flex-col">
                 <DialogHeader>
                     <DialogTitle>{title}</DialogTitle>
                     <DialogDescription>

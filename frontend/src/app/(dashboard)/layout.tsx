@@ -79,7 +79,6 @@ export default function DashboardLayout({
     { name: "Nova Campanha", href: "/dashboard/campaigns/create", icon: PlusCircle },
     { name: "Conversas", href: "/dashboard/messages", icon: MessageCircle },
     { name: "Dados Financeiros", href: "/dashboard/financial", icon: Wallet },
-    { name: "Transações", href: "/dashboard/financial", icon: Receipt },
     { name: "Configurar Pagamentos", href: "/dashboard/payment-methods", icon: BanknoteIcon },
     { name: "Notificações", href: "/dashboard/notifications", icon: Bell },
     { name: "Meu Perfil", href: "/dashboard/profile", icon: User },
