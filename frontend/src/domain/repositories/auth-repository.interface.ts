@@ -10,7 +10,7 @@ export interface AuthRepository {
   csrf(): Promise<void>
   updateProfile(data: JsonObject | FormData): Promise<User>
   uploadAvatar(file: File | Blob): Promise<User>
-  sendOtp(contact: string, type: 'email' | 'whatsapp'): Promise<void>
+  sendOtp(contact: string, type: 'email' | 'whatsapp'): Promise<string | undefined>
   verifyOtp(contact: string, type: 'email' | 'whatsapp', code: string): Promise<boolean>
   forgotPassword(email: string): Promise<unknown>
   resetPassword(data: JsonObject): Promise<unknown>

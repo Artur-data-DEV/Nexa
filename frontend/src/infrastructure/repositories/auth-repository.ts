@@ -161,9 +161,10 @@ export class ApiAuthRepository implements AuthRepository {
     return this.normalizeProfile(raw as RawProfile)
   }
 
-  async sendOtp(contact: string, type: 'email' | 'whatsapp'): Promise<void> {
+  async sendOtp(contact: string, type: 'email' | 'whatsapp'): Promise<string | undefined> {
     await this.csrf()
-    await this.http.post("/otp/send", { contact, type })
+    const response = await this.http.post<{ dev_code?: string }>("/otp/send", { contact, type })
+    return response?.dev_code
   }
 
   async verifyOtp(contact: string, type: 'email' | 'whatsapp', code: string): Promise<boolean> {

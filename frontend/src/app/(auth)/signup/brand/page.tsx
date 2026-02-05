@@ -172,9 +172,14 @@ function BrandSignUpInner() {
     setLoading(true)
     try {
       setCode("")
-      await authRepository.sendOtp(email, 'email')
+      const devCode = await authRepository.sendOtp(email, 'email')
       setVerificationSent(true)
-      toast.success(`Código de verificação enviado para ${email}`)
+      if (devCode) {
+          toast.success(`Código de verificação enviado: ${devCode}`)
+          console.log("DEV CODE:", devCode)
+      } else {
+          toast.success(`Código de verificação enviado para ${email}`)
+      }
     } catch (error) {
       toast.error("Erro ao enviar código. Tente novamente.")
       console.error(error)
