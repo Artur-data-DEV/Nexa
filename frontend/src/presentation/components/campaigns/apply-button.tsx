@@ -49,7 +49,7 @@ export const applicationSchema = z.object({
   proposal: z.string().min(20, "A proposta deve ter pelo menos 20 caracteres"),
   budget: z.number().min(1, "O orçamento deve ser maior que zero"),
   delivery_days: z.number().min(1, "O prazo deve ser de pelo menos 1 dia"),
-  portfolio_links: z.array(z.string().url("URL inválida")).default([]),
+  portfolio_links: z.array(z.string().url("URL inválida")),
 })
 
 export type ApplicationFormValues = z.infer<typeof applicationSchema>
