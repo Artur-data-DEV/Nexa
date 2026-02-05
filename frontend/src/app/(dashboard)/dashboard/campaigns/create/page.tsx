@@ -7,7 +7,7 @@ import { Button } from "@/presentation/components/ui/button"
 import { Card } from "@/presentation/components/ui/card"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
-import { UploadCloud, X, PlusCircle, ArrowRight, ArrowLeft, Check, Play, List, Image as ImageIcon, Filter, DollarSign, Calendar, Wand2, FileText } from "lucide-react"
+import { UploadCloud, X, PlusCircle, ArrowRight, ArrowLeft, Check, Play, List, Image as ImageIcon, Filter, DollarSign, Calendar, Wand2, FileText, Stars } from "lucide-react"
 import { ptBR } from "date-fns/locale"
 import { CreateCampaignUseCase } from "@/application/use-cases/create-campaign.use-case"
 import { ApiCampaignRepository } from "@/infrastructure/repositories/campaign-repository"
@@ -866,7 +866,7 @@ export default function CreateCampaignPage() {
 
                     <div className="flex items-center gap-2 p-4 bg-yellow-50 dark:bg-yellow-900/10 text-yellow-800 dark:text-yellow-200 rounded-lg text-sm">
                         <Wand2 className="h-5 w-5 shrink-0" />
-                        <p>Nossa IA analisará sua campanha e gerará um briefing detalhado para os criadores aprovados.</p>
+                        <p>Novo recurso em breve: Nossa IA analisará sua campanha e gerará um briefing detalhado para os criadores aprovados.</p>
                     </div>
                 </div>
             )}

@@ -95,6 +95,11 @@ export function ApplyButton({ campaign, onSuccess }: ApplyButtonProps) {
   const userPortfolioLinks = user.portfolio?.project_links || []
 
   const onSubmit = async (data: ApplicationFormValues) => {
+    if (step !== 2) {
+        await handleNextStep()
+        return
+    }
+
     setLoading(true)
     setError(null)
     try {
