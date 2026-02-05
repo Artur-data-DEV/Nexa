@@ -81,12 +81,10 @@ export function ApplyButton({ campaign, onSuccess }: ApplyButtonProps) {
 
   // Check terms acceptance on mount
   useEffect(() => {
-    if (open) {
-        termsRepository.check(['creator_application']).then(status => {
-            setTermsAccepted(status.creator_application)
-        })
-    }
-  }, [open])
+    termsRepository.check(['creator_application']).then(status => {
+        setTermsAccepted(status.creator_application)
+    })
+  }, [])
 
   if (!user || user.role !== "creator") {
     return null

@@ -59,7 +59,7 @@ export default function DashboardLayout({
 
   const creatorNavItems = [
     { name: "Início", href: "/dashboard", icon: Home },
-    { name: "Vitrine de Campanhas", href: "/dashboard/campaigns", icon: Package },
+    { name: "Campanhas Disponíveis", href: "/dashboard/campaigns", icon: Package },
     { name: "Minhas Campanhas", href: "/dashboard/applications", icon: FileText },
     { name: "Meu Portfólio", href: "/dashboard/portfolio", icon: Briefcase },
     { name: "Carteira", href: "/dashboard/financial", icon: Wallet },
