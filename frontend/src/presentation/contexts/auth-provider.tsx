@@ -29,7 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const checkAuth = async () => {
-    const token = localStorage.getItem("auth_token")
+    const token = sessionStorage.getItem("auth_token")
     if (!token) {
       setLoading(false)
       return
@@ -40,14 +40,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(userData)
     } catch (error) {
       console.error("Failed to fetch user", error)
-      localStorage.removeItem("auth_token")
+      sessionStorage.removeItem("auth_token")
     } finally {
       setLoading(false)
     }
   }
 
   const login = async (token: string, userData: User) => {
-    localStorage.setItem("auth_token", token)
+    sessionStorage.setItem("auth_token", token)
     try {
       const fresh = await authRepository.me()
       const bust = typeof window !== "undefined" ? `?t=${Date.now()}` : ""
@@ -67,7 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error("Logout error", error)
     } finally {
-      localStorage.removeItem("auth_token")
+      sessionStorage.removeItem("auth_token")
       setUser(null)
       router.push("/login")
     }

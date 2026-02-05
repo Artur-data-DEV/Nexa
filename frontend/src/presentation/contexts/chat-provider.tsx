@@ -28,6 +28,7 @@ interface ChatContextType {
   selectChat: (chat: Chat) => Promise<void>
   sendMessage: (roomId: string, content: string, file?: File | null) => Promise<void>
   deleteMessage: (messageId: number) => void
+  sendGuideMessages: (roomId: string) => Promise<void>
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined)
@@ -202,6 +203,14 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     [user, updateChatList]
   )
 
+  const sendGuideMessages = useCallback(async (roomId: string) => {
+    try {
+      await chatRepository.sendGuideMessages(roomId)
+    } catch (error) {
+      console.error("Failed to send guide messages", error)
+    }
+  }, [])
+
   const deleteMessage = useCallback(
     (messageId: number) => {
       setMessages(prevMessages => {
@@ -223,13 +232,13 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
               last_message:
                 last
                   ? {
-                      id: last.id,
-                      message: last.message,
-                      message_type: last.message_type,
-                      sender_id: last.sender_id,
-                      is_sender: last.is_sender,
-                      created_at: last.created_at,
-                    }
+                    id: last.id,
+                    message: last.message,
+                    message_type: last.message_type,
+                    sender_id: last.sender_id,
+                    is_sender: last.is_sender,
+                    created_at: last.created_at,
+                  }
                   : null,
               last_message_at: last ? last.created_at : null,
             }
@@ -311,6 +320,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         selectChat,
         sendMessage,
         deleteMessage,
+        sendGuideMessages,
       }}
     >
       {children}

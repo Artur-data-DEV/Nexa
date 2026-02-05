@@ -1,3 +1,5 @@
+"use client"
+
 import Link from "next/link"
 import { Calendar, MapPin, DollarSign } from "lucide-react"
 import { Campaign } from "@/domain/entities/campaign"
@@ -6,6 +8,7 @@ import { Badge } from "@/presentation/components/ui/badge"
 import { Button } from "@/presentation/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/presentation/components/ui/avatar"
 import Image from "next/image"
+import { useState } from "react"
 
 const fallbackImages = [
   "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=800&q=80",
@@ -47,8 +50,18 @@ interface CampaignCardProps {
 }
 
 export function CampaignCard({ campaign }: CampaignCardProps) {
-  const imageSrc = getCampaignImage(campaign)
+  const [imageSrc, setImageSrc] = useState<string | null>(getCampaignImage(campaign))
   const brandAvatar = isSafeUrl(campaign.brand?.avatar) ? campaign.brand?.avatar : undefined;
+
+  const handleImageError = () => {
+    const index = campaign.id % fallbackImages.length;
+    const fallback = fallbackImages[index];
+    if (imageSrc !== fallback) {
+        setImageSrc(fallback);
+    } else {
+        setImageSrc(null); // Fallback failed too, show gradient
+    }
+  };
 
   return (
     <Card className="flex flex-col h-full overflow-hidden hover:shadow-md transition-shadow">
@@ -60,6 +73,8 @@ export function CampaignCard({ campaign }: CampaignCardProps) {
               alt={campaign.title}
               fill
               className="object-cover"
+              onError={handleImageError}
+              unoptimized
             />
           ) : (
             <div className="w-full h-full bg-linear-to-r from-pink-500 to-purple-600 opacity-20" />

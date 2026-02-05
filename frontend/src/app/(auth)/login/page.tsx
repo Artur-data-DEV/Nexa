@@ -81,7 +81,7 @@ function LoginInner() {
 
   useEffect(() => {
     // Clear any stale state on mount
-    localStorage.removeItem("auth_token")
+    sessionStorage.removeItem("auth_token")
     const hasSensitiveQuery =
       typeof searchParams.get("password") === "string" ||
       typeof searchParams.get("email") === "string"

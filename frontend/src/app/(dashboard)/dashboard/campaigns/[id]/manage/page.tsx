@@ -9,6 +9,7 @@ import type { AxiosError } from "axios"
 import { ApiApplicationRepository } from "@/infrastructure/repositories/application-repository"
 import { ApiCampaignRepository } from "@/infrastructure/repositories/campaign-repository"
 import { ApiContractRepository } from "@/infrastructure/repositories/contract-repository"
+import { ApiTermsRepository } from "@/infrastructure/repositories/terms-repository"
 import { api } from "@/infrastructure/api/axios-adapter"
 import { Application } from "@/domain/entities/application"
 import { Campaign } from "@/domain/entities/campaign"
@@ -19,10 +20,13 @@ import { Skeleton } from "@/presentation/components/ui/skeleton"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/presentation/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/presentation/components/ui/tabs"
 import { toast } from "sonner"
+import { TermsModal } from "@/presentation/components/terms/terms-modal"
+import { TERMS_CONTENT } from "@/presentation/components/terms/terms-content"
 
 const applicationRepository = new ApiApplicationRepository(api)
 const campaignRepository = new ApiCampaignRepository(api)
 const contractRepository = new ApiContractRepository(api)
+const termsRepository = new ApiTermsRepository(api)
 
 interface ExtendedApplication extends Application {
     creator?: {
@@ -43,6 +47,8 @@ export default function ManageCandidatesPage() {
     const [applications, setApplications] = useState<ExtendedApplication[]>([])
     const [loading, setLoading] = useState(true)
     const [processingId, setProcessingId] = useState<number | null>(null)
+    const [showTerms, setShowTerms] = useState(false)
+    const [pendingApprovalId, setPendingApprovalId] = useState<number | null>(null)
 
     useEffect(() => {
         const fetchData = async () => {
@@ -66,6 +72,31 @@ export default function ManageCandidatesPage() {
             fetchData()
         }
     }, [campaignId])
+
+    const handleApproveClick = async (applicationId: number) => {
+        try {
+            const status = await termsRepository.check(['brand_approval'])
+            if (!status.brand_approval) {
+                setPendingApprovalId(applicationId)
+                setShowTerms(true)
+            } else {
+                handleStatusUpdate(applicationId, 'approved')
+            }
+        } catch (error) {
+            console.error("Error checking terms", error)
+            // Fallback to direct approval if check fails, or show error
+            handleStatusUpdate(applicationId, 'approved')
+        }
+    }
+
+    const handleTermsAccept = async () => {
+        await termsRepository.accept('brand_approval')
+        setShowTerms(false)
+        if (pendingApprovalId) {
+            handleStatusUpdate(pendingApprovalId, 'approved')
+            setPendingApprovalId(null)
+        }
+    }
 
     const handleStatusUpdate = async (applicationId: number, status: 'approved' | 'rejected') => {
         setProcessingId(applicationId)
@@ -162,6 +193,14 @@ export default function ManageCandidatesPage() {
 
     return (
         <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8 min-h-[92vh]">
+            <TermsModal 
+                open={showTerms} 
+                onOpenChange={setShowTerms}
+                title={TERMS_CONTENT.brand_approval.title}
+                content={TERMS_CONTENT.brand_approval.content}
+                onAccept={handleTermsAccept}
+            />
+
             <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" onClick={() => router.back()}>
                     <ArrowLeft className="h-4 w-4" />
@@ -200,7 +239,7 @@ export default function ManageCandidatesPage() {
                                     <CandidateCard 
                                         key={app.id} 
                                         application={app} 
-                                        onApprove={() => handleStatusUpdate(app.id, 'approved')}
+                                        onApprove={() => handleApproveClick(app.id)}
                                         onReject={() => handleStatusUpdate(app.id, 'rejected')}
                                         isProcessing={processingId === app.id}
                                     />

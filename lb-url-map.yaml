@@ -1,0 +1,21 @@
+creationTimestamp: '2026-01-31T06:47:24.335-08:00'
+defaultService: https://www.googleapis.com/compute/v1/projects/nexa-teste-1/global/backendServices/nexa-frontend-service
+fingerprint: hL9vaJVotOw=
+hostRules:
+- hosts:
+  - www.nexacreators.com
+  pathMatcher: path-matcher-1
+id: 8965659996290525972
+kind: compute#urlMap
+name: nexa-www-lb
+pathMatchers:
+- defaultService: https://www.googleapis.com/compute/v1/projects/nexa-teste-1/global/backendServices/nexa-frontend-service
+  name: path-matcher-1
+  pathRules:
+    - paths:
+      - /api/*
+      - /sanctum/*
+      - /broadcasting/*
+      - /storage/*
+      service: https://www.googleapis.com/compute/v1/projects/nexa-teste-1/global/backendServices/nexa-backend-service
+selfLink: https://www.googleapis.com/compute/v1/projects/nexa-teste-1/global/urlMaps/nexa-www-lb

@@ -18,7 +18,9 @@ import {
   Briefcase,
   CreditCard,
   GraduationCap,
-  Shield
+  Shield,
+  BookOpen,
+  Receipt
 } from "lucide-react"
 
 import { Button } from "@/presentation/components/ui/button"
@@ -64,10 +66,11 @@ export default function DashboardLayout({
     { name: "Financeiro", href: "/dashboard/financial", icon: Wallet },
     { name: "Assinatura", href: "/dashboard/subscription", icon: CreditCard },
     { name: "Métodos de Pagamento", href: "/dashboard/payment-methods", icon: BanknoteIcon },
+    { name: "Guia da Plataforma", href: "/docs", icon: BookOpen },
+    { name: "Histórico de Pagamentos", href: "/dashboard/financial/history", icon: Receipt },
     { name: "Verificação de Aluno", href: "/dashboard/student-verify?embedded=true", icon: GraduationCap },
     { name: "Notificações", href: "/dashboard/notifications", icon: Bell },
     { name: "Minha Conta", href: "/dashboard/profile", icon: User },
-    // { name: "Guia da Plataforma", href: "/dashboard/guide", icon: BookOpen },
   ]
 
   const brandNavItems = [
@@ -76,10 +79,11 @@ export default function DashboardLayout({
     { name: "Nova Campanha", href: "/dashboard/campaigns/create", icon: PlusCircle },
     { name: "Conversas", href: "/dashboard/messages", icon: MessageCircle },
     { name: "Dados Financeiros", href: "/dashboard/financial", icon: Wallet },
+    { name: "Transações", href: "/dashboard/financial", icon: Receipt },
     { name: "Configurar Pagamentos", href: "/dashboard/payment-methods", icon: BanknoteIcon },
     { name: "Notificações", href: "/dashboard/notifications", icon: Bell },
     { name: "Meu Perfil", href: "/dashboard/profile", icon: User },
-    // { name: "Guia da Plataforma", href: "/dashboard/guide", icon: BookOpen },
+    { name: "Guia da Plataforma", href: "/docs", icon: BookOpen },
   ]
 
   const navItems = user?.role === 'brand' ? brandNavItems : creatorNavItems

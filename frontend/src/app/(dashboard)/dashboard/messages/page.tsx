@@ -14,12 +14,17 @@ import { Input } from "@/presentation/components/ui/input"
 import { ScrollArea } from "@/presentation/components/ui/scroll-area"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/presentation/components/ui/sheet"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/presentation/components/ui/dialog"
+import { Textarea } from "@/presentation/components/ui/textarea"
 import { Badge } from "@/presentation/components/ui/badge"
 import { Label } from "@/presentation/components/ui/label"
-import { MessageCircle, Wifi, WifiOff, MoreVertical, Send, Check, CheckCheck, Briefcase, DollarSign, Calendar, Clock, X, Paperclip, FileText } from "lucide-react"
+import { MessageCircle, Wifi, WifiOff, MoreVertical, Send, Check, CheckCheck, Briefcase, DollarSign, Calendar, Clock, X, Paperclip, FileText, Info, Star } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useChat } from "@/presentation/contexts/chat-provider"
 import { toast } from "sonner"
+import CampaignTimelineSheet from "@/presentation/components/campaigns/campaign-timeline-sheet"
+import ReviewModal from "@/presentation/components/campaigns/review-modal"
+import { ApiContractRepository } from "@/infrastructure/repositories/contract-repository"
+import { Contract } from "@/domain/entities/contract"
 
 const chatRepository = new ApiChatRepository(api)
 
@@ -111,6 +116,7 @@ export default function MessagesPage() {
         isInitialLoading,
         selectChat,
         sendMessage,
+        sendGuideMessages,
         isChatLoading,
         setChats,
     } = useChat()
@@ -128,6 +134,14 @@ export default function MessagesPage() {
     const [isSubmittingOffer, setIsSubmittingOffer] = useState(false)
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const fileInputRef = useRef<HTMLInputElement | null>(null)
+    const [isTimelineOpen, setIsTimelineOpen] = useState(false)
+    const [contractId, setContractId] = useState<number | null>(null)
+    const [offerTitle, setOfferTitle] = useState("")
+    const [offerDescription, setOfferDescription] = useState("")
+    const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
+    const [contractForReview, setContractForReview] = useState<Contract | null>(null)
+
+    const contractRepository = new ApiContractRepository(api)
 
     const scrollToBottom = useCallback(
         (force = false) => {
@@ -234,6 +248,24 @@ export default function MessagesPage() {
         const targetChat = chats.find(chat => chat.room_id === roomId)
         if (!targetChat) return
         selectChat(targetChat)
+
+        // Trigger guide messages (backend will check if already sent)
+        sendGuideMessages(roomId).catch(console.error)
+
+        // Fetch contract for this room
+        const fetchContract = async () => {
+            try {
+                const response = await api.get<{ data: any[] }>(`/contracts/chat-room/${roomId}`)
+                if (response.data && response.data.length > 0) {
+                    setContractId(response.data[0].id)
+                } else {
+                    setContractId(null)
+                }
+            } catch (err) {
+                console.error("Error fetching contract for room:", err)
+            }
+        }
+        fetchContract()
     }, [searchParams, chats, selectedChat, selectChat, router, user?.id])
 
     const handleAcceptOffer = async (offerId: number) => {
@@ -293,6 +325,23 @@ export default function MessagesPage() {
         }
     }
 
+    const handleOpenReview = async () => {
+        if (!selectedChat) return
+        try {
+            const response = await api.get<{ data: Contract[] }>(`/contracts/chat-room/${selectedChat.room_id}`)
+            if (response.data && response.data.length > 0) {
+                // Find completed contract that hasn't been reviewed by me yet
+                setContractForReview(response.data[0])
+                setIsReviewModalOpen(true)
+            } else {
+                toast.error("Nenhum contrato encontrado para avaliação")
+            }
+        } catch (error) {
+            console.error("Error fetching contract for review:", error)
+            toast.error("Erro ao carregar contrato")
+        }
+    }
+
     const handleSubmitOffer = async (event: FormEvent) => {
         event.preventDefault()
         if (!selectedChat || user?.role !== "brand") return
@@ -315,6 +364,8 @@ export default function MessagesPage() {
             const payload = {
                 creator_id: selectedChat.other_user.id,
                 chat_room_id: selectedChat.room_id,
+                title: offerTitle,
+                description: offerDescription,
                 budget: budgetValue,
                 estimated_days: daysValue,
             }
@@ -323,6 +374,8 @@ export default function MessagesPage() {
             if (response.success) {
                 toast.success("Oferta enviada com sucesso!")
                 setIsOfferDialogOpen(false)
+                setOfferTitle("")
+                setOfferDescription("")
                 setOfferBudget("")
                 setOfferEstimatedDays("")
             } else {
@@ -645,12 +698,25 @@ export default function MessagesPage() {
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
+                                {contractId && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setIsTimelineOpen(true)}
+                                        className="hidden sm:flex"
+                                    >
+                                        <Clock className="h-4 w-4 mr-2" />
+                                        Timeline
+                                    </Button>
+                                )}
                                 {user?.role === "brand" && (
                                     <Button
                                         size="sm"
                                         variant="outline"
                                         onClick={() => setIsOfferDialogOpen(true)}
+                                        className="bg-primary text-primary-foreground hover:bg-primary/90"
                                     >
+                                        <Briefcase className="h-4 w-4 mr-2" />
                                         Nova oferta
                                     </Button>
                                 )}
@@ -852,6 +918,53 @@ export default function MessagesPage() {
                                             const isFileMessage = msg.message_type === "file"
                                             const isImageMessage = msg.message_type === "image"
 
+                                            const isSystem = msg.message_type === "system"
+
+                                            if (isSystem) {
+                                                return (
+                                                    <div
+                                                        key={index}
+                                                        className="flex w-full flex-col items-center justify-center py-6 px-4"
+                                                    >
+                                                        <div className="bg-muted/50 backdrop-blur-sm border border-border/50 rounded-2xl p-6 max-w-[85%] shadow-sm relative overflow-hidden group">
+                                                            <div className="absolute top-0 left-0 w-1 h-full bg-primary/40" />
+                                                            <div className="flex items-start gap-4">
+                                                                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                                                                    <Info className="h-5 w-5 text-primary" />
+                                                                </div>
+                                                                <div className="flex-1 space-y-2">
+                                                                    <div className="text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
+                                                                        {(() => {
+                                                                            // Simple formatter for bold text (**text**)
+                                                                            const parts = (msg.message || "").split(/(\*\*.*?\*\*)/g);
+                                                                            return parts.map((part: string, i: number) => {
+                                                                                if (part.startsWith('**') && part.endsWith('**')) {
+                                                                                    return <strong key={i} className="text-primary">{part.slice(2, -2)}</strong>;
+                                                                                }
+                                                                                return part;
+                                                                            });
+                                                                        })()}
+                                                                    </div>
+                                                                    {msg.message?.toLowerCase().includes('finalizado com sucesso') && (
+                                                                        <Button
+                                                                            size="sm"
+                                                                            className="mt-2"
+                                                                            onClick={handleOpenReview}
+                                                                        >
+                                                                            <Star className="w-4 h-4 mr-2" />
+                                                                            Avaliar Parceria
+                                                                        </Button>
+                                                                    )}
+                                                                    <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                                                                        Mensagem do Sistema • {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )
+                                            }
+
                                             return (
                                                 <div
                                                     key={index}
@@ -998,45 +1111,59 @@ export default function MessagesPage() {
                             onChange={handleFileChange}
                         />
                         <Dialog open={isOfferDialogOpen} onOpenChange={setIsOfferDialogOpen}>
-                            <DialogContent>
+                            <DialogContent className="sm:max-w-[425px]">
                                 <DialogHeader>
-                                    <DialogTitle>Nova oferta</DialogTitle>
+                                    <DialogTitle>Enviar Proposta</DialogTitle>
                                     <DialogDescription>
-                                        Defina o orçamento e prazo estimado para esta oferta.
+                                        Defina os detalhes da sua proposta de parceria.
                                     </DialogDescription>
                                 </DialogHeader>
-                                <form onSubmit={handleSubmitOffer} className="space-y-4">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <form onSubmit={handleSubmitOffer} className="space-y-4 pt-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="offer-title">Título da Proposta</Label>
+                                        <Input
+                                            id="offer-title"
+                                            placeholder="Ex: Produção de 3 Reels"
+                                            value={offerTitle}
+                                            onChange={(e) => setOfferTitle(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="offer-description">Descrição/Detalhes</Label>
+                                        <Textarea
+                                            id="offer-description"
+                                            placeholder="Descreva o que está incluído nesta proposta..."
+                                            value={offerDescription}
+                                            onChange={(e) => setOfferDescription(e.target.value)}
+                                            rows={3}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <Label htmlFor="offer_budget">
-                                                Orçamento (R$)
-                                            </Label>
+                                            <Label htmlFor="offer_budget">Orçamento (R$)</Label>
                                             <Input
                                                 id="offer_budget"
                                                 type="number"
-                                                min={10}
                                                 step="0.01"
+                                                min="10"
+                                                placeholder="0,00"
                                                 value={offerBudget}
-                                                onChange={(e) =>
-                                                    setOfferBudget(e.target.value)
-                                                }
+                                                onChange={(e) => setOfferBudget(e.target.value)}
+                                                required
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label htmlFor="offer_days">
-                                                Prazo estimado (dias)
-                                            </Label>
+                                            <Label htmlFor="offer_days">Prazo (Dias)</Label>
                                             <Input
                                                 id="offer_days"
                                                 type="number"
-                                                min={1}
-                                                max={365}
+                                                min="1"
+                                                placeholder="Ex: 7"
                                                 value={offerEstimatedDays}
-                                                onChange={(e) =>
-                                                    setOfferEstimatedDays(
-                                                        e.target.value
-                                                    )
-                                                }
+                                                onChange={(e) => setOfferEstimatedDays(e.target.value)}
+                                                required
                                             />
                                         </div>
                                     </div>
@@ -1061,6 +1188,26 @@ export default function MessagesPage() {
                                 </form>
                             </DialogContent>
                         </Dialog>
+
+                        {contractId && (
+                            <CampaignTimelineSheet
+                                contractId={contractId}
+                                isOpen={isTimelineOpen}
+                                onClose={() => setIsTimelineOpen(false)}
+                            />
+                        )}
+
+                        {contractForReview && (
+                            <ReviewModal
+                                isOpen={isReviewModalOpen}
+                                contract={contractForReview}
+                                onReviewSubmitted={() => {
+                                    setIsReviewModalOpen(false)
+                                    // Refresh messages to show the review status if needed
+                                }}
+                                onClose={() => setIsReviewModalOpen(false)}
+                            />
+                        )}
                     </>
                 ) : (
                     <div className="flex-1 flex flex-col items-center justify-center gap-4 text-muted-foreground">

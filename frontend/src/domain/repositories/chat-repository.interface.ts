@@ -15,6 +15,8 @@ export interface ChatRepository {
   markAsRead(roomId: string, messageIds: number[]): Promise<void>
   sendTypingStatus(roomId: string, isTyping: boolean): Promise<void>
 
+  sendGuideMessages(roomId: string): Promise<void>
+
   // Archived chat methods
   getArchivedChats(limit?: number): Promise<ArchivedChat[]>
   getArchivedChatReport(roomId: string): Promise<ArchivedChatDetail>

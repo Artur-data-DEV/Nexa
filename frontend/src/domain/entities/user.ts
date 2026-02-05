@@ -1,3 +1,5 @@
+import { Portfolio } from "./portfolio"
+
 export interface User {
   id: number
   name: string
@@ -30,6 +32,7 @@ export interface User {
   languages?: string[]
   has_premium?: boolean
   avatar_url?: string
+  portfolio?: Portfolio
 }
 
 export interface AuthResponse {

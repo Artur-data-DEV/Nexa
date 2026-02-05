@@ -18,12 +18,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "nexa-backend2-1044548850970.southamerica-east1.run.app",
-        pathname: "/storage/**",
-      },
-      {
-        protocol: "https",
-        hostname: "nexa-backend2-bwld7w5onq-rj.a.run.app",
+        hostname: "www.nexacreators.com",
         pathname: "/storage/**",
       },
       {

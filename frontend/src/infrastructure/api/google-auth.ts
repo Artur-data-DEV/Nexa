@@ -6,7 +6,7 @@ import { AuthResponse } from "@/domain/entities/user"
 export async function getGoogleOAuthUrl() {
   const backendUrl =
     process.env.NEXT_PUBLIC_BACKEND_URL ||
-    "https://nexa-backend2-1044548850970.southamerica-east1.run.app/api"
+    "https://www.nexacreators.com/api"
   const rootUrl = backendUrl.replace(/\/api\/?$/, "")
   if (!backendUrl) {
     throw new Error("BACKEND_URL não configurado")
@@ -28,7 +28,7 @@ export async function getGoogleOAuthUrl() {
 export async function handleGoogleCallbackRequest(code: string, role?: "creator" | "brand", isStudent?: boolean) {
   const backendUrl =
     process.env.NEXT_PUBLIC_BACKEND_URL ||
-    "https://nexa-backend2-1044548850970.southamerica-east1.run.app/api"
+    "https://www.nexacreators.com/api"
   const rootUrl = backendUrl.replace(/\/api\/?$/, "")
 
   const params = new URLSearchParams({ code })

@@ -4,13 +4,24 @@ steps:
     'build',
     '--no-cache',
     '-t', 'gcr.io/nexa-teste-1/nexa-frontend:latest',
-    '--build-arg', 'NEXT_PUBLIC_BACKEND_URL=https://nexa-backend2-1044548850970.southamerica-east1.run.app/api',
-    '--build-arg', 'NEXT_PUBLIC_REVERB_APP_KEY=local_key',
-    '--build-arg', 'NEXT_PUBLIC_REVERB_HOST=nexa-chat-1044548850970.southamerica-east1.run.app',
+    '--build-arg', 'NEXT_PUBLIC_BACKEND_URL=https://nexa-backend-prod-1044548850970.southamerica-east1.run.app/api',
+    '--build-arg', 'NEXT_PUBLIC_REVERB_APP_KEY=nexa_reverb_key',
+    '--build-arg', 'NEXT_PUBLIC_REVERB_HOST=chat-prod-1044548850970.southamerica-east1.run.app',
     '--build-arg', 'NEXT_PUBLIC_REVERB_PORT=443',
     '--build-arg', 'NEXT_PUBLIC_REVERB_SCHEME=https',
     '--build-arg', 'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_51S0Wz1PRcUVFvPMgtByCDcKqzOeGnRicbmd0SckOIFtegvqkyKlAkTVpiCMSOqzWDbmS2NtadwFF9dTxQxDZbJpo00aJN8YBC8',
     '.'
+  ]
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/nexa-teste-1/nexa-frontend:latest']
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: 'gcloud'
+  args: [
+    'run', 'deploy', 'nexa-frontend-prod',
+    '--image', 'gcr.io/nexa-teste-1/nexa-frontend:latest',
+    '--region', 'southamerica-east1',
+    '--platform', 'managed',
+    '--allow-unauthenticated'
   ]
 images:
 - 'gcr.io/nexa-teste-1/nexa-frontend:latest'

@@ -29,7 +29,7 @@ export class ApiPortfolioRepository implements PortfolioRepository {
     const apiPortfolio = response.data.portfolio
     const backendUrl =
       process.env.NEXT_PUBLIC_BACKEND_URL ||
-      "https://nexa-backend2-1044548850970.southamerica-east1.run.app/api"
+      "https://www.nexacreators.com/api"
     const rootUrl = backendUrl.replace(/\/api\/?$/, "")
     const resolveUrl = (path?: string | null) => {
       if (!path) return undefined
@@ -82,7 +82,7 @@ export class ApiPortfolioRepository implements PortfolioRepository {
     const response = await this.http.post<{ data: UpdateProfileResponse }>("/portfolio/profile", data)
     const backendUrl =
       process.env.NEXT_PUBLIC_BACKEND_URL ||
-      "https://nexa-backend2-1044548850970.southamerica-east1.run.app/api"
+      "https://www.nexacreators.com/api"
     const rootUrl = backendUrl.replace(/\/api\/?$/, "")
     const resolveUrl = (path?: string | null) => {
       if (!path) return undefined

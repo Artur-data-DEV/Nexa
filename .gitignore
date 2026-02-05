@@ -2,6 +2,10 @@
 Thumbs.db
 Desktop.ini
 .DS_Store
+/pgsql
+pgsql.zip
+pgsql16.zip
+/postgres_data
 
 # Node
 **/node_modules/

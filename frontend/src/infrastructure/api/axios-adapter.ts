@@ -30,7 +30,7 @@ export class AxiosAdapter implements HttpClient {
       (config) => {
         const headers = config.headers as Record<string, unknown> | undefined
         const skipAuth = headers?.["X-Skip-Auth"] === "true"
-        const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null
+        const token = typeof window !== "undefined" ? sessionStorage.getItem("auth_token") : null
         if (!skipAuth && token) {
           config.headers.Authorization = `Bearer ${token}`
         }
@@ -103,7 +103,19 @@ export class AxiosAdapter implements HttpClient {
   }
 }
 
-export const api = new AxiosAdapter(
-  process.env.NEXT_PUBLIC_BACKEND_URL ||
-  "https://nexa-backend2-1044548850970.southamerica-east1.run.app/api"
-)
+function computeBaseURL(): string {
+  const env = process.env.NEXT_PUBLIC_BACKEND_URL
+  const origin = typeof window !== "undefined" ? window.location.origin : ""
+  if (origin && origin.includes("nexacreators.com")) {
+    return `${origin}/api`
+  }
+  if (env && env.length > 0) {
+    return env
+  }
+  if (origin && origin.endsWith(".run.app")) {
+    return "https://nexa-backend-prod-1044548850970.southamerica-east1.run.app/api"
+  }
+  return "https://nexa-backend-prod-1044548850970.southamerica-east1.run.app/api"
+}
+
+export const api = new AxiosAdapter(computeBaseURL())

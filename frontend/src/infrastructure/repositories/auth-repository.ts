@@ -30,15 +30,30 @@ type RawProfile = {
   profession?: string
   languages?: string[]
   has_premium?: boolean
+  portfolio?: User['portfolio']
 }
 
 export class ApiAuthRepository implements AuthRepository {
   constructor(private http: HttpClient) {}
 
+    private computeRootUrl(): string {
+    const origin = typeof window !== "undefined" ? window.location.origin : ""
+    if (origin && origin.includes("nexacreators.com")) {
+      return origin.replace(/\/api\/?$/, "")
+    }
+    const env = process.env.NEXT_PUBLIC_BACKEND_URL
+    if (env && env.length > 0) {
+      return env.replace(/\/api\/?$/, "")
+    }
+    if (origin && origin.endsWith(".run.app")) {
+      return "https://nexa-backend-prod-1044548850970.southamerica-east1.run.app"
+    }
+    return "https://nexa-backend-prod-1044548850970.southamerica-east1.run.app"
+  }
+
   private resolveUrl(path?: string | null): string | undefined {
     if (!path) return undefined
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000/api"
-    const rootUrl = backendUrl.replace(/\/api\/?$/, "")
+    const rootUrl = this.computeRootUrl()
     return path.startsWith("/") ? `${rootUrl}${path}` : path
   }
 
@@ -71,11 +86,19 @@ export class ApiAuthRepository implements AuthRepository {
       profession: profile.profession,
       languages: profile.languages,
       has_premium: profile.has_premium,
+      portfolio: profile.portfolio,
     }
   }
 
   async csrf(): Promise<void> {
-    return
+    const rootUrl = this.computeRootUrl()
+    try {
+      await this.http.get("/sanctum/csrf-cookie", {
+        baseURL: rootUrl,
+        headers: { "X-Skip-Auth": "true" },
+      })
+    } catch {
+    }
   }
 
   async login(credentials: Record<string, unknown>): Promise<AuthResponse> {

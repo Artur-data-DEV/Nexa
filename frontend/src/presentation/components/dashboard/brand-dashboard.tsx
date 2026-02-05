@@ -84,7 +84,7 @@ export default function BrandDashboard() {
                     {isLoading ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {[1, 2, 3].map(i => (
-                                <Skeleton key={i} className="h-[200px] w-full" />
+                                <Skeleton key={i} className="h-50 w-full" />
                             ))}
                         </div>
                     ) : campaigns.length === 0 ? (
@@ -607,7 +607,7 @@ function PaymentsTab() {
                         </Link>
                     </Button>
                     <Button variant="outline" className="w-full" asChild>
-                        <Link href="/guides">
+                        <Link href="/docs">
                             <Shield className="h-4 w-4 mr-2" />
                             Ver Guias de Pagamento
                         </Link>

@@ -14,7 +14,7 @@ if (typeof window !== 'undefined') {
 export const createEcho = (token: string): InstanceType<typeof Echo> | null => {
   const backendApiUrl =
     process.env.NEXT_PUBLIC_BACKEND_URL ||
-    'https://nexa-backend2-1044548850970.southamerica-east1.run.app/api'
+    'https://www.nexacreators.com/api'
   const backendRootUrl = backendApiUrl.replace(/\/api\/?$/, '')
 
   // Dynamic configuration to support both Local and Production environments

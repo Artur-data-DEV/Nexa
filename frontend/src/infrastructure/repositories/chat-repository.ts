@@ -96,6 +96,10 @@ export class ApiChatRepository implements ChatRepository {
     })
   }
 
+  async sendGuideMessages(roomId: string): Promise<void> {
+    await this.http.post(`/chat/rooms/${roomId}/send-guide-messages`)
+  }
+
   // ============ Archived Chat Methods ============
 
   async getArchivedChats(limit: number = 20): Promise<ArchivedChat[]> {

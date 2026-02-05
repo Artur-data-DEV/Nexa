@@ -29,4 +29,5 @@ export interface Campaign {
   attach_file?: string[]
   is_featured?: boolean
   is_favorited?: boolean
+  has_applied?: boolean
 }
