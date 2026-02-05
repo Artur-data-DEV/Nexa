@@ -58,75 +58,38 @@ export default function DashboardLayout({
   const pathname = usePathname()
 
   const creatorNavItems = [
-    { 
-      group: "Geral",
-      items: [
-        { name: "Início", href: "/dashboard", icon: Home },
-        { name: "Meu Portfólio", href: "/dashboard/portfolio", icon: Briefcase },
-      ]
-    },
-    {
-      group: "Trabalhos",
-      items: [
-        { name: "Vitrine de Campanhas", href: "/dashboard/campaigns", icon: Package },
-        { name: "Minhas Campanhas", href: "/dashboard/applications", icon: FileText },
-        { name: "Experiências", href: "/dashboard/experiences", icon: GraduationCap },
-      ]
-    },
-    {
-      group: "Financeiro",
-      items: [
-        { name: "Carteira", href: "/dashboard/financial", icon: Wallet },
-        { name: "Histórico", href: "/dashboard/financial/history", icon: Receipt },
-        { name: "Métodos de Pagamento", href: "/dashboard/payment-methods", icon: BanknoteIcon },
-        { name: "Assinatura", href: "/dashboard/subscription", icon: CreditCard },
-      ]
-    },
-    {
-      group: "Outros",
-      items: [
-        { name: "Conversas", href: "/dashboard/messages", icon: MessageCircle },
-        { name: "Guia da Plataforma", href: "/docs", icon: BookOpen },
-        { name: "Verificação de Aluno", href: "/dashboard/student-verify?embedded=true", icon: GraduationCap },
-        { name: "Notificações", href: "/dashboard/notifications", icon: Bell },
-        { name: "Minha Conta", href: "/dashboard/profile", icon: User },
-      ]
-    }
+    { name: "Início", href: "/dashboard", icon: Home },
+    { name: "Vitrine de Campanhas", href: "/dashboard/campaigns", icon: Package },
+    { name: "Minhas Campanhas", href: "/dashboard/applications", icon: FileText },
+    { name: "Meu Portfólio", href: "/dashboard/portfolio", icon: Briefcase },
+    { name: "Carteira", href: "/dashboard/financial", icon: Wallet },
+    { name: "Histórico", href: "/dashboard/financial/history", icon: Receipt },
+    { name: "Métodos de Pagamento", href: "/dashboard/payment-methods", icon: BanknoteIcon },
+    { name: "Assinatura", href: "/dashboard/subscription", icon: CreditCard },
+    { name: "Conversas", href: "/dashboard/messages", icon: MessageCircle },
+    { name: "Guia da Plataforma", href: "/docs", icon: BookOpen },
+    { name: "Verificação de Aluno", href: "/dashboard/student-verify?embedded=true", icon: GraduationCap },
+    { name: "Notificações", href: "/dashboard/notifications", icon: Bell },
+    { name: "Minha Conta", href: "/dashboard/profile", icon: User },
   ]
 
   const brandNavItems = [
-    {
-      group: "Geral",
-      items: [
-        { name: "Visão Geral", href: "/dashboard", icon: Home },
-        { name: "Nova Campanha", href: "/dashboard/campaigns/create", icon: PlusCircle },
-        { name: "Minhas Campanhas", href: "/dashboard/campaigns", icon: Package },
-      ]
-    },
-    {
-      group: "Gestão",
-      items: [
-        { name: "Conversas", href: "/dashboard/messages", icon: MessageCircle },
-        { name: "Dados Financeiros", href: "/dashboard/financial", icon: Wallet },
-        { name: "Configurar Pagamentos", href: "/dashboard/payment-methods", icon: BanknoteIcon },
-      ]
-    },
-    {
-      group: "Conta",
-      items: [
-        { name: "Notificações", href: "/dashboard/notifications", icon: Bell },
-        { name: "Meu Perfil", href: "/dashboard/profile", icon: User },
-        { name: "Guia da Plataforma", href: "/docs", icon: BookOpen },
-      ]
-    }
+    { name: "Visão Geral", href: "/dashboard", icon: Home },
+    { name: "Nova Campanha", href: "/dashboard/campaigns/create", icon: PlusCircle },
+    { name: "Minhas Campanhas", href: "/dashboard/campaigns", icon: Package },
+    { name: "Conversas", href: "/dashboard/messages", icon: MessageCircle },
+    { name: "Dados Financeiros", href: "/dashboard/financial", icon: Wallet },
+    { name: "Configurar Pagamentos", href: "/dashboard/payment-methods", icon: BanknoteIcon },
+    { name: "Notificações", href: "/dashboard/notifications", icon: Bell },
+    { name: "Meu Perfil", href: "/dashboard/profile", icon: User },
+    { name: "Guia da Plataforma", href: "/docs", icon: BookOpen },
   ]
 
-  const navGroups = user?.role === 'brand' ? brandNavItems : creatorNavItems
-  const flatNavItems = navGroups.flatMap(g => g.items)
+  const navItems = user?.role === 'brand' ? brandNavItems : creatorNavItems
   
   const basePathname = pathname.split("?")[0]
   const activeItemHref = (() => {
-    const candidates = flatNavItems.map((item) => item.href.split("?")[0]).filter((hrefPath) => {
+    const candidates = navItems.map((item) => item.href.split("?")[0]).filter((hrefPath) => {
       const isRoot = hrefPath === "/dashboard"
       if (isRoot) return basePathname === hrefPath
       return basePathname === hrefPath || basePathname.startsWith(`${hrefPath}/`)
@@ -155,33 +118,22 @@ export default function DashboardLayout({
                   </div>
                   <div className="flex-1">
                     <nav className="grid items-start px-2 text-sm font-medium lg:px-4" data-testid="sidebar">
-                      {navGroups.map((group, groupIndex) => (
-                        <div key={groupIndex} className="mb-4">
-                          {group.group && (
-                            <h4 className="mb-2 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                              {group.group}
-                            </h4>
-                          )}
-                          <div className="space-y-1">
-                            {group.items.map((item) => {
-                              const Icon = item.icon
-                              const hrefPath = item.href.split("?")[0]
-                              const isActive = hrefPath === activeItemHref
-                              return (
-                                <Link
-                                  key={item.href}
-                                  href={item.href}
-                                  className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${isActive ? "bg-muted text-primary" : "text-muted-foreground"
-                                    }`}
-                                >
-                                  <Icon className="h-4 w-4" />
-                                  {item.name}
-                                </Link>
-                              )
-                            })}
-                          </div>
-                        </div>
-                      ))}
+                      {navItems.map((item) => {
+                        const Icon = item.icon
+                        const hrefPath = item.href.split("?")[0]
+                        const isActive = hrefPath === activeItemHref
+                        return (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${isActive ? "bg-muted text-primary" : "text-muted-foreground"
+                              }`}
+                          >
+                            <Icon className="h-4 w-4" />
+                            {item.name}
+                          </Link>
+                        )
+                      })}
                     </nav>
                   </div>
                   {user?.role === "admin" && (
@@ -227,34 +179,23 @@ export default function DashboardLayout({
                             <SheetTitle className="sr-only">Navegação</SheetTitle>
                           </SheetHeader>
                           <nav className="grid gap-1 p-2 text-sm font-medium">
-                            {navGroups.map((group, groupIndex) => (
-                              <div key={groupIndex} className="mb-4">
-                                {group.group && (
-                                  <h4 className="mb-2 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                    {group.group}
-                                  </h4>
-                                )}
-                                <div className="space-y-1">
-                                  {group.items.map((item) => {
-                                    const Icon = item.icon
-                                    const hrefPath = item.href.split("?")[0]
-                                    const isActive = hrefPath === activeItemHref
-                                    return (
-                                      <SheetClose asChild key={item.href}>
-                                        <Link
-                                          href={item.href}
-                                          className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${isActive ? "bg-muted text-primary" : "text-muted-foreground"
-                                            }`}
-                                        >
-                                          <Icon className="h-4 w-4" />
-                                          {item.name}
-                                        </Link>
-                                      </SheetClose>
-                                    )
-                                  })}
-                                </div>
-                              </div>
-                            ))}
+                            {navItems.map((item) => {
+                              const Icon = item.icon
+                              const hrefPath = item.href.split("?")[0]
+                              const isActive = hrefPath === activeItemHref
+                              return (
+                                <SheetClose asChild key={item.href}>
+                                  <Link
+                                    href={item.href}
+                                    className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${isActive ? "bg-muted text-primary" : "text-muted-foreground"
+                                      }`}
+                                  >
+                                    <Icon className="h-4 w-4" />
+                                    {item.name}
+                                  </Link>
+                                </SheetClose>
+                              )
+                            })}
                           </nav>
                           {user?.role === "admin" && (
                             <div className="border-t p-2 mt-2">
