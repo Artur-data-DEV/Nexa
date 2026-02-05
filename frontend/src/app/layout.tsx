@@ -19,6 +19,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Nexa | Plataforma para Criadores",
   description: "Conectando marcas e criadores de conteúdo.",
+  icons: {
+    icon: "/assets/dark-logo.png",
+  },
 };
 
 export default function RootLayout({
