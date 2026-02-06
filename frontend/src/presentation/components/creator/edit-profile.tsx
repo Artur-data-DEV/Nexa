@@ -10,7 +10,7 @@ import {
   SelectItem,
 } from "@/presentation/components/ui/select"
 import { NICHES } from "@/lib/niches"
-import { UploadIcon, XIcon } from "lucide-react"
+import { UploadIcon, XIcon, Plus, Trash2 } from "lucide-react"
 import { Button } from "@/presentation/components/ui/button"
 import DatePicker, { registerLocale } from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
@@ -132,6 +132,44 @@ export const EditProfile: React.FC<EditProfileProps> = ({ initialProfile, onCanc
       languages: currentLanguages.includes(language)
         ? currentLanguages.filter((l: string) => l !== language)
         : [...currentLanguages, language],
+    }))
+  }
+
+  const handleAddLink = () => {
+    const currentLinks = profile.portfolio?.project_links || []
+    setProfile((p) => ({
+      ...p,
+      portfolio: {
+        ...p.portfolio,
+        user_id: p.id,
+        title: p.portfolio?.title || '',
+        bio: p.portfolio?.bio || '',
+        items: p.portfolio?.items || [],
+        project_links: [...currentLinks, { title: "", url: "" }]
+      }
+    }))
+  }
+
+  const handleRemoveLink = (index: number) => {
+    const currentLinks = profile.portfolio?.project_links || []
+    setProfile((p) => ({
+      ...p,
+      portfolio: {
+        ...p.portfolio!,
+        project_links: currentLinks.filter((_, i) => i !== index)
+      }
+    }))
+  }
+
+  const handleLinkChange = (index: number, field: "title" | "url", value: string) => {
+    const currentLinks = [...(profile.portfolio?.project_links || [])]
+    currentLinks[index] = { ...currentLinks[index], [field]: value }
+    setProfile((p) => ({
+      ...p,
+      portfolio: {
+        ...p.portfolio!,
+        project_links: currentLinks
+      }
     }))
   }
 
@@ -388,6 +426,48 @@ export const EditProfile: React.FC<EditProfileProps> = ({ initialProfile, onCanc
             <div className="space-y-2">
                 <label className="text-sm font-medium">Twitter</label>
                 <Input name="twitter_handle" value={profile.twitter_handle || ""} onChange={handleChange} placeholder="@usuario" />
+            </div>
+        </div>
+
+        <div className="pt-4 border-t space-y-4">
+            <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">Links do Portfólio</label>
+                <Button type="button" variant="outline" size="sm" onClick={handleAddLink}>
+                    <Plus className="w-4 h-4 mr-2" /> Adicionar Link
+                </Button>
+            </div>
+            
+            <div className="space-y-3">
+                {profile.portfolio?.project_links?.map((link, index) => (
+                    <div key={index} className="flex gap-2 items-start">
+                        <Input 
+                            placeholder="Título (ex: Meu Site)" 
+                            value={link.title} 
+                            onChange={(e) => handleLinkChange(index, "title", e.target.value)}
+                            className="flex-1"
+                        />
+                        <Input 
+                            placeholder="URL (https://...)" 
+                            value={link.url} 
+                            onChange={(e) => handleLinkChange(index, "url", e.target.value)}
+                            className="flex-[2]"
+                        />
+                        <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-destructive hover:text-destructive/90"
+                            onClick={() => handleRemoveLink(index)}
+                        >
+                            <Trash2 className="w-4 h-4" />
+                        </Button>
+                    </div>
+                ))}
+                {(!profile.portfolio?.project_links || profile.portfolio.project_links.length === 0) && (
+                    <p className="text-sm text-muted-foreground text-center py-4 bg-muted/30 rounded-md border border-dashed">
+                        Nenhum link adicionado. Adicione links para seus trabalhos anteriores.
+                    </p>
+                )}
             </div>
         </div>
 

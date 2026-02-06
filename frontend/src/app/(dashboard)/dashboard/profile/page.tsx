@@ -104,6 +104,16 @@ export default function ProfilePage() {
 
                 if (key === 'languages' && Array.isArray(val)) {
                     form.append('languages', JSON.stringify(val))
+                } else if (key === 'portfolio') {
+                    const portfolio = val as any
+                    if (portfolio && Array.isArray(portfolio.project_links)) {
+                        portfolio.project_links.forEach((link: any, index: number) => {
+                            if (link.url) {
+                                form.append(`project_links[${index}][title]`, link.title || '')
+                                form.append(`project_links[${index}][url]`, link.url)
+                            }
+                        })
+                    }
                 } else if (val !== undefined && val !== null) {
                     if (typeof val === 'string' && val.trim() === '') {
                         return
