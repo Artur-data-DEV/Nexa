@@ -93,11 +93,6 @@ export function ApplyButton({ campaign, onSuccess }: ApplyButtonProps) {
   const userPortfolioLinks = user.portfolio?.project_links || []
 
   const onSubmit = async (data: ApplicationFormValues) => {
-    if (step !== 2) {
-        await handleNextStep()
-        return
-    }
-
     setLoading(true)
     setError(null)
     try {
@@ -200,7 +195,17 @@ export function ApplyButton({ campaign, onSuccess }: ApplyButtonProps) {
             </DialogDescription>
             </DialogHeader>
             <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form 
+                onSubmit={(e) => {
+                    if (step === 1) {
+                        e.preventDefault()
+                        handleNextStep()
+                    } else {
+                        form.handleSubmit(onSubmit)(e)
+                    }
+                }} 
+                className="space-y-4"
+            >
                 
                 {step === 1 && (
                     <>
