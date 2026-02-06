@@ -42,16 +42,23 @@ function GoogleOAuthCallbackInner() {
   const [error, setError] = useState("")
 
   useEffect(() => {
+    // Avoid double-execution in React strict mode or quick remounts
+    if (sessionStorage.getItem("google_oauth_processing") === "true") {
+      return
+    }
+    
     const handleCallback = async () => {
-      // Remove processing flag logic which was causing race conditions
-      // Each render of this page with a code should attempt to process it
-      // React.useEffect with empty dependency array runs once per mount
-
       try {
-        setStatus("loading")
-
         const code = searchParams.get("code")
         const oauthError = searchParams.get("error")
+
+        // If no code and no error, do nothing (maybe still hydrating params)
+        if (!code && !oauthError) {
+          return
+        }
+
+        sessionStorage.setItem("google_oauth_processing", "true")
+        setStatus("loading")
 
         if (oauthError) {
           const known =
@@ -63,17 +70,10 @@ function GoogleOAuthCallbackInner() {
           throw new Error(known)
         }
 
-        if (!code) {
-          // Only redirect if absolutely no code present, but maybe wait a tick
-          // to ensure params are fully hydrated? Usually searchParams is ready.
-          // router.push("/login") 
-          return
-        }
-
         const role = sessionStorage.getItem("google_oauth_role") as "creator" | "brand" | null
         const isStudent = sessionStorage.getItem("google_oauth_is_student") === "true"
 
-        const response = await handleGoogleCallbackRequest(code, role || undefined, isStudent)
+        const response = await handleGoogleCallbackRequest(code!, role || undefined, isStudent)
 
         sessionStorage.removeItem("google_oauth_role")
         sessionStorage.removeItem("google_oauth_is_student")
@@ -106,6 +106,8 @@ function GoogleOAuthCallbackInner() {
         setError(message)
         setStatus("error")
         toast.error(message)
+      } finally {
+        sessionStorage.removeItem("google_oauth_processing")
       }
     }
 
