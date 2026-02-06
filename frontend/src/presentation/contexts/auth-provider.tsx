@@ -36,6 +36,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
+      // Ensure CSRF cookie is set for stateful requests (if any)
+      await authRepository.csrf()
       const userData = await authRepository.me()
       setUser(userData)
     } catch (error) {
@@ -49,6 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (token: string, userData: User) => {
     sessionStorage.setItem("auth_token", token)
     try {
+      await authRepository.csrf()
       const fresh = await authRepository.me()
       const bust = typeof window !== "undefined" ? `?t=${Date.now()}` : ""
       const nextUser = { ...fresh, avatar: fresh.avatar ? `${fresh.avatar}${bust}` : fresh.avatar }
