@@ -450,7 +450,7 @@ export const EditProfile: React.FC<EditProfileProps> = ({ initialProfile, onCanc
                             placeholder="URL (https://...)" 
                             value={link.url} 
                             onChange={(e) => handleLinkChange(index, "url", e.target.value)}
-                            className="flex-[2]"
+                            className="flex-2"
                         />
                         <Button 
                             type="button" 

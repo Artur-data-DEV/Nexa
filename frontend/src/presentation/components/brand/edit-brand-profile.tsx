@@ -199,7 +199,7 @@ export const EditBrandProfile: React.FC<EditBrandProfileProps> = ({ initialProfi
               onChange={handleChange}
               disabled={isLoading}
               placeholder="Descreva sua empresa, missão e valores..."
-              className="min-h-[100px]"
+              className="min-h-25"
             />
           </div>
 
