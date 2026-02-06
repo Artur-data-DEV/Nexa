@@ -183,8 +183,9 @@ function CreatorSignUpInner() {
       // await authRepository.sendOtp(whatsapp, 'whatsapp') // Uncomment to send via WhatsApp too if needed
       setVerificationSent(true)
       toast.success(`Código de verificação enviado para ${email}`)
-    } catch (error) {
-      toast.error("Erro ao enviar código. Tente novamente.")
+    } catch (error: any) {
+      const message = error?.response?.data?.message || "Erro ao enviar código. Tente novamente."
+      toast.error(message)
       console.error(error)
     } finally {
       setFormLoading(false)
