@@ -43,12 +43,9 @@ function GoogleOAuthCallbackInner() {
 
   useEffect(() => {
     const handleCallback = async () => {
-      const processingFlag = sessionStorage.getItem("google_oauth_processing")
-      if (processingFlag === "true") {
-        return
-      }
-
-      sessionStorage.setItem("google_oauth_processing", "true")
+      // Remove processing flag logic which was causing race conditions
+      // Each render of this page with a code should attempt to process it
+      // React.useEffect with empty dependency array runs once per mount
 
       try {
         setStatus("loading")
@@ -67,7 +64,9 @@ function GoogleOAuthCallbackInner() {
         }
 
         if (!code) {
-          router.push("/login")
+          // Only redirect if absolutely no code present, but maybe wait a tick
+          // to ensure params are fully hydrated? Usually searchParams is ready.
+          // router.push("/login") 
           return
         }
 
@@ -107,8 +106,6 @@ function GoogleOAuthCallbackInner() {
         setError(message)
         setStatus("error")
         toast.error(message)
-      } finally {
-        sessionStorage.removeItem("google_oauth_processing")
       }
     }
 
