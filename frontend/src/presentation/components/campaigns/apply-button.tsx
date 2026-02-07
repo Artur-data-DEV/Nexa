@@ -70,7 +70,7 @@ export function ApplyButton({ campaign, onSuccess }: ApplyButtonProps) {
   const [termsAccepted, setTermsAccepted] = useState(false)
 
   const form = useForm<ApplicationFormValues>({
-    resolver: zodResolver(applicationSchema),
+    resolver: zodResolver(applicationSchema) as any,
     defaultValues: {
       proposal: "",
       budget: campaign.budget,
@@ -298,6 +298,11 @@ export function ApplyButton({ campaign, onSuccess }: ApplyButtonProps) {
                                     <Plus className="h-4 w-4" />
                                 </Button>
                             </div>
+                            {form.formState.errors.portfolio_links && (
+                                <p className="text-sm font-medium text-destructive">
+                                    {form.formState.errors.portfolio_links.message}
+                                </p>
+                            )}
                             <div className="space-y-2">
                                 {form.watch("portfolio_links").map((link, index) => (
                                     <div key={index} className="flex items-center justify-between bg-muted p-2 rounded-md text-sm">
