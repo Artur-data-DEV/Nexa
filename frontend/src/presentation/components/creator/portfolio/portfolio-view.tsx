@@ -17,7 +17,7 @@ import { Textarea } from "@/presentation/components/ui/textarea"
 import { Label } from "@/presentation/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/presentation/components/ui/avatar"
 import { Skeleton } from "@/presentation/components/ui/skeleton"
-import { Camera, Plus, Trash2, Edit2, Link as LinkIcon, Upload, X } from "lucide-react"
+import { Camera, Plus, Trash2, Edit2, Link as LinkIcon, Upload, X, Eye } from "lucide-react"
 import { toast } from "sonner"
 import { PortfolioItem } from "@/domain/entities/portfolio"
 import type { AxiosError } from "axios"
@@ -67,6 +67,9 @@ export default function PortfolioView() {
     const [editingItem, setEditingItem] = useState<PortfolioItem | null>(null)
     const [editItemTitle, setEditItemTitle] = useState("")
     const [editItemDescription, setEditItemDescription] = useState("")
+    
+    // View Item State
+    const [viewingItem, setViewingItem] = useState<PortfolioItem | null>(null)
 
     useEffect(() => {
         fetchPortfolio()
@@ -338,14 +341,10 @@ export default function PortfolioView() {
                                     <Button
                                         variant="secondary"
                                         size="icon"
-                                        onClick={() => {
-                                            setEditingItem(item)
-                                            setEditItemTitle(item.title || "")
-                                            setEditItemDescription(item.description || "")
-                                        }}
-                                        title="Editar"
+                                        onClick={() => setViewingItem(item)}
+                                        title="Visualizar"
                                     >
-                                        <Edit2 className="h-4 w-4" />
+                                        <Eye className="h-4 w-4" />
                                     </Button>
                                     <Button
                                         variant="destructive"
@@ -528,6 +527,38 @@ export default function PortfolioView() {
                             {uploading ? "Enviando..." : `Enviar ${uploadFiles.length > 0 ? `(${uploadFiles.length})` : ''}`}
                         </Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* View Item Dialog */}
+            <Dialog open={!!viewingItem} onOpenChange={(open) => !open && setViewingItem(null)}>
+                <DialogContent className="max-w-4xl w-full p-0 overflow-hidden bg-transparent border-none shadow-none">
+                    <div className="relative w-full h-full flex items-center justify-center pointer-events-none">
+                        <div className="pointer-events-auto">
+                            <Button 
+                                variant="secondary" 
+                                size="icon" 
+                                className="absolute top-2 right-2 z-50 rounded-full opacity-70 hover:opacity-100"
+                                onClick={() => setViewingItem(null)}
+                            >
+                                <X className="h-4 w-4" />
+                            </Button>
+                            {viewingItem?.media_type === 'image' ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img 
+                                    src={viewingItem.file_url} 
+                                    alt={viewingItem.title || "Portfolio Item"} 
+                                    className="max-h-[90vh] max-w-full rounded-lg shadow-2xl" 
+                                />
+                            ) : (
+                                <video 
+                                    src={viewingItem?.file_url} 
+                                    controls 
+                                    className="max-h-[90vh] max-w-full rounded-lg shadow-2xl" 
+                                />
+                            )}
+                        </div>
+                    </div>
                 </DialogContent>
             </Dialog>
 
