@@ -117,7 +117,11 @@ export function ApplyButton({ campaign, onSuccess }: ApplyButtonProps) {
   const onInvalid = (errors: any) => {
         console.log("Form errors:", errors)
         if (errors.portfolio_links) {
-            toast.error("Adicione pelo menos um link ao seu portfólio.")
+            if (Array.isArray(errors.portfolio_links)) {
+                 toast.error("Alguns links do portfólio são inválidos.")
+            } else {
+                 toast.error(errors.portfolio_links.message || "Adicione pelo menos um link ao seu portfólio.")
+            }
         } else {
             toast.error("Verifique os campos do formulário.")
         }
@@ -135,24 +139,27 @@ export function ApplyButton({ campaign, onSuccess }: ApplyButtonProps) {
   }
 
   const addLink = () => {
-    if (newLink && z.string().url().safeParse(newLink).success) {
+    const result = z.string().url().safeParse(newLink)
+    if (newLink && result.success) {
       const currentLinks = form.getValues("portfolio_links")
-      form.setValue("portfolio_links", [...currentLinks, newLink])
+      form.setValue("portfolio_links", [...currentLinks, newLink], { shouldValidate: true })
       setNewLink("")
+    } else if (newLink) {
+        toast.error("URL inválida. Certifique-se de incluir http:// ou https://")
     }
   }
 
   const removeLink = (index: number) => {
     const currentLinks = form.getValues("portfolio_links")
-    form.setValue("portfolio_links", currentLinks.filter((_, i) => i !== index))
+    form.setValue("portfolio_links", currentLinks.filter((_, i) => i !== index), { shouldValidate: true })
   }
 
   const togglePortfolioLink = (url: string) => {
     const currentLinks = form.getValues("portfolio_links")
     if (currentLinks.includes(url)) {
-      form.setValue("portfolio_links", currentLinks.filter(l => l !== url))
+      form.setValue("portfolio_links", currentLinks.filter(l => l !== url), { shouldValidate: true })
     } else {
-      form.setValue("portfolio_links", [...currentLinks, url])
+      form.setValue("portfolio_links", [...currentLinks, url], { shouldValidate: true })
     }
   }
 
