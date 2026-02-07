@@ -68,13 +68,14 @@ export async function handleGoogleCallbackRequest(code: string, role?: "creator"
   return response
 }
 
-export async function completeGoogleRegistration(registrationId: string, role: "creator" | "brand") {
+export async function completeGoogleRegistration(registrationId: string, role: "creator" | "brand", whatsapp: string) {
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "https://www.nexacreators.com/api"
   const rootUrl = backendUrl.replace(/\/api\/?$/, "")
 
   const response = await api.post<AuthResponse & { success: boolean }>(`/google/complete-registration`, {
       registration_id: registrationId,
-      role
+      role,
+      whatsapp
   }, {
       baseURL: `${rootUrl}/api`
   })

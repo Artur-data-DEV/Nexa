@@ -2,9 +2,11 @@
 
 import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Loader2, CheckCircle, XCircle, User as UserIcon, Briefcase } from "lucide-react"
+import { Loader2, CheckCircle, XCircle, User as UserIcon, Briefcase, ArrowLeft } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/presentation/components/ui/card"
 import { Button } from "@/presentation/components/ui/button"
+import { Input } from "@/presentation/components/ui/input"
+import { Label } from "@/presentation/components/ui/label"
 import { toast } from "sonner"
 import { handleGoogleCallbackRequest, completeGoogleRegistration } from "@/infrastructure/api/google-auth"
 import { useAuth } from "@/presentation/contexts/auth-provider"
@@ -48,6 +50,10 @@ function GoogleOAuthCallbackInner() {
   const [registrationId, setRegistrationId] = useState<string | null>(null)
   const [googleUser, setGoogleUser] = useState<{name: string, email: string, avatar: string} | null>(null)
   const [isRegistering, setIsRegistering] = useState(false)
+  
+  // Step 2: Details
+  const [selectedRole, setSelectedRole] = useState<"creator" | "brand" | null>(null)
+  const [whatsapp, setWhatsapp] = useState("")
 
   useEffect(() => {
     const code = searchParams.get("code")
@@ -139,16 +145,32 @@ function GoogleOAuthCallbackInner() {
     handleCallback()
   }, [searchParams, router, login])
 
-  const handleSelectRole = async (role: "creator" | "brand") => {
-      if (!registrationId) return
+  const handleSelectRole = (role: "creator" | "brand") => {
+      setSelectedRole(role)
+  }
+
+  const handleBack = () => {
+      setSelectedRole(null)
+      setWhatsapp("")
+  }
+
+  const handleConfirm = async () => {
+      if (!registrationId || !selectedRole) return
+      
+      const cleanWhatsapp = whatsapp.replace(/\D/g, "")
+      if (cleanWhatsapp.length < 10) {
+          toast.error("Por favor, insira um número de WhatsApp válido com DDD")
+          return
+      }
+      
       setIsRegistering(true)
       try {
-          const response = await completeGoogleRegistration(registrationId, role)
+          const response = await completeGoogleRegistration(registrationId, selectedRole, whatsapp)
            if (!response?.token || !response?.user) {
               throw new Error("Falha ao criar conta")
            }
            await login(response.token, response.user)
-           toast.success(`Conta de ${role === 'creator' ? 'Criador' : 'Marca'} criada com sucesso!`)
+           toast.success(`Conta de ${selectedRole === 'creator' ? 'Criador' : 'Marca'} criada com sucesso!`)
            router.push("/dashboard")
       } catch (err: any) {
           const msg = err.response?.data?.message || "Erro ao finalizar cadastro"
@@ -179,44 +201,71 @@ function GoogleOAuthCallbackInner() {
                 )}
               <CardTitle className="text-2xl font-bold">Quase lá, {googleUser?.name?.split(' ')[0]}!</CardTitle>
               <CardDescription className="text-base">
-                Como você deseja utilizar a Nexa?
+                {selectedRole 
+                    ? `Finalize seu perfil de ${selectedRole === 'creator' ? 'Criador' : 'Marca'}`
+                    : "Como você deseja utilizar a Nexa?"
+                }
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <button 
-                        onClick={() => handleSelectRole('creator')}
-                        disabled={isRegistering}
-                        className="flex flex-col items-center justify-center p-6 space-y-4 rounded-xl border-2 border-transparent bg-secondary/50 hover:bg-secondary hover:border-pink-500 hover:shadow-lg transition-all group"
-                    >
-                        <div className="p-4 rounded-full bg-pink-100 dark:bg-pink-900/20 group-hover:scale-110 transition-transform">
-                            <UserIcon className="w-8 h-8 text-pink-500" />
-                        </div>
-                        <div className="text-center">
-                            <h3 className="font-bold text-lg">Sou Criador</h3>
-                            <p className="text-xs text-muted-foreground mt-1">Quero encontrar campanhas e monetizar meu conteúdo</p>
-                        </div>
-                    </button>
+                {!selectedRole ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <button 
+                            onClick={() => handleSelectRole('creator')}
+                            disabled={isRegistering}
+                            className="flex flex-col items-center justify-center p-6 space-y-4 rounded-xl border-2 border-transparent bg-secondary/50 hover:bg-secondary hover:border-pink-500 hover:shadow-lg transition-all group"
+                        >
+                            <div className="p-4 rounded-full bg-pink-100 dark:bg-pink-900/20 group-hover:scale-110 transition-transform">
+                                <UserIcon className="w-8 h-8 text-pink-500" />
+                            </div>
+                            <div className="text-center">
+                                <h3 className="font-bold text-lg">Sou Criador</h3>
+                                <p className="text-xs text-muted-foreground mt-1">Quero encontrar campanhas e monetizar meu conteúdo</p>
+                            </div>
+                        </button>
 
-                    <button 
-                        onClick={() => handleSelectRole('brand')}
-                        disabled={isRegistering}
-                        className="flex flex-col items-center justify-center p-6 space-y-4 rounded-xl border-2 border-transparent bg-secondary/50 hover:bg-secondary hover:border-purple-500 hover:shadow-lg transition-all group"
-                    >
-                        <div className="p-4 rounded-full bg-purple-100 dark:bg-purple-900/20 group-hover:scale-110 transition-transform">
-                            <Briefcase className="w-8 h-8 text-purple-500" />
+                        <button 
+                            onClick={() => handleSelectRole('brand')}
+                            disabled={isRegistering}
+                            className="flex flex-col items-center justify-center p-6 space-y-4 rounded-xl border-2 border-transparent bg-secondary/50 hover:bg-secondary hover:border-purple-500 hover:shadow-lg transition-all group"
+                        >
+                            <div className="p-4 rounded-full bg-purple-100 dark:bg-purple-900/20 group-hover:scale-110 transition-transform">
+                                <Briefcase className="w-8 h-8 text-purple-500" />
+                            </div>
+                            <div className="text-center">
+                                <h3 className="font-bold text-lg">Sou Marca</h3>
+                                <p className="text-xs text-muted-foreground mt-1">Quero contratar criadores para divulgar meus produtos</p>
+                            </div>
+                        </button>
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-2 p-4 bg-primary/10 rounded-lg text-primary mb-4">
+                             {selectedRole === 'creator' ? <UserIcon className="w-5 h-5" /> : <Briefcase className="w-5 h-5" />}
+                             <span className="font-medium">Você escolheu: {selectedRole === 'creator' ? 'Criador' : 'Marca'}</span>
                         </div>
-                        <div className="text-center">
-                            <h3 className="font-bold text-lg">Sou Marca</h3>
-                            <p className="text-xs text-muted-foreground mt-1">Quero contratar criadores para divulgar meus produtos</p>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="whatsapp">WhatsApp</Label>
+                            <Input 
+                                id="whatsapp"
+                                placeholder="(11) 99999-9999"
+                                value={whatsapp}
+                                onChange={(e) => setWhatsapp(e.target.value)}
+                            />
+                            <p className="text-xs text-muted-foreground">Necessário para comunicação sobre campanhas.</p>
                         </div>
-                    </button>
-                </div>
-                
-                {isRegistering && (
-                    <div className="flex justify-center items-center text-sm text-muted-foreground gap-2">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Criando sua conta...
+
+                        <div className="flex flex-col gap-3 pt-4">
+                            <Button onClick={handleConfirm} disabled={isRegistering} className="w-full">
+                                {isRegistering ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                                {isRegistering ? "Criando conta..." : "Confirmar e Criar Conta"}
+                            </Button>
+                            <Button onClick={handleBack} variant="ghost" disabled={isRegistering} className="w-full">
+                                <ArrowLeft className="w-4 h-4 mr-2" />
+                                Voltar e escolher outro perfil
+                            </Button>
+                        </div>
                     </div>
                 )}
             </CardContent>
