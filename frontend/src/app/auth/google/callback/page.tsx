@@ -34,6 +34,8 @@ export default function GoogleOAuthCallbackPage() {
   )
 }
 
+const processedCodes = new Set<string>()
+
 function GoogleOAuthCallbackInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -42,22 +44,23 @@ function GoogleOAuthCallbackInner() {
   const [error, setError] = useState("")
 
   useEffect(() => {
-    // Avoid double-execution in React strict mode or quick remounts
-    if (sessionStorage.getItem("google_oauth_processing") === "true") {
+    const code = searchParams.get("code")
+    const oauthError = searchParams.get("error")
+
+    if (!code && !oauthError) {
       return
+    }
+
+    if (code && processedCodes.has(code)) {
+        return
+    }
+
+    if (code) {
+        processedCodes.add(code)
     }
     
     const handleCallback = async () => {
       try {
-        const code = searchParams.get("code")
-        const oauthError = searchParams.get("error")
-
-        // If no code and no error, do nothing (maybe still hydrating params)
-        if (!code && !oauthError) {
-          return
-        }
-
-        sessionStorage.setItem("google_oauth_processing", "true")
         setStatus("loading")
 
         if (oauthError) {
@@ -81,7 +84,7 @@ function GoogleOAuthCallbackInner() {
         if (!response?.token || !response?.user) {
           throw new Error("Resposta inválida do servidor")
         }
-        login(response.token, response.user)
+        await login(response.token, response.user)
 
         setStatus("success")
 
@@ -101,13 +104,21 @@ function GoogleOAuthCallbackInner() {
 
         router.push("/dashboard")
       } catch (err: unknown) {
-        const axiosError = err as AxiosError<{ message?: string }>
+        const axiosError = err as AxiosError<{ message?: string; error?: string }>
+        
+        // Ignore "invalid_grant" if we already succeeded (race condition artifact)
+        if (axiosError.response?.data?.error === 'invalid_grant' || 
+            axiosError.message?.includes('invalid_grant')) {
+             console.warn("Ignored invalid_grant error likely due to double submission")
+             return
+        }
+
         const message = axiosError.response?.data?.message || axiosError.message || "Falha na autenticação Google OAuth"
         setError(message)
         setStatus("error")
         toast.error(message)
       } finally {
-        sessionStorage.removeItem("google_oauth_processing")
+        // We do NOT remove from processedCodes to prevent re-execution on same page session
       }
     }
 
