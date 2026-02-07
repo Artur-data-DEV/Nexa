@@ -114,7 +114,16 @@ export function ApplyButton({ campaign, onSuccess }: ApplyButtonProps) {
     }
   }
 
-  const handleNextStep = async () => {
+  const onInvalid = (errors: any) => {
+        console.log("Form errors:", errors)
+        if (errors.portfolio_links) {
+            toast.error("Adicione pelo menos um link ao seu portfólio.")
+        } else {
+            toast.error("Verifique os campos do formulário.")
+        }
+    }
+
+    const handleNextStep = async () => {
     const isValid = await form.trigger(["proposal", "budget", "delivery_days"])
     if (isValid) {
       setStep(2)
@@ -201,7 +210,7 @@ export function ApplyButton({ campaign, onSuccess }: ApplyButtonProps) {
                         e.preventDefault()
                         handleNextStep()
                     } else {
-                        form.handleSubmit(onSubmit)(e)
+                        form.handleSubmit(onSubmit, onInvalid)(e)
                     }
                 }} 
                 className="space-y-4"
