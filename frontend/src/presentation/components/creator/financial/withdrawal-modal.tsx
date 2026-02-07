@@ -139,6 +139,7 @@ export function WithdrawalModal({ open, onOpenChange, availableBalance, onSucces
                         <Label>Valor</Label>
                         <Input 
                             type="number" 
+                            step="0.01"
                             placeholder="0,00" 
                             value={amount}
                             onChange={(e) => setAmount(e.target.value)}

@@ -831,6 +831,7 @@ export default function CreateCampaignPage() {
                             <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input
                                 type="number"
+                                step="0.01"
                                 value={budget}
                                 onChange={e => setBudget(e.target.value)}
                                 placeholder={remunerationType === 'permuta' ? '0,00' : '800,00'}
