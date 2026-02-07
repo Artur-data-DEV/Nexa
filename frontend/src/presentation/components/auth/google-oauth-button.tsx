@@ -30,6 +30,8 @@ export function GoogleOAuthButton({
 
       if (role) {
         sessionStorage.setItem("google_oauth_role", role)
+      } else {
+        sessionStorage.removeItem("google_oauth_role")
       }
 
       if (isStudent) {

@@ -2,13 +2,14 @@
 
 import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Loader2, CheckCircle, XCircle } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/presentation/components/ui/card"
+import { Loader2, CheckCircle, XCircle, User as UserIcon, Briefcase } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/presentation/components/ui/card"
 import { Button } from "@/presentation/components/ui/button"
 import { toast } from "sonner"
-import { handleGoogleCallbackRequest } from "@/infrastructure/api/google-auth"
+import { handleGoogleCallbackRequest, completeGoogleRegistration } from "@/infrastructure/api/google-auth"
 import { useAuth } from "@/presentation/contexts/auth-provider"
 import type { AxiosError } from "axios"
+import Image from "next/image"
 
 export default function GoogleOAuthCallbackPage() {
   return (
@@ -40,8 +41,13 @@ function GoogleOAuthCallbackInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { login } = useAuth()
-  const [status, setStatus] = useState<"loading" | "success" | "error">("loading")
+  const [status, setStatus] = useState<"loading" | "success" | "error" | "role_selection">("loading")
   const [error, setError] = useState("")
+  
+  // Role Selection State
+  const [registrationId, setRegistrationId] = useState<string | null>(null)
+  const [googleUser, setGoogleUser] = useState<{name: string, email: string, avatar: string} | null>(null)
+  const [isRegistering, setIsRegistering] = useState(false)
 
   useEffect(() => {
     const code = searchParams.get("code")
@@ -80,6 +86,14 @@ function GoogleOAuthCallbackInner() {
 
         sessionStorage.removeItem("google_oauth_role")
         sessionStorage.removeItem("google_oauth_is_student")
+
+        // Check for Role Selection Action
+        if (response.success && response.action === 'role_selection' && response.registration_id) {
+             setRegistrationId(response.registration_id)
+             if (response.google_user) setGoogleUser(response.google_user)
+             setStatus("role_selection")
+             return
+        }
 
         if (!response?.token || !response?.user) {
           throw new Error("Resposta inválida do servidor")
@@ -125,12 +139,90 @@ function GoogleOAuthCallbackInner() {
     handleCallback()
   }, [searchParams, router, login])
 
+  const handleSelectRole = async (role: "creator" | "brand") => {
+      if (!registrationId) return
+      setIsRegistering(true)
+      try {
+          const response = await completeGoogleRegistration(registrationId, role)
+           if (!response?.token || !response?.user) {
+              throw new Error("Falha ao criar conta")
+           }
+           await login(response.token, response.user)
+           toast.success(`Conta de ${role === 'creator' ? 'Criador' : 'Marca'} criada com sucesso!`)
+           router.push("/dashboard")
+      } catch (err: any) {
+          const msg = err.response?.data?.message || "Erro ao finalizar cadastro"
+          toast.error(msg)
+          setError(msg)
+      } finally {
+          setIsRegistering(false)
+      }
+  }
+
   const handleRetry = () => {
     router.push("/login")
   }
 
   const handleGoHome = () => {
     router.push("/")
+  }
+
+  if (status === "role_selection") {
+      return (
+        <div className="min-h-screen bg-muted flex items-center justify-center p-4">
+          <Card className="w-full max-w-lg shadow-xl">
+            <CardHeader className="text-center space-y-4">
+                {googleUser?.avatar && (
+                    <div className="mx-auto w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-md">
+                        <Image src={googleUser.avatar} alt="Avatar" width={80} height={80} />
+                    </div>
+                )}
+              <CardTitle className="text-2xl font-bold">Quase lá, {googleUser?.name?.split(' ')[0]}!</CardTitle>
+              <CardDescription className="text-base">
+                Como você deseja utilizar a Nexa?
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button 
+                        onClick={() => handleSelectRole('creator')}
+                        disabled={isRegistering}
+                        className="flex flex-col items-center justify-center p-6 space-y-4 rounded-xl border-2 border-transparent bg-secondary/50 hover:bg-secondary hover:border-pink-500 hover:shadow-lg transition-all group"
+                    >
+                        <div className="p-4 rounded-full bg-pink-100 dark:bg-pink-900/20 group-hover:scale-110 transition-transform">
+                            <UserIcon className="w-8 h-8 text-pink-500" />
+                        </div>
+                        <div className="text-center">
+                            <h3 className="font-bold text-lg">Sou Criador</h3>
+                            <p className="text-xs text-muted-foreground mt-1">Quero encontrar campanhas e monetizar meu conteúdo</p>
+                        </div>
+                    </button>
+
+                    <button 
+                        onClick={() => handleSelectRole('brand')}
+                        disabled={isRegistering}
+                        className="flex flex-col items-center justify-center p-6 space-y-4 rounded-xl border-2 border-transparent bg-secondary/50 hover:bg-secondary hover:border-purple-500 hover:shadow-lg transition-all group"
+                    >
+                        <div className="p-4 rounded-full bg-purple-100 dark:bg-purple-900/20 group-hover:scale-110 transition-transform">
+                            <Briefcase className="w-8 h-8 text-purple-500" />
+                        </div>
+                        <div className="text-center">
+                            <h3 className="font-bold text-lg">Sou Marca</h3>
+                            <p className="text-xs text-muted-foreground mt-1">Quero contratar criadores para divulgar meus produtos</p>
+                        </div>
+                    </button>
+                </div>
+                
+                {isRegistering && (
+                    <div className="flex justify-center items-center text-sm text-muted-foreground gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Criando sua conta...
+                    </div>
+                )}
+            </CardContent>
+          </Card>
+        </div>
+      )
   }
 
   return (

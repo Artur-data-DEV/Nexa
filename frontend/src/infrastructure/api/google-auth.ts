@@ -25,6 +25,18 @@ export async function getGoogleOAuthUrl() {
   }
 }
 
+export type GoogleAuthResponse = AuthResponse & {
+    success: boolean
+    message?: string
+    action?: 'role_selection'
+    registration_id?: string
+    google_user?: {
+        name: string
+        email: string
+        avatar: string
+    }
+}
+
 export async function handleGoogleCallbackRequest(code: string, role?: "creator" | "brand", isStudent?: boolean) {
   const backendUrl =
     process.env.NEXT_PUBLIC_BACKEND_URL ||
@@ -41,13 +53,31 @@ export async function handleGoogleCallbackRequest(code: string, role?: "creator"
     params.append("is_student", "true")
   }
 
-  const response = await api.get<AuthResponse & { success: boolean; message?: string }>(`/google/callback?${params.toString()}`, {
+  const response = await api.get<GoogleAuthResponse>(`/google/callback?${params.toString()}`, {
     baseURL: `${rootUrl}/api`,
   })
+
+  if (response.success && response.action === 'role_selection') {
+      return response
+  }
 
   if (!response?.success || !response?.token || !response?.user) {
     throw new Error(response.message || "Falha na autenticação com Google")
   }
 
+  return response
+}
+
+export async function completeGoogleRegistration(registrationId: string, role: "creator" | "brand") {
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "https://www.nexacreators.com/api"
+  const rootUrl = backendUrl.replace(/\/api\/?$/, "")
+
+  const response = await api.post<AuthResponse & { success: boolean }>(`/google/complete-registration`, {
+      registration_id: registrationId,
+      role
+  }, {
+      baseURL: `${rootUrl}/api`
+  })
+  
   return response
 }
