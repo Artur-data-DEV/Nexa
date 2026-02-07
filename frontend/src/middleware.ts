@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
-  // Get hostname from header or nextUrl, ensuring we handle ports correctly
-  const hostHeader = request.headers.get('host')
+  // Get hostname from x-forwarded-host (load balancers) or host header
+  // This ensures we get the original domain even behind Cloud Run / Proxies
+  const hostHeader = request.headers.get('x-forwarded-host') || request.headers.get('host')
   const hostname = hostHeader ? hostHeader.split(':')[0] : request.nextUrl.hostname
 
   // Redirect nexacreators.com to www.nexacreators.com
