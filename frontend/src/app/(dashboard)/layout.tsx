@@ -238,18 +238,20 @@ export default function DashboardLayout({
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem>
-                        <Link href="/dashboard/profile" className="flex items-center">
+                      <DropdownMenuItem asChild>
+                        <Link href="/dashboard/profile" className="flex items-center cursor-pointer">
                           <User className="mr-2 h-4 w-4" />
                           Perfil
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Settings className="mr-2 h-4 w-4" />
-                        Configurações
+                      <DropdownMenuItem asChild>
+                        <Link href="/dashboard/profile" className="flex items-center cursor-pointer">
+                          <Settings className="mr-2 h-4 w-4" />
+                          Configurações
+                        </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={logout} className="text-destructive" data-testid="logout-button">
+                      <DropdownMenuItem onClick={logout} className="text-destructive cursor-pointer" data-testid="logout-button">
                         <LogOut className="mr-2 h-4 w-4" />
                         Sair
                       </DropdownMenuItem>

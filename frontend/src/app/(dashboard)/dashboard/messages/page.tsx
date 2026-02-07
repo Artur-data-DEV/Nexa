@@ -133,7 +133,18 @@ export default function MessagesPage() {
     const [offerEstimatedDays, setOfferEstimatedDays] = useState("")
     const [isSubmittingOffer, setIsSubmittingOffer] = useState(false)
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null)
     const fileInputRef = useRef<HTMLInputElement | null>(null)
+
+    useEffect(() => {
+        if (selectedFile && selectedFile.type.startsWith('image/')) {
+            const url = URL.createObjectURL(selectedFile)
+            setPreviewUrl(url)
+            return () => URL.revokeObjectURL(url)
+        }
+        setPreviewUrl(null)
+    }, [selectedFile])
+
     const [isTimelineOpen, setIsTimelineOpen] = useState(false)
     const [contractId, setContractId] = useState<number | null>(null)
     const [offerTitle, setOfferTitle] = useState("")
@@ -1089,18 +1100,32 @@ export default function MessagesPage() {
                         {selectedFile && (
                             <div className="px-4 pb-4 flex items-center justify-between text-xs text-muted-foreground gap-2">
                                 <div className="inline-flex items-center gap-2">
-                                    <FileText className="h-3 w-3" />
-                                    <span className="truncate inline-block w-52">
-                                        {selectedFile.name}
-                                    </span>
+                                    {previewUrl ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img 
+                                            src={previewUrl} 
+                                            alt="Preview" 
+                                            className="h-12 w-12 object-cover rounded-md border"
+                                        />
+                                    ) : (
+                                        <FileText className="h-8 w-8 text-muted-foreground/50" />
+                                    )}
+                                    <div className="flex flex-col">
+                                        <span className="truncate inline-block max-w-[200px] font-medium text-foreground">
+                                            {selectedFile.name}
+                                        </span>
+                                        <span className="text-[10px]">
+                                            {(selectedFile.size / 1024).toFixed(1)} KB
+                                        </span>
+                                    </div>
                                 </div>
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-6 w-6"
+                                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
                                     onClick={() => setSelectedFile(null)}
                                 >
-                                    <X className="h-3 w-3" />
+                                    <X className="h-4 w-4" />
                                 </Button>
                             </div>
                         )}
