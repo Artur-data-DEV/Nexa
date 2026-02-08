@@ -175,7 +175,7 @@ export default function ProfilePage() {
                         <Card className="h-fit">
                             <CardHeader className="items-center text-center">
                                 <Avatar className="h-32 w-32">
-                                    <AvatarImage src={user.avatar || brandProfile.logo_url} />
+                                    <AvatarImage src={user.avatar || brandProfile.logo_url} key={user.avatar} />
                                     <AvatarFallback className="text-4xl">{brandProfile.company_name?.substring(0, 2).toUpperCase() || user.name?.substring(0, 2).toUpperCase()}</AvatarFallback>
                                 </Avatar>
                                 <CardTitle className="mt-4">{brandProfile.company_name}</CardTitle>

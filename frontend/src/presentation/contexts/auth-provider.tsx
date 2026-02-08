@@ -40,7 +40,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Ensure CSRF cookie is set for stateful requests (if any)
       await authRepository.csrf()
       const userData = await authRepository.me()
-      setUser(userData)
+      const bust = typeof window !== "undefined" ? `?t=${Date.now()}` : ""
+      const nextUser = { ...userData, avatar: userData.avatar ? `${userData.avatar}${bust}` : userData.avatar }
+      setUser(nextUser)
     } catch (error) {
       console.error("Failed to fetch user", error)
       sessionStorage.removeItem("auth_token")
@@ -68,7 +70,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshUser = async () => {
     try {
       const userData = await authRepository.me()
-      setUser(userData)
+      const bust = typeof window !== "undefined" ? `?t=${Date.now()}` : ""
+      const nextUser = { ...userData, avatar: userData.avatar ? `${userData.avatar}${bust}` : userData.avatar }
+      setUser(nextUser)
     } catch (error) {
       console.error("Failed to refresh user", error)
     }
@@ -87,7 +91,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const updateUser = (userData: User) => {
-    setUser(userData)
+    const bust = typeof window !== "undefined" ? `?t=${Date.now()}` : ""
+    const nextUser = { ...userData, avatar: userData.avatar ? `${userData.avatar}${bust}` : userData.avatar }
+    setUser(nextUser)
   }
 
   return (
