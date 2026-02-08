@@ -357,7 +357,8 @@ export default function MessagesPage() {
         event.preventDefault()
         if (!selectedChat || user?.role !== "brand") return
 
-        const budgetValue = parseFloat(offerBudget)
+        const normalizedBudget = typeof offerBudget === 'string' ? offerBudget.replace(',', '.') : offerBudget
+        const budgetValue = parseFloat(normalizedBudget)
         const daysValue = parseInt(offerEstimatedDays, 10)
 
         if (!budgetValue || Number.isNaN(budgetValue) || budgetValue < 10) {
@@ -927,7 +928,7 @@ export default function MessagesPage() {
                                             }
 
                                             const isFileMessage = msg.message_type === "file"
-                                            const hasImageExtension = (name: string | null) => /\.(jpg|jpeg|png|gif|webp|avif|bmp|svg)$/i.test(name || "")
+                                            const hasImageExtension = (name: string | null | undefined) => /\.(jpg|jpeg|png|gif|webp|avif|bmp|svg)$/i.test(name || "")
                                             const isImageMessage = msg.message_type === "image" || (msg.message_type === "file" && hasImageExtension(msg.file_name))
 
                                             const isSystem = msg.message_type === "system"
@@ -1112,7 +1113,7 @@ export default function MessagesPage() {
                                         <FileText className="h-8 w-8 text-muted-foreground/50" />
                                     )}
                                     <div className="flex flex-col">
-                                        <span className="truncate inline-block max-w-[200px] font-medium text-foreground">
+                                        <span className="truncate inline-block max-w-50 font-medium text-foreground">
                                             {selectedFile.name}
                                         </span>
                                         <span className="text-[10px]">
@@ -1137,7 +1138,7 @@ export default function MessagesPage() {
                             onChange={handleFileChange}
                         />
                         <Dialog open={isOfferDialogOpen} onOpenChange={setIsOfferDialogOpen}>
-                            <DialogContent className="sm:max-w-[425px]">
+                            <DialogContent className="sm:max-w-106.25">
                                 <DialogHeader>
                                     <DialogTitle>Enviar Proposta</DialogTitle>
                                     <DialogDescription>

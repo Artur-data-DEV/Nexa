@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { Loader2, Plus, X, ArrowRight, ArrowLeft } from "lucide-react"
+import { Loader2, Plus, X, ArrowRight, ArrowLeft, Check } from "lucide-react"
 
 import { Button } from "@/presentation/components/ui/button"
 import {
@@ -48,7 +48,7 @@ const termsRepository = new ApiTermsRepository(api)
 export const applicationSchema = z.object({
   proposal: z.string().min(20, "A proposta deve ter pelo menos 20 caracteres"),
   budget: z.coerce.number().min(1, "O orçamento deve ser maior que zero"),
-  delivery_days: z.coerce.number().min(1, "O prazo deve ser de pelo menos 1 dia"),
+  delivery_days: z.coerce.number().int("O prazo deve ser um número inteiro").min(1, "O prazo deve ser de pelo menos 1 dia"),
   portfolio_links: z.array(z.string().url("URL inválida")).min(1, "Adicione pelo menos um link ao portfólio para se candidatar."),
 })
 
@@ -60,7 +60,7 @@ interface ApplyButtonProps {
 }
 
 export function ApplyButton({ campaign, onSuccess }: ApplyButtonProps) {
-  const { user } = useAuth()
+  const { user, refreshUser } = useAuth()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -131,6 +131,12 @@ export function ApplyButton({ campaign, onSuccess }: ApplyButtonProps) {
     const isValid = await form.trigger(["proposal", "budget", "delivery_days"])
     if (isValid) {
       setStep(2)
+    } else {
+        const errors = form.formState.errors;
+        if (errors.proposal) toast.error(errors.proposal.message);
+        else if (errors.budget) toast.error(errors.budget.message);
+        else if (errors.delivery_days) toast.error(errors.delivery_days.message);
+        else toast.error("Por favor, preencha os campos obrigatórios corretamente.");
     }
   }
 
@@ -164,8 +170,13 @@ export function ApplyButton({ campaign, onSuccess }: ApplyButtonProps) {
   }
 
   const handleOpenChange = (isOpen: boolean) => {
-      if (isOpen && !termsAccepted) {
-          setShowTerms(true)
+      if (isOpen) {
+          refreshUser() // Always refresh user data when opening the application dialog
+          if (!termsAccepted) {
+              setShowTerms(true)
+          } else {
+              setOpen(true)
+          }
       } else {
           setOpen(isOpen)
           if (!isOpen) setStep(1)
@@ -253,7 +264,16 @@ export function ApplyButton({ campaign, onSuccess }: ApplyButtonProps) {
                                 <FormItem>
                                 <FormLabel>Valor da Proposta (R$)</FormLabel>
                                 <FormControl>
-                                    <Input type="number" step="0.01" {...field} onChange={(e) => field.onChange(e.target.value)} />
+                                    <Input 
+                                        type="number" 
+                                        step="0.01" 
+                                        placeholder="0.00"
+                                        {...field} 
+                                        onChange={(e) => {
+                                            const val = e.target.value.replace(',', '.');
+                                            field.onChange(val);
+                                        }} 
+                                    />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
@@ -266,7 +286,12 @@ export function ApplyButton({ campaign, onSuccess }: ApplyButtonProps) {
                                 <FormItem>
                                 <FormLabel>Prazo de Entrega (Dias)</FormLabel>
                                 <FormControl>
-                                    <Input type="number" {...field} onChange={(e) => field.onChange(e.target.value)} />
+                                    <Input 
+                                        type="number" 
+                                        placeholder="7"
+                                        {...field} 
+                                        onChange={(e) => field.onChange(e.target.value)} 
+                                    />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
@@ -295,7 +320,7 @@ export function ApplyButton({ campaign, onSuccess }: ApplyButtonProps) {
                                                 onClick={() => togglePortfolioLink(link.url)}
                                             >
                                                 {link.title || link.url}
-                                                {isSelected && <CheckIcon className="ml-1 h-3 w-3" />}
+                                                {isSelected && <Check className="ml-1 h-3 w-3" />}
                                             </Badge>
                                         )
                                     })}

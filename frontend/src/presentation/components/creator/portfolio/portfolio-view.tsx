@@ -322,7 +322,11 @@ export default function PortfolioView() {
                         {portfolio.items.map((item) => {
                             const isImage = item.media_type === "image" || /\.(jpg|jpeg|png|gif|webp|avif|bmp|svg)$/i.test(item.file_url || "") || /\.(jpg|jpeg|png|gif|webp|avif|bmp|svg)$/i.test(item.title || "")
                             return (
-                            <div key={item.id} className="group relative aspect-square bg-muted rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all">
+                            <div 
+                                key={item.id} 
+                                className="group relative aspect-square bg-muted rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer"
+                                onClick={() => setViewingItem({ ...item, media_type: isImage ? 'image' : 'video' })}
+                            >
                                 {isImage ? (
                                     // eslint-disable-next-line @next/next/no-img-element
                                     <img
@@ -338,18 +342,19 @@ export default function PortfolioView() {
                                 )}
 
                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                                    <Button
-                                        variant="secondary"
-                                        size="icon"
-                                        onClick={() => setViewingItem({ ...item, media_type: isImage ? 'image' : 'video' })}
-                                        title="Visualizar"
-                                    >
-                                        <Eye className="h-4 w-4" />
-                                    </Button>
+                                    <div className="flex items-center gap-2 pointer-events-none">
+                                        <div className="bg-white/20 backdrop-blur-md p-2 rounded-full">
+                                            <Eye className="h-6 w-6 text-white" />
+                                        </div>
+                                    </div>
                                     <Button
                                         variant="destructive"
                                         size="icon"
-                                        onClick={() => setDeleteId(item.id)}
+                                        className="absolute top-2 right-2 pointer-events-auto"
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            setDeleteId(item.id)
+                                        }}
                                         title="Excluir"
                                     >
                                         <Trash2 className="h-4 w-4" />

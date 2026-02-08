@@ -421,7 +421,7 @@ export default function CreatorDashboard() {
                                         value={filters.sort}
                                         onValueChange={(value) => setFilters((prev) => ({ ...prev, sort: value }))}
                                     >
-                                        <SelectTrigger className="w-full sm:w-[180px] h-9">
+                                        <SelectTrigger className="w-full sm:w-45 h-9">
                                             <SelectValue placeholder="Ordenar por" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -491,6 +491,7 @@ export default function CreatorDashboard() {
                                             <Label className="text-xs font-medium">Orçamento Mínimo</Label>
                                             <Input
                                                 type="number"
+                                                step="0.01"
                                                 placeholder="R$ 0"
                                                 value={filters.budgetMin}
                                                 onChange={(e) => setFilters((prev) => ({ ...prev, budgetMin: e.target.value }))}
@@ -502,6 +503,7 @@ export default function CreatorDashboard() {
                                             <Label className="text-xs font-medium">Orçamento Máximo</Label>
                                             <Input
                                                 type="number"
+                                                step="0.01"
                                                 placeholder="R$ 10.000"
                                                 value={filters.budgetMax}
                                                 onChange={(e) => setFilters((prev) => ({ ...prev, budgetMax: e.target.value }))}

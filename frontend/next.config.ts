@@ -41,6 +41,17 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
+        source: "/:path*",
+        has: [
+          {
+            type: "host",
+            value: "nexacreators.com",
+          },
+        ],
+        destination: "https://www.nexacreators.com/:path*",
+        permanent: true,
+      },
+      {
         source: "/creator/payment-method",
         destination: "/dashboard/payment-methods",
         permanent: false,

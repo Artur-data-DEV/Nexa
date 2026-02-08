@@ -239,11 +239,11 @@ export default function DashboardLayout({
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem onSelect={() => router.push("/dashboard/profile")} className="cursor-pointer">
+                      <DropdownMenuItem onClick={() => router.push("/dashboard/profile")} className="cursor-pointer">
                         <User className="mr-2 h-4 w-4" />
                         Perfil
                       </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={() => router.push("/dashboard/profile")} className="cursor-pointer">
+                      <DropdownMenuItem onClick={() => router.push("/dashboard/profile")} className="cursor-pointer">
                         <Settings className="mr-2 h-4 w-4" />
                         Configurações
                       </DropdownMenuItem>

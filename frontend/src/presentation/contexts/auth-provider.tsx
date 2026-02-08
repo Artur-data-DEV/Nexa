@@ -13,6 +13,7 @@ interface AuthContextType {
   login: (token: string, user: User) => Promise<void>
   logout: () => void
   updateUser: (user: User) => void
+  refreshUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -64,6 +65,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // router.push("/dashboard")
   }
 
+  const refreshUser = async () => {
+    try {
+      const userData = await authRepository.me()
+      setUser(userData)
+    } catch (error) {
+      console.error("Failed to refresh user", error)
+    }
+  }
+
   const logout = async () => {
     try {
       await authRepository.logout()
@@ -88,7 +98,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAuthenticated: !!user,
         login,
         logout,
-        updateUser
+        updateUser,
+        refreshUser
       }}
     >
       {children}
