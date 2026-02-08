@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import {
   Bell,
   Home,
@@ -56,6 +56,7 @@ export default function DashboardLayout({
 }) {
   const { user, logout } = useAuth()
   const pathname = usePathname()
+  const router = useRouter()
 
   const creatorNavItems = [
     { name: "Início", href: "/dashboard", icon: Home },
@@ -238,17 +239,13 @@ export default function DashboardLayout({
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem asChild>
-                        <Link href="/dashboard/profile" className="flex items-center cursor-pointer">
-                          <User className="mr-2 h-4 w-4" />
-                          Perfil
-                        </Link>
+                      <DropdownMenuItem onSelect={() => router.push("/dashboard/profile")} className="cursor-pointer">
+                        <User className="mr-2 h-4 w-4" />
+                        Perfil
                       </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href="/dashboard/profile" className="flex items-center cursor-pointer">
-                          <Settings className="mr-2 h-4 w-4" />
-                          Configurações
-                        </Link>
+                      <DropdownMenuItem onSelect={() => router.push("/dashboard/profile")} className="cursor-pointer">
+                        <Settings className="mr-2 h-4 w-4" />
+                        Configurações
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={logout} className="text-destructive cursor-pointer" data-testid="logout-button">

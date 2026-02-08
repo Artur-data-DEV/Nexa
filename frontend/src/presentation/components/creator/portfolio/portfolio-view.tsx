@@ -30,7 +30,10 @@ const uploadPortfolioMediaUseCase = new UploadPortfolioMediaUseCase(portfolioRep
 const deletePortfolioItemUseCase = new DeletePortfolioItemUseCase(portfolioRepository)
 
 const MAX_TOTAL_FILES = 12
-const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/jpg", "video/mp4", "video/quicktime", "video/mov", "video/avi", "video/webm", "video/ogg", "video/x-matroska", "video/x-flv", "video/3gpp", "video/x-ms-wmv", "application/octet-stream"]
+const ACCEPTED_TYPES = [
+    "image/jpeg", "image/png", "image/jpg", "image/webp", "image/avif", "image/gif", "image/bmp", "image/svg+xml",
+    "video/mp4", "video/quicktime", "video/mov", "video/avi", "video/webm", "video/ogg", "video/x-matroska", "video/x-flv", "video/3gpp", "video/x-ms-wmv", "application/octet-stream"
+]
 
 function getFileType(file: File) {
     if (file.type.startsWith("image/")) return "image"
@@ -62,11 +65,6 @@ export default function PortfolioView() {
     // Delete State
     const [deleteId, setDeleteId] = useState<number | null>(null)
     const [deleting, setDeleting] = useState(false)
-
-    // Edit Item State
-    const [editingItem, setEditingItem] = useState<PortfolioItem | null>(null)
-    const [editItemTitle, setEditItemTitle] = useState("")
-    const [editItemDescription, setEditItemDescription] = useState("")
     
     // View Item State
     const [viewingItem, setViewingItem] = useState<PortfolioItem | null>(null)
@@ -321,9 +319,11 @@ export default function PortfolioView() {
 
                 {portfolio?.items && portfolio.items.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {portfolio.items.map((item) => (
+                        {portfolio.items.map((item) => {
+                            const isImage = item.media_type === "image" || /\.(jpg|jpeg|png|gif|webp|avif|bmp|svg)$/i.test(item.file_url || "") || /\.(jpg|jpeg|png|gif|webp|avif|bmp|svg)$/i.test(item.title || "")
+                            return (
                             <div key={item.id} className="group relative aspect-square bg-muted rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all">
-                                {item.media_type === "image" ? (
+                                {isImage ? (
                                     // eslint-disable-next-line @next/next/no-img-element
                                     <img
                                         src={item.file_url}
@@ -341,7 +341,7 @@ export default function PortfolioView() {
                                     <Button
                                         variant="secondary"
                                         size="icon"
-                                        onClick={() => setViewingItem(item)}
+                                        onClick={() => setViewingItem({ ...item, media_type: isImage ? 'image' : 'video' })}
                                         title="Visualizar"
                                     >
                                         <Eye className="h-4 w-4" />
@@ -361,7 +361,8 @@ export default function PortfolioView() {
                                     </div>
                                 )}
                             </div>
-                        ))}
+                            )
+                        })}
                     </div>
                 ) : (
                     <div className="text-center py-16 border-2 border-dashed rounded-xl bg-muted/30">
@@ -559,45 +560,6 @@ export default function PortfolioView() {
                             )}
                         </div>
                     </div>
-                </DialogContent>
-            </Dialog>
-
-            {/* Edit Item Dialog */}
-            <Dialog open={!!editingItem} onOpenChange={(open) => !open && setEditingItem(null)}>
-                <DialogContent className="sm:max-w-125">
-                    <DialogHeader>
-                        <DialogTitle>Editar Item</DialogTitle>
-                        <DialogDescription>Edite os detalhes do item do seu portfólio.</DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                            <Label>Título</Label>
-                            <Input
-                                value={editItemTitle}
-                                onChange={(e) => setEditItemTitle(e.target.value)}
-                                placeholder="Título do item"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Descrição</Label>
-                            <Textarea
-                                value={editItemDescription}
-                                onChange={(e) => setEditItemDescription(e.target.value)}
-                                placeholder="Descrição do item"
-                                className="resize-none h-24"
-                            />
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setEditingItem(null)}>Cancelar</Button>
-                        <Button onClick={() => {
-                            // TODO: Implement update functionality
-                            setEditingItem(null)
-                            toast.success("Item atualizado (simulação)")
-                        }}>
-                            Salvar Alterações
-                        </Button>
-                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 

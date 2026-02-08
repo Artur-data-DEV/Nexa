@@ -5,6 +5,15 @@ import { HttpClient } from "../api/axios-adapter"
 export class ApiPortfolioRepository implements PortfolioRepository {
   constructor(private http: HttpClient) { }
 
+  private resolveUrl(path?: string | null): string | undefined {
+    if (!path) return undefined
+    const backendUrl =
+      process.env.NEXT_PUBLIC_BACKEND_URL ||
+      "https://www.nexacreators.com/api"
+    const rootUrl = backendUrl.replace(/\/api\/?$/, "")
+    return path.startsWith("/") ? `${rootUrl}${path}` : path || undefined
+  }
+
   async getPortfolio(): Promise<Portfolio> {
     const response = await this.http.get<{
       data: {
@@ -27,25 +36,17 @@ export class ApiPortfolioRepository implements PortfolioRepository {
     }>("/portfolio")
 
     const apiPortfolio = response.data.portfolio
-    const backendUrl =
-      process.env.NEXT_PUBLIC_BACKEND_URL ||
-      "https://www.nexacreators.com/api"
-    const rootUrl = backendUrl.replace(/\/api\/?$/, "")
-    const resolveUrl = (path?: string | null) => {
-      if (!path) return undefined
-      return path.startsWith("/") ? `${rootUrl}${path}` : path || undefined
-    }
 
     return {
       user_id: apiPortfolio.user_id,
       id: apiPortfolio.id,
       title: apiPortfolio.title || "",
       bio: apiPortfolio.bio || "",
-      profile_picture_url: resolveUrl(apiPortfolio.profile_picture),
+      profile_picture_url: this.resolveUrl(apiPortfolio.profile_picture),
       project_links: apiPortfolio.project_links || [],
       items: apiPortfolio.items.map((item) => ({
         id: item.id,
-        file_url: item.file_url,
+        file_url: this.resolveUrl(item.file_url) || item.file_url,
         media_type: item.media_type,
         title: item.title || undefined,
         order: item.order,
@@ -80,14 +81,6 @@ export class ApiPortfolioRepository implements PortfolioRepository {
     }
 
     const response = await this.http.post<{ data: UpdateProfileResponse }>("/portfolio/profile", data)
-    const backendUrl =
-      process.env.NEXT_PUBLIC_BACKEND_URL ||
-      "https://www.nexacreators.com/api"
-    const rootUrl = backendUrl.replace(/\/api\/?$/, "")
-    const resolveUrl = (path?: string | null) => {
-      if (!path) return undefined
-      return path.startsWith("/") ? `${rootUrl}${path}` : path || undefined
-    }
 
     // Handle new backend response format { portfolio: ..., user: ... }
     const updatedData = response.data.portfolio
@@ -100,11 +93,11 @@ export class ApiPortfolioRepository implements PortfolioRepository {
       id: apiPortfolio.id,
       title: apiPortfolio.title || "",
       bio: apiPortfolio.bio || "",
-      profile_picture_url: resolveUrl(apiPortfolio.profile_picture),
+      profile_picture_url: this.resolveUrl(apiPortfolio.profile_picture),
       project_links: apiPortfolio.project_links || [],
       items: apiPortfolio.items ? apiPortfolio.items.map((item) => ({
         id: item.id,
-        file_url: item.file_url,
+        file_url: this.resolveUrl(item.file_url) || item.file_url,
         media_type: item.media_type,
         title: item.title || undefined,
         order: item.order,
@@ -115,7 +108,13 @@ export class ApiPortfolioRepository implements PortfolioRepository {
 
   async uploadMedia(data: FormData): Promise<{ items: PortfolioItem[]; total_items: number }> {
     const response = await this.http.post<{ data: { items: PortfolioItem[]; total_items: number } }>("/portfolio/media", data)
-    return response.data
+    return {
+      total_items: response.data.total_items,
+      items: response.data.items.map((item) => ({
+        ...item,
+        file_url: this.resolveUrl(item.file_url) || item.file_url,
+      })),
+    }
   }
 
   async deleteItem(itemId: number): Promise<void> {

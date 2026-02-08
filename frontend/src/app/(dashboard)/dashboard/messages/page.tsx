@@ -927,7 +927,8 @@ export default function MessagesPage() {
                                             }
 
                                             const isFileMessage = msg.message_type === "file"
-                                            const isImageMessage = msg.message_type === "image"
+                                            const hasImageExtension = (name: string | null) => /\.(jpg|jpeg|png|gif|webp|avif|bmp|svg)$/i.test(name || "")
+                                            const isImageMessage = msg.message_type === "image" || (msg.message_type === "file" && hasImageExtension(msg.file_name))
 
                                             const isSystem = msg.message_type === "system"
 

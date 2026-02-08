@@ -49,7 +49,7 @@ export const applicationSchema = z.object({
   proposal: z.string().min(20, "A proposta deve ter pelo menos 20 caracteres"),
   budget: z.coerce.number().min(1, "O orçamento deve ser maior que zero"),
   delivery_days: z.coerce.number().min(1, "O prazo deve ser de pelo menos 1 dia"),
-  portfolio_links: z.array(z.url("URL inválida")).min(1, "Adicione pelo menos um link ao portfólio"),
+  portfolio_links: z.array(z.string().url("URL inválida")).min(1, "Adicione pelo menos um link ao portfólio para se candidatar."),
 })
 
 export type ApplicationFormValues = z.infer<typeof applicationSchema>
@@ -278,8 +278,11 @@ export function ApplyButton({ campaign, onSuccess }: ApplyButtonProps) {
 
                 {step === 2 && (
                     <div className="space-y-6">
+                        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-sm text-blue-700 dark:text-blue-300">
+                            <strong>Aviso:</strong> Você deve selecionar pelo menos um link do seu portfólio para enviar a proposta.
+                        </div>
                         <div>
-                            <h4 className="text-sm font-medium mb-3">Links do seu Portfólio (Recomendado)</h4>
+                            <h4 className="text-sm font-medium mb-3">Links do seu Portfólio (Obrigatório)</h4>
                             {userPortfolioLinks.length > 0 ? (
                                 <div className="flex flex-wrap gap-2">
                                     {userPortfolioLinks.map((link, i) => {
