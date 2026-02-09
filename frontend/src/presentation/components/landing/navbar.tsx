@@ -106,6 +106,13 @@ const MobileMenu = () => {
 export const Navbar = () => {
     const pathname = usePathname()
     const { isAuthenticated, user, logout } = useAuth()
+    const [avatarTry, setAvatarTry] = useState(0)
+    const avatarSrc = (() => {
+        const src = user?.avatar || ""
+        if (!src) return ""
+        const sep = src.includes("?") ? "&" : "?"
+        return `${src}${sep}r=${avatarTry}`
+    })()
     const handleScrollTo = (id: string) => {
         if (typeof window === "undefined") return
         const element = document.getElementById(id)
@@ -221,7 +228,12 @@ export const Navbar = () => {
                                         aria-label="Abrir perfil"
                                     >
                                         <Avatar className="h-7 w-7 ring-1 ring-white/10">
-                                            <AvatarImage src={user?.avatar || ""} alt={user?.name || "Perfil"} />
+                                            <AvatarImage
+                                                src={avatarSrc}
+                                                alt={user?.name || "Perfil"}
+                                                key={avatarSrc}
+                                                onError={() => setTimeout(() => setAvatarTry((t) => (t < 3 ? t + 1 : t)), 1000)}
+                                            />
                                             <AvatarFallback className="bg-primary/20 text-primary text-[10px]">{(user?.name || "U").slice(0, 1).toUpperCase()}</AvatarFallback>
                                         </Avatar>
                                         <span className="text-xs font-semibold">{user?.name || "Perfil"}</span>
@@ -254,7 +266,12 @@ export const Navbar = () => {
                                     aria-label="Abrir perfil"
                                 >
                                     <Avatar className="h-8 w-8 ring-1 ring-white/10">
-                                        <AvatarImage src={user?.avatar || ""} alt={user?.name || "Perfil"} />
+                                        <AvatarImage
+                                            src={avatarSrc}
+                                            alt={user?.name || "Perfil"}
+                                            key={avatarSrc}
+                                            onError={() => setTimeout(() => setAvatarTry((t) => (t < 3 ? t + 1 : t)), 1000)}
+                                        />
                                         <AvatarFallback className="bg-primary/20 text-primary text-[10px]">{(user?.name || "U").slice(0, 1).toUpperCase()}</AvatarFallback>
                                     </Avatar>
                                 </button>

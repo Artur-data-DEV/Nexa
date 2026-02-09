@@ -28,6 +28,13 @@ export default function ProfilePage() {
     const [isEditing, setIsEditing] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [brandProfile, setBrandProfile] = useState<BrandProfile | null>(null)
+    const [avatarTry, setAvatarTry] = useState(0)
+    const avatarSrc = (() => {
+        const src = user?.avatar || ""
+        if (!src) return ""
+        const sep = src.includes("?") ? "&" : "?"
+        return `${src}${sep}r=${avatarTry}`
+    })()
 
     useEffect(() => {
         if (user?.role === 'brand') {
@@ -60,6 +67,9 @@ export default function ProfilePage() {
                     ...newUser,
                     avatar: newUser.avatar ? `${newUser.avatar}${bust}` : newUser.avatar
                 })
+                if (typeof window !== "undefined") {
+                    window.location.reload()
+                }
             }
              
             // Also update user name if company name changed
@@ -129,6 +139,9 @@ export default function ProfilePage() {
                 avatar: newUser.avatar ? `${newUser.avatar}${bust}` : newUser.avatar
             }
             updateUser(nextUser)
+            if (typeof window !== "undefined" && updatedProfile.image instanceof Blob) {
+                window.location.reload()
+            }
             setIsEditing(false)
             toast.success("Perfil atualizado com sucesso!")
         } catch (error) {
@@ -175,7 +188,11 @@ export default function ProfilePage() {
                         <Card className="h-fit">
                             <CardHeader className="items-center text-center">
                                 <Avatar className="h-32 w-32">
-                                    <AvatarImage src={user.avatar || brandProfile.logo_url} key={user.avatar} />
+                                    <AvatarImage
+                                        src={user.avatar ? avatarSrc : (brandProfile.logo_url || "")}
+                                        key={user.avatar ? avatarSrc : brandProfile.logo_url}
+                                        onError={() => setTimeout(() => setAvatarTry((t) => (t < 3 ? t + 1 : t)), 1000)}
+                                    />
                                     <AvatarFallback className="text-4xl">{brandProfile.company_name?.substring(0, 2).toUpperCase() || user.name?.substring(0, 2).toUpperCase()}</AvatarFallback>
                                 </Avatar>
                                 <CardTitle className="mt-4">{brandProfile.company_name}</CardTitle>
@@ -260,7 +277,11 @@ export default function ProfilePage() {
                     <Card className="h-fit">
                         <CardHeader className="items-center text-center">
                             <Avatar className="h-32 w-32">
-                                <AvatarImage src={user.avatar} />
+                                    <AvatarImage
+                                        src={avatarSrc}
+                                        key={avatarSrc}
+                                        onError={() => setTimeout(() => setAvatarTry((t) => (t < 3 ? t + 1 : t)), 1000)}
+                                    />
                                 <AvatarFallback className="text-4xl">{user.name?.substring(0, 2).toUpperCase()}</AvatarFallback>
                             </Avatar>
                             <CardTitle className="mt-4">{user.name}</CardTitle>

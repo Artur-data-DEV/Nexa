@@ -44,7 +44,7 @@ const registerBrandUseCase = new RegisterBrandUseCase(authRepository)
 // Schema Validation
 const signUpSchema = z.object({
   companyName: z.string().min(3, "Nome da empresa deve ter no mínimo 3 caracteres"),
-  email: z.string().email("Email corporativo inválido"),
+  email: z.email("Email corporativo inválido"),
   whatsapp: z.string().min(10, "WhatsApp inválido"),
   password: z.string()
     .min(8, "Senha deve ter no mínimo 8 caracteres")

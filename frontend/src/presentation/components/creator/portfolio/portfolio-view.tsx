@@ -45,6 +45,13 @@ export default function PortfolioView() {
     const { user, updateUser } = useAuth()
     const [portfolio, setPortfolio] = useState<Portfolio | null>(null)
     const [loading, setLoading] = useState(true)
+    const [avatarTry, setAvatarTry] = useState(0)
+    const avatarSrc = (() => {
+        const src = user?.avatar || ""
+        if (!src) return ""
+        const sep = src.includes("?") ? "&" : "?"
+        return `${src}${sep}r=${avatarTry}`
+    })()
 
     // Edit Profile State
     const [isEditOpen, setIsEditOpen] = useState(false)
@@ -145,8 +152,15 @@ export default function PortfolioView() {
             const bust = typeof window !== "undefined" ? `?t=${Date.now()}` : ""
             const updatedAvatarUrl = updated.profile_picture_url ? `${updated.profile_picture_url}${bust}` : undefined
             
-            // Update local portfolio state
-            setPortfolio({ ...updated, profile_picture_url: updatedAvatarUrl || updated.profile_picture_url })
+            // Merge items to avoid clearing the grid when API doesn't return them on update
+            const merged: Portfolio = {
+                ...updated,
+                profile_picture_url: updatedAvatarUrl || updated.profile_picture_url,
+                items: (updated.items && updated.items.length > 0)
+                    ? updated.items
+                    : (portfolio?.items || [])
+            }
+            setPortfolio(merged)
             
             // Update auth context user state immediately
             if (user) {
@@ -156,6 +170,9 @@ export default function PortfolioView() {
                     bio: updated.bio || user.bio
                 }
                 updateUser(nextUser)
+                if (typeof window !== "undefined" && editAvatar) {
+                    window.location.reload()
+                }
             }
             
             setIsEditOpen(false)
@@ -269,7 +286,11 @@ export default function PortfolioView() {
             <Card className="bg-linear-to-r from-pink-50 to-purple-50 dark:from-pink-950/20 dark:to-purple-950/20 border-none shadow-sm">
                 <CardContent className="p-6 md:p-8 flex flex-col md:flex-row items-center md:items-start gap-6">
                     <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-white shadow-md">
-                        <AvatarImage src={user?.avatar} />
+                                <AvatarImage
+                                    src={avatarSrc}
+                                    key={avatarSrc}
+                                    onError={() => setTimeout(() => setAvatarTry((t) => (t < 3 ? t + 1 : t)), 1000)}
+                                />
                         <AvatarFallback className="text-2xl">{user?.name?.substring(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
 

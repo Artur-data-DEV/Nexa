@@ -39,6 +39,15 @@ export const EditBrandProfile: React.FC<EditBrandProfileProps> = ({ initialProfi
   const [imagePreview, setImagePreview] = useState<string | null>(initialProfile.logo_url || null)
   const [error, setError] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const requiredFieldLabels: Record<string, string> = {
+    company_name: "Nome da Empresa",
+    cnpj: "CNPJ",
+    niche: "Nicho",
+    description: "Sobre a Empresa",
+    address: "Endereço",
+    city: "Cidade",
+    state: "Estado",
+  }
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -79,9 +88,15 @@ export const EditBrandProfile: React.FC<EditBrandProfileProps> = ({ initialProfi
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!profile.company_name) return setError("Nome da empresa é obrigatório")
-    if (!profile.niche) return setError("Nicho é obrigatório")
-    if (!profile.state) return setError("Estado é obrigatório")
+    const missingFields = Object.keys(requiredFieldLabels).filter((field) => {
+      const value = (profile as unknown as Record<string, unknown>)[field]
+      if (typeof value === "string") return value.trim() === ""
+      return !value
+    })
+    if (missingFields.length > 0) {
+      setError(`Preencha os campos obrigatórios: ${missingFields.map((field) => requiredFieldLabels[field]).join(", ")}`)
+      return
+    }
 
     setError("")
     onSave(profile)
@@ -150,13 +165,14 @@ export const EditBrandProfile: React.FC<EditBrandProfileProps> = ({ initialProfi
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">CNPJ</label>
+            <label className="text-sm font-medium">CNPJ *</label>
             <Input
               name="cnpj"
               value={profile.cnpj || ""}
               onChange={handleChange}
               disabled={isLoading}
               placeholder="00.000.000/0000-00"
+              required
             />
           </div>
 
@@ -192,7 +208,7 @@ export const EditBrandProfile: React.FC<EditBrandProfileProps> = ({ initialProfi
           </div>
 
           <div className="col-span-1 sm:col-span-2 space-y-2">
-            <label className="text-sm font-medium">Sobre a Empresa</label>
+            <label className="text-sm font-medium">Sobre a Empresa *</label>
             <Textarea
               name="description"
               value={profile.description || ""}
@@ -200,27 +216,30 @@ export const EditBrandProfile: React.FC<EditBrandProfileProps> = ({ initialProfi
               disabled={isLoading}
               placeholder="Descreva sua empresa, missão e valores..."
               className="min-h-25"
+              required
             />
           </div>
 
           <div className="col-span-1 sm:col-span-2 space-y-2">
-            <label className="text-sm font-medium">Endereço</label>
+            <label className="text-sm font-medium">Endereço *</label>
             <Input
               name="address"
               value={profile.address || ""}
               onChange={handleChange}
               disabled={isLoading}
               placeholder="Rua, número, bairro"
+              required
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Cidade</label>
+            <label className="text-sm font-medium">Cidade *</label>
             <Input
               name="city"
               value={profile.city || ""}
               onChange={handleChange}
               disabled={isLoading}
+              required
             />
           </div>
 

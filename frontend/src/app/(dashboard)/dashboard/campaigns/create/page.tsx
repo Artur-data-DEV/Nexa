@@ -59,6 +59,7 @@ export default function CreateCampaignPage() {
   // Profile State
   const [checkingProfile, setCheckingProfile] = useState(true)
   const [profileComplete, setProfileComplete] = useState(true)
+  const [missingProfileFields, setMissingProfileFields] = useState<string[]>([])
 
   // Terms State
   const [showTerms, setShowTerms] = useState(false)
@@ -102,13 +103,24 @@ export default function CreateCampaignPage() {
           }
           try {
               const profile = await brandProfileRepository.getProfile()
-              // Check required fields: company_name, description (sobre), niche, address
-              // You can add more like 'cnpj' if available in the model
-              const requiredFields = ['company_name', 'description', 'niche', 'address']
-              // @ts-ignore
-              const isComplete = requiredFields.every(field => !!profile[field])
+              const requiredFieldLabels: Record<string, string> = {
+                  company_name: "Nome da Empresa",
+                  cnpj: "CNPJ",
+                  description: "Sobre a Empresa",
+                  niche: "Nicho",
+                  address: "Endereço",
+                  city: "Cidade",
+                  state: "Estado",
+              }
+              const missingFields = Object.keys(requiredFieldLabels).filter((field) => {
+                  const value = (profile as unknown as Record<string, unknown>)[field]
+                  if (typeof value === "string") return value.trim() === ""
+                  return !value
+              })
+              const isComplete = missingFields.length === 0
               
               setProfileComplete(isComplete)
+              setMissingProfileFields(missingFields.map((field) => requiredFieldLabels[field]))
           } catch (e) {
               console.error("Error checking profile", e)
           } finally {
@@ -378,9 +390,14 @@ export default function CreateCampaignPage() {
                 </div>
                 <h2 className="text-2xl font-bold mb-2">Perfil Incompleto</h2>
                 <p className="text-muted-foreground mb-6">
-                    Para criar uma campanha, você precisa preencher as informações da sua empresa (Sobre, Nicho, Endereço).
+                    Para criar uma campanha, você precisa preencher as informações da sua empresa.
                     Isso ajuda os criadores a conhecerem melhor sua marca.
                 </p>
+                {missingProfileFields.length > 0 && (
+                    <p className="text-sm text-destructive mb-6">
+                        Faltando: {missingProfileFields.join(", ")}
+                    </p>
+                )}
                 <Link href="/dashboard/profile">
                     <Button className="w-full">
                         Completar Perfil
