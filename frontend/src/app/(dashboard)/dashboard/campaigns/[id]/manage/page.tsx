@@ -8,7 +8,6 @@ import type { AxiosError } from "axios"
 
 import { ApiApplicationRepository } from "@/infrastructure/repositories/application-repository"
 import { ApiCampaignRepository } from "@/infrastructure/repositories/campaign-repository"
-import { ApiContractRepository } from "@/infrastructure/repositories/contract-repository"
 import { ApiTermsRepository } from "@/infrastructure/repositories/terms-repository"
 import { api } from "@/infrastructure/api/axios-adapter"
 import { Application } from "@/domain/entities/application"
@@ -25,7 +24,6 @@ import { TERMS_CONTENT } from "@/presentation/components/terms/terms-content"
 
 const applicationRepository = new ApiApplicationRepository(api)
 const campaignRepository = new ApiCampaignRepository(api)
-const contractRepository = new ApiContractRepository(api)
 const termsRepository = new ApiTermsRepository(api)
 
 interface ExtendedApplication extends Application {

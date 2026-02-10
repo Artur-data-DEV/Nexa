@@ -17,16 +17,19 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Textarea } from "@/presentation/components/ui/textarea"
 import { Badge } from "@/presentation/components/ui/badge"
 import { Label } from "@/presentation/components/ui/label"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/presentation/components/ui/tabs"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/presentation/components/ui/dropdown-menu"
 import { MessageCircle, Wifi, WifiOff, MoreVertical, Send, Check, CheckCheck, Briefcase, DollarSign, Calendar, Clock, X, Paperclip, FileText, Info, Star } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useChat } from "@/presentation/contexts/chat-provider"
 import { toast } from "sonner"
 import CampaignTimelineSheet from "@/presentation/components/campaigns/campaign-timeline-sheet"
 import ReviewModal from "@/presentation/components/campaigns/review-modal"
-import { ApiContractRepository } from "@/infrastructure/repositories/contract-repository"
 import { Contract } from "@/domain/entities/contract"
+import { ApiContractRepository } from "@/infrastructure/repositories/contract-repository"
 
 const chatRepository = new ApiChatRepository(api)
+const contractRepository = new ApiContractRepository(api)
 
 type OfferData = {
     id?: number
@@ -37,6 +40,11 @@ type OfferData = {
     budget?: number
     estimated_days?: number
     days_until_expiry?: number
+    contract_id?: number
+    contract_status?: string
+    workflow_status?: string
+    creator_amount?: number
+    can_be_completed?: boolean
 }
 
 type NewMessageEvent = {
@@ -61,8 +69,14 @@ type MessagesReadEvent = {
     messageIds: number[]
 }
 
+type ContractEvent = {
+    roomId?: string
+    contractData?: Record<string, unknown> | null
+    senderId?: number
+}
+
 const toOfferData = (data: Record<string, unknown>): OfferData => {
-    const rawId = data.id
+    const rawId = data.id ?? (data as { offer_id?: unknown }).offer_id
     const id =
         typeof rawId === "number" ? rawId : typeof rawId === "string" ? Number(rawId) : undefined
 
@@ -90,6 +104,18 @@ const toOfferData = (data: Record<string, unknown>): OfferData => {
                 ? Number(rawDaysUntilExpiry)
                 : undefined
 
+    const rawContractId = (data as { contract_id?: unknown }).contract_id
+    const contract_id =
+        typeof rawContractId === "number"
+            ? rawContractId
+            : typeof rawContractId === "string"
+                ? Number(rawContractId)
+                : undefined
+    const rawContractStatus = (data as { contract_status?: unknown }).contract_status
+    const rawWorkflowStatus = (data as { workflow_status?: unknown }).workflow_status
+    const rawCreatorAmount = (data as { creator_amount?: unknown }).creator_amount
+    const rawCanBeCompleted = (data as { can_be_completed?: unknown }).can_be_completed
+
     return {
         id: Number.isFinite(id) ? id : undefined,
         status: typeof data.status === "string" ? data.status : undefined,
@@ -99,6 +125,11 @@ const toOfferData = (data: Record<string, unknown>): OfferData => {
         budget: Number.isFinite(budget) ? budget : undefined,
         estimated_days: Number.isFinite(estimated_days) ? estimated_days : undefined,
         days_until_expiry: Number.isFinite(days_until_expiry) ? days_until_expiry : undefined,
+        contract_id: Number.isFinite(contract_id) ? contract_id : undefined,
+        contract_status: typeof rawContractStatus === "string" ? rawContractStatus : undefined,
+        workflow_status: typeof rawWorkflowStatus === "string" ? rawWorkflowStatus : undefined,
+        creator_amount: typeof rawCreatorAmount === "number" ? rawCreatorAmount : undefined,
+        can_be_completed: typeof rawCanBeCompleted === "boolean" ? rawCanBeCompleted : undefined,
     }
 }
 
@@ -145,14 +176,108 @@ export default function MessagesPage() {
         setPreviewUrl(null)
     }, [selectedFile])
 
-    const [isTimelineOpen, setIsTimelineOpen] = useState(false)
+    const [activeTab, setActiveTab] = useState<"messages" | "milestones">("messages")
     const [contractId, setContractId] = useState<number | null>(null)
     const [offerTitle, setOfferTitle] = useState("")
     const [offerDescription, setOfferDescription] = useState("")
     const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
     const [contractForReview, setContractForReview] = useState<Contract | null>(null)
+    const [isCampaignDetailsOpen, setIsCampaignDetailsOpen] = useState(false)
+    const [detailsTab, setDetailsTab] = useState<"milestones" | "contract">("milestones")
+    const [contractDetails, setContractDetails] = useState<Contract | null>(null)
+    const [isContractDetailsLoading, setIsContractDetailsLoading] = useState(false)
 
-    const contractRepository = new ApiContractRepository(api)
+    const formatDate = (value?: string | null) => {
+        if (!value) return "—"
+        const date = new Date(value)
+        if (Number.isNaN(date.getTime())) return "—"
+        return date.toLocaleDateString("pt-BR")
+    }
+
+    const formatCurrency = (value?: number | null) => {
+        if (value === null || value === undefined) return "—"
+        return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value)
+    }
+
+    const getContractStatusLabel = (status?: Contract["status"]) => {
+        switch (status) {
+            case "pending": return "Pendente"
+            case "active": return "Ativo"
+            case "completed": return "Concluído"
+            case "cancelled": return "Cancelado"
+            case "disputed": return "Em disputa"
+            default: return "Indefinido"
+        }
+    }
+
+    const getContractStatusColor = (status?: Contract["status"]) => {
+        switch (status) {
+            case "pending": return "bg-yellow-500/20 text-yellow-700"
+            case "active": return "bg-blue-500/20 text-blue-700"
+            case "completed": return "bg-green-500/20 text-green-700"
+            case "cancelled": return "bg-red-500/20 text-red-700"
+            case "disputed": return "bg-orange-500/20 text-orange-700"
+            default: return "bg-muted text-muted-foreground"
+        }
+    }
+
+    const offerMessages = messages
+        .filter(msg => msg.message_type === "offer" && msg.offer_data && typeof msg.offer_data === "object")
+        .map(msg => {
+            const offer = toOfferData(msg.offer_data as Record<string, unknown>)
+            return {
+                ...offer,
+                created_at: msg.created_at,
+            }
+        })
+        .filter(offer => typeof offer.id === "number" && !Number.isNaN(offer.id))
+
+    const pendingOffers = offerMessages.filter(offer => (offer.status || "pending") === "pending")
+
+    const fetchContractId = useCallback(async (roomId: string) => {
+        try {
+            const response = await api.get<{ data: Contract[] }>(`/contracts/chat-room/${roomId}`)
+            if (response.data && response.data.length > 0) {
+                setContractId(response.data[0].id)
+            } else {
+                setContractId(null)
+            }
+        } catch (err) {
+            console.error("Error fetching contract for room:", err)
+        }
+    }, [])
+
+    const loadContractDetails = useCallback(async () => {
+        if (!contractId) return
+        try {
+            setIsContractDetailsLoading(true)
+            const data = await contractRepository.getContract(contractId)
+            setContractDetails(data)
+        } catch (error) {
+            console.error("Error fetching contract details:", error)
+            toast.error("Erro ao carregar detalhes do contrato")
+        } finally {
+            setIsContractDetailsLoading(false)
+        }
+    }, [contractId])
+
+    useEffect(() => {
+        if (isCampaignDetailsOpen && contractId) {
+            loadContractDetails()
+        }
+    }, [isCampaignDetailsOpen, contractId, loadContractDetails])
+
+    const refreshRoomMessages = useCallback(async (roomId: string) => {
+        try {
+            const { messages: msgs } = await chatRepository.getMessages(roomId)
+            setMessages(msgs)
+            if (msgs.length > 0) {
+                updateChatList(roomId, msgs[msgs.length - 1])
+            }
+        } catch (error) {
+            console.error("Failed to refresh messages", error)
+        }
+    }, [setMessages, updateChatList])
 
     const scrollToBottom = useCallback(
         (force = false) => {
@@ -264,31 +389,34 @@ export default function MessagesPage() {
         sendGuideMessages(roomId).catch(console.error)
 
         // Fetch contract for this room
-        const fetchContract = async () => {
-            try {
-                const response = await api.get<{ data: any[] }>(`/contracts/chat-room/${roomId}`)
-                if (response.data && response.data.length > 0) {
-                    setContractId(response.data[0].id)
-                } else {
-                    setContractId(null)
-                }
-            } catch (err) {
-                console.error("Error fetching contract for room:", err)
-            }
-        }
-        fetchContract()
-    }, [searchParams, chats, selectedChat, selectChat, router, user?.id])
+        fetchContractId(roomId)
+    }, [searchParams, chats, selectedChat, selectChat, router, user?.id, fetchContractId, sendGuideMessages])
 
     const handleAcceptOffer = async (offerId: number) => {
         if (!offerId || offerId <= 0 || Number.isNaN(offerId)) {
             toast.error("ID da oferta inválido")
             return
         }
+        if (!selectedChat) return
 
         try {
             const response = await api.post<{ success: boolean; message?: string }>(`/offers/${offerId}/accept`)
             if (response.success) {
                 toast.success("Oferta aceita com sucesso! Contrato criado.")
+                setMessages(prev => prev.map(msg => {
+                    if (msg.message_type === "offer" && msg.offer_data) {
+                        const parsed = toOfferData(msg.offer_data as Record<string, unknown>)
+                        if (parsed.id === offerId) {
+                            const updatedData = { ...(msg.offer_data as Record<string, unknown>), status: "accepted" }
+                            return { ...msg, offer_data: updatedData }
+                        }
+                    }
+                    return msg
+                }))
+                await Promise.all([
+                    refreshRoomMessages(selectedChat.room_id),
+                    fetchContractId(selectedChat.room_id),
+                ])
             } else {
                 throw new Error(response.message || "Erro ao aceitar oferta")
             }
@@ -303,11 +431,23 @@ export default function MessagesPage() {
             toast.error("ID da oferta inválido")
             return
         }
+        if (!selectedChat) return
 
         try {
             const response = await api.post<{ success: boolean; message?: string }>(`/offers/${offerId}/reject`)
             if (response.success) {
                 toast.success("Oferta rejeitada com sucesso")
+                setMessages(prev => prev.map(msg => {
+                    if (msg.message_type === "offer" && msg.offer_data) {
+                        const parsed = toOfferData(msg.offer_data as Record<string, unknown>)
+                        if (parsed.id === offerId) {
+                            const updatedData = { ...(msg.offer_data as Record<string, unknown>), status: "rejected" }
+                            return { ...msg, offer_data: updatedData }
+                        }
+                    }
+                    return msg
+                }))
+                await refreshRoomMessages(selectedChat.room_id)
             } else {
                 throw new Error(response.message || "Erro ao rejeitar oferta")
             }
@@ -322,11 +462,23 @@ export default function MessagesPage() {
             toast.error("ID da oferta inválido")
             return
         }
+        if (!selectedChat) return
 
         try {
             const response = await api.delete<{ success: boolean; message?: string }>(`/offers/${offerId}`)
             if (response.success) {
                 toast.success("Oferta cancelada com sucesso")
+                setMessages(prev => prev.map(msg => {
+                    if (msg.message_type === "offer" && msg.offer_data) {
+                        const parsed = toOfferData(msg.offer_data as Record<string, unknown>)
+                        if (parsed.id === offerId) {
+                            const updatedData = { ...(msg.offer_data as Record<string, unknown>), status: "cancelled" }
+                            return { ...msg, offer_data: updatedData }
+                        }
+                    }
+                    return msg
+                }))
+                await refreshRoomMessages(selectedChat.room_id)
             } else {
                 throw new Error(response.message || "Erro ao cancelar oferta")
             }
@@ -390,6 +542,7 @@ export default function MessagesPage() {
                 setOfferDescription("")
                 setOfferBudget("")
                 setOfferEstimatedDays("")
+                await refreshRoomMessages(selectedChat.room_id)
             } else {
                 throw new Error(response.message || "Erro ao enviar oferta")
             }
@@ -406,6 +559,8 @@ export default function MessagesPage() {
                         creator_id: selectedChat.other_user.id,
                         creator_name: selectedChat.other_user.name,
                         chat_room_id: selectedChat.room_id,
+                        title: offerTitle,
+                        description: offerDescription,
                         budget: budgetValue,
                         estimated_days: daysValue,
                     }
@@ -504,7 +659,25 @@ export default function MessagesPage() {
             if (incoming.sender_id !== user?.id) {
                 chatRepository.markAsRead(selectedChat.room_id, [incoming.id])
             }
+            const offerObj = e.offerData && typeof e.offerData === "object" ? toOfferData(e.offerData as Record<string, unknown>) : {}
+            if (offerObj.contract_id && Number.isFinite(offerObj.contract_id)) {
+                setContractId(offerObj.contract_id!)
+            }
         })
+
+        const handleContractEvent = (e: ContractEvent) => {
+            if (!e.roomId || e.roomId !== selectedChat.room_id) return
+            const rawId = e.contractData?.id
+            const id = typeof rawId === "number" ? rawId : typeof rawId === "string" ? Number(rawId) : undefined
+            if (Number.isFinite(id)) {
+                setContractId(id!)
+            }
+            refreshRoomMessages(selectedChat.room_id)
+        }
+
+        channel.listen('.contract_activated', handleContractEvent)
+        channel.listen('.contract_completed', handleContractEvent)
+        channel.listen('.contract_terminated', handleContractEvent)
 
         // Handle typing events
         channel.listen('.user_typing', (e: {
@@ -547,11 +720,14 @@ export default function MessagesPage() {
 
         return () => {
             channel.stopListening('.new_message')
+            channel.stopListening('.contract_activated')
+            channel.stopListening('.contract_completed')
+            channel.stopListening('.contract_terminated')
             channel.stopListening('.user_typing')
             channel.stopListening('.messages_read')
             statusChannel.stopListening('.user_status_updated')
         }
-    }, [selectedChat, echo, scrollToBottom, user?.id, setChats, setMessages, updateChatList])
+    }, [selectedChat, echo, scrollToBottom, user?.id, setChats, setMessages, updateChatList, refreshRoomMessages])
 
     const renderChatList = () => (
         <div className="flex flex-col gap-1 p-2" data-testid="chat-room-list">
@@ -710,17 +886,6 @@ export default function MessagesPage() {
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
-                                {contractId && (
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setIsTimelineOpen(true)}
-                                        className="hidden sm:flex"
-                                    >
-                                        <Clock className="h-4 w-4 mr-2" />
-                                        Timeline
-                                    </Button>
-                                )}
                                 {user?.role === "brand" && (
                                     <Button
                                         size="sm"
@@ -732,200 +897,230 @@ export default function MessagesPage() {
                                         Nova oferta
                                     </Button>
                                 )}
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => selectChat(selectedChat)}
-                                >
-                                    <MoreVertical className="h-5 w-5" />
-                                </Button>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon">
+                                            <MoreVertical className="h-5 w-5" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem
+                                            onSelect={() => {
+                                                setDetailsTab("milestones")
+                                                setIsCampaignDetailsOpen(true)
+                                            }}
+                                        >
+                                            Ver detalhes da campanha
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </div>
                         </div>
 
-                        <div
-                            ref={messagesContainerRef}
-                            className="flex-1 overflow-y-auto px-4 py-0 mb-1"
-                            id="messages-container"
-                            onScroll={handleScroll}
-                        >
-                            <div className="flex flex-col gap-1 h-full">
-                                {isChatLoading && messages.length === 0 ? (
-                                    <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-                                        Carregando mensagens...
-                                    </div>
-                                ) : (
-                                    <>
-                                        {messages.map((msg, index) => {
-                                            const isMe = msg.sender_id === user?.id
-                                            const isOffer =
-                                                msg.message_type === "offer" &&
-                                                msg.offer_data
+                        <div className="flex flex-1 flex-col overflow-hidden rounded-lg border bg-background">
+                            <Tabs
+                                value={activeTab}
+                                onValueChange={(value) => setActiveTab(value as "messages" | "milestones")}
+                                className="flex flex-1 flex-col overflow-hidden"
+                            >
+                                <div className="px-4 py-2 border-b bg-muted/40">
+                                    <TabsList className="grid w-full grid-cols-2">
+                                        <TabsTrigger value="messages" className="flex items-center gap-2">
+                                            <MessageCircle className="h-4 w-4" />
+                                            Mensagens
+                                        </TabsTrigger>
+                                        <TabsTrigger value="milestones" className="flex items-center gap-2">
+                                            <Clock className="h-4 w-4" />
+                                            Milestones
+                                        </TabsTrigger>
+                                    </TabsList>
+                                </div>
 
-                                            if (isOffer) {
-                                                const offer =
-                                                    msg.offer_data && typeof msg.offer_data === "object"
-                                                        ? toOfferData(msg.offer_data)
-                                                        : {}
-                                                const status = offer.status || "pending"
-                                                const isCreatorUser = user?.role === "creator"
-                                                const canAccept =
-                                                    status === "pending" &&
-                                                    isCreatorUser &&
-                                                    offer.id &&
-                                                    !Number.isNaN(offer.id)
-                                                const canReject =
-                                                    status === "pending" &&
-                                                    isCreatorUser &&
-                                                    offer.id &&
-                                                    !Number.isNaN(offer.id)
-                                                const canCancel =
-                                                    status === "pending" &&
-                                                    user?.role === "brand" &&
-                                                    offer.id &&
-                                                    !Number.isNaN(offer.id)
+                                <TabsContent value="messages" className="mt-0 flex flex-1 flex-col overflow-hidden">
+                                <div
+                                    ref={messagesContainerRef}
+                                    className="flex-1 overflow-y-auto px-4 py-0 mb-1"
+                                    id="messages-container"
+                                    onScroll={handleScroll}
+                                >
+                                    <div className="flex flex-col gap-1 h-full">
+                                        {isChatLoading && messages.length === 0 ? (
+                                            <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
+                                                Carregando mensagens...
+                                            </div>
+                                        ) : (
+                                            <>
+                                                {messages.map((msg, index) => {
+                                                    const isMe = msg.sender_id === user?.id
+                                                    const isOffer =
+                                                        msg.message_type === "offer" &&
+                                                        msg.offer_data
 
-                                                return (
-                                                    <div
-                                                        key={index}
-                                                        className={cn(
-                                                            "flex w-max max-w-[75%] flex-col gap-1",
-                                                            isMe ? "ml-auto items-end" : "items-start"
-                                                        )}
-                                                    >
-                                                        <div
-                                                            className={cn(
-                                                                "w-full rounded-lg border px-3 py-2 text-sm",
-                                                                isMe
-                                                                    ? "bg-linear-to-r from-blue-50 to-indigo-50"
-                                                                    : "bg-muted"
-                                                            )}
-                                                        >
-                                                            <div className="flex items-center justify-between mb-1">
-                                                                <div className="flex items-center gap-2">
-                                                                    <Briefcase className="h-4 w-4 text-primary" />
-                                                                    <span className="font-semibold text-xs">
-                                                                        {offer.title || "Oferta"}
-                                                                    </span>
-                                                                </div>
-                                                                <Badge
-                                                                    variant="outline"
-                                                                    className="text-[10px] capitalize"
-                                                                >
-                                                                    {status}
-                                                                </Badge>
-                                                            </div>
-                                                            {offer.description && (
-                                                                <p className="text-xs text-muted-foreground mb-2">
-                                                                    {offer.description}
-                                                                </p>
-                                                            )}
-                                                            <div className="flex flex-wrap items-center gap-3 text-[11px] mb-2">
-                                                                {(offer.formatted_budget ||
-                                                                    offer.budget) && (
-                                                                        <div className="flex items-center gap-1">
-                                                                            <DollarSign className="h-3 w-3 text-green-600" />
-                                                                            <span>
-                                                                                {offer.formatted_budget ||
-                                                                                    offer.budget}
-                                                                            </span>
-                                                                        </div>
-                                                                    )}
-                                                                {typeof offer.estimated_days ===
-                                                                    "number" && (
-                                                                        <div className="flex items-center gap-1">
-                                                                            <Calendar className="h-3 w-3 text-purple-600" />
-                                                                            <span>
-                                                                                {offer.estimated_days}{" "}
-                                                                                {offer.estimated_days === 1
-                                                                                    ? "dia"
-                                                                                    : "dias"}
-                                                                            </span>
-                                                                        </div>
-                                                                    )}
-                                                                {typeof offer.days_until_expiry ===
-                                                                    "number" && (
-                                                                        <div className="flex items-center gap-1">
-                                                                            <Clock className="h-3 w-3 text-amber-600" />
-                                                                            <span>
-                                                                                expira em{" "}
-                                                                                {offer.days_until_expiry}{" "}
-                                                                                {offer.days_until_expiry === 1
-                                                                                    ? "dia"
-                                                                                    : "dias"}
-                                                                            </span>
-                                                                        </div>
-                                                                    )}
-                                                            </div>
-                                                            {(canAccept ||
-                                                                canReject ||
-                                                                canCancel) && (
-                                                                    <div className="flex gap-2 justify-end">
-                                                                        {canAccept && (
-                                                                            <Button
-                                                                                size="sm"
-                                                                                onClick={() => {
-                                                                                    if (typeof offer.id === "number") {
-                                                                                        handleAcceptOffer(offer.id)
-                                                                                    }
-                                                                                }}
-                                                                            >
-                                                                                Aceitar
-                                                                            </Button>
-                                                                        )}
-                                                                        {canReject && (
-                                                                            <Button
-                                                                                size="sm"
-                                                                                variant="outline"
-                                                                                onClick={() => {
-                                                                                    if (typeof offer.id === "number") {
-                                                                                        handleRejectOffer(offer.id)
-                                                                                    }
-                                                                                }}
-                                                                            >
-                                                                                Rejeitar
-                                                                            </Button>
-                                                                        )}
-                                                                        {canCancel && (
-                                                                            <Button
-                                                                                size="sm"
-                                                                                variant="outline"
-                                                                                onClick={() => {
-                                                                                    if (typeof offer.id === "number") {
-                                                                                        handleCancelOffer(offer.id)
-                                                                                    }
-                                                                                }}
-                                                                            >
-                                                                                Cancelar
-                                                                            </Button>
-                                                                        )}
-                                                                    </div>
+                                                    if (isOffer) {
+                                                        const offer =
+                                                            msg.offer_data && typeof msg.offer_data === "object"
+                                                                ? toOfferData(msg.offer_data)
+                                                                : {}
+                                                        const status = offer.status || "pending"
+                                                        const isCreatorUser = user?.role === "creator"
+                                                        const canAccept =
+                                                            status === "pending" &&
+                                                            isCreatorUser &&
+                                                            offer.id &&
+                                                            !Number.isNaN(offer.id)
+                                                        const canReject =
+                                                            status === "pending" &&
+                                                            isCreatorUser &&
+                                                            offer.id &&
+                                                            !Number.isNaN(offer.id)
+                                                        const canCancel =
+                                                            status === "pending" &&
+                                                            user?.role === "brand" &&
+                                                            offer.id &&
+                                                            !Number.isNaN(offer.id)
+
+                                                        return (
+                                                            <div
+                                                                key={index}
+                                                                className={cn(
+                                                                    "flex w-max max-w-[75%] flex-col gap-1",
+                                                                    isMe ? "ml-auto items-end" : "items-start"
                                                                 )}
-                                                        </div>
-                                                        <span
-                                                            className={cn(
-                                                                "text-[10px] flex items-center gap-1",
-                                                                isMe
-                                                                    ? "text-primary-foreground/70"
-                                                                    : "text-muted-foreground"
-                                                            )}
-                                                        >
-                                                            {new Date(
-                                                                msg.created_at
-                                                            ).toLocaleTimeString([], {
-                                                                hour: "2-digit",
-                                                                minute: "2-digit",
-                                                            })}
-                                                            {isMe && (
-                                                                msg.is_read ? (
-                                                                    <CheckCheck className="h-3 w-3" />
-                                                                ) : (
-                                                                    <Check className="h-3 w-3" />
-                                                                )
-                                                            )}
-                                                        </span>
-                                                    </div>
-                                                )
-                                            }
+                                                            >
+                                                                <div
+                                                                    className={cn(
+                                                                        "w-full rounded-lg border px-3 py-2 text-sm",
+                                                                        isMe
+                                                                            ? "bg-linear-to-r from-blue-50 to-indigo-50"
+                                                                            : "bg-muted"
+                                                                    )}
+                                                                >
+                                                                    <div className="flex items-center justify-between mb-1">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <Briefcase className="h-4 w-4 text-primary" />
+                                                                            <span className="font-semibold text-xs">
+                                                                                {offer.title || "Oferta"}
+                                                                            </span>
+                                                                        </div>
+                                                                        <Badge
+                                                                            variant="outline"
+                                                                            className="text-[10px] capitalize"
+                                                                        >
+                                                                            {status}
+                                                                        </Badge>
+                                                                    </div>
+                                                                    {offer.description && (
+                                                                        <p className="text-xs text-muted-foreground mb-2">
+                                                                            {offer.description}
+                                                                        </p>
+                                                                    )}
+                                                                    <div className="flex flex-wrap items-center gap-3 text-[11px] mb-2">
+                                                                        {(offer.formatted_budget ||
+                                                                            offer.budget) && (
+                                                                                <div className="flex items-center gap-1">
+                                                                                    <DollarSign className="h-3 w-3 text-green-600" />
+                                                                                    <span>
+                                                                                        {offer.formatted_budget ||
+                                                                                            offer.budget}
+                                                                                    </span>
+                                                                                </div>
+                                                                            )}
+                                                                        {typeof offer.estimated_days ===
+                                                                            "number" && (
+                                                                                <div className="flex items-center gap-1">
+                                                                                    <Calendar className="h-3 w-3 text-purple-600" />
+                                                                                    <span>
+                                                                                        {offer.estimated_days}{" "}
+                                                                                        {offer.estimated_days === 1
+                                                                                            ? "dia"
+                                                                                            : "dias"}
+                                                                                    </span>
+                                                                                </div>
+                                                                            )}
+                                                                        {typeof offer.days_until_expiry ===
+                                                                            "number" && (
+                                                                                <div className="flex items-center gap-1">
+                                                                                    <Clock className="h-3 w-3 text-amber-600" />
+                                                                                    <span>
+                                                                                        expira em{" "}
+                                                                                        {offer.days_until_expiry}{" "}
+                                                                                        {offer.days_until_expiry === 1
+                                                                                            ? "dia"
+                                                                                            : "dias"}
+                                                                                    </span>
+                                                                                </div>
+                                                                            )}
+                                                                    </div>
+                                                                    {(canAccept ||
+                                                                        canReject ||
+                                                                        canCancel) && (
+                                                                            <div className="flex gap-2 justify-end">
+                                                                                {canAccept && (
+                                                                                    <Button
+                                                                                        size="sm"
+                                                                                        onClick={() => {
+                                                                                            if (typeof offer.id === "number") {
+                                                                                                handleAcceptOffer(offer.id)
+                                                                                            }
+                                                                                        }}
+                                                                                    >
+                                                                                        Aceitar
+                                                                                    </Button>
+                                                                                )}
+                                                                                {canReject && (
+                                                                                    <Button
+                                                                                        size="sm"
+                                                                                        variant="outline"
+                                                                                        onClick={() => {
+                                                                                            if (typeof offer.id === "number") {
+                                                                                                handleRejectOffer(offer.id)
+                                                                                            }
+                                                                                        }}
+                                                                                    >
+                                                                                        Rejeitar
+                                                                                    </Button>
+                                                                                )}
+                                                                                {canCancel && (
+                                                                                    <Button
+                                                                                        size="sm"
+                                                                                        variant="outline"
+                                                                                        onClick={() => {
+                                                                                            if (typeof offer.id === "number") {
+                                                                                                handleCancelOffer(offer.id)
+                                                                                            }
+                                                                                        }}
+                                                                                    >
+                                                                                        Cancelar
+                                                                                    </Button>
+                                                                                )}
+                                                                            </div>
+                                                                        )}
+                                                                </div>
+                                                                <span
+                                                                    className={cn(
+                                                                        "text-[10px] flex items-center gap-1",
+                                                                        isMe
+                                                                            ? "text-primary-foreground/70"
+                                                                            : "text-muted-foreground"
+                                                                    )}
+                                                                >
+                                                                    {new Date(
+                                                                        msg.created_at
+                                                                    ).toLocaleTimeString([], {
+                                                                        hour: "2-digit",
+                                                                        minute: "2-digit",
+                                                                    })}
+                                                                    {isMe && (
+                                                                        msg.is_read ? (
+                                                                            <CheckCheck className="h-3 w-3" />
+                                                                        ) : (
+                                                                            <Check className="h-3 w-3" />
+                                                                        )
+                                                                    )}
+                                                                </span>
+                                                            </div>
+                                                        )
+                                                    }
 
                                             const isFileMessage = msg.message_type === "file"
                                             const hasImageExtension = (name: string | null | undefined) => /\.(jpg|jpeg|png|gif|webp|avif|bmp|svg)$/i.test(name || "")
@@ -1071,66 +1266,102 @@ export default function MessagesPage() {
                             </div>
                         </div>
 
-                        <div className="p-4 border-t flex gap-2 flex-none bg-background z-10">
-                            <div className="flex items-center gap-2 flex-1">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="icon"
-                                    onClick={() => fileInputRef.current?.click()}
-                                >
-                                    <Paperclip className="h-4 w-4" />
-                                </Button>
-                                <Input
-                                    placeholder="Digite sua mensagem..."
-                                    value={newMessage}
-                                    data-testid="message-input"
-                                    onChange={(e) => {
-                                        setNewMessage(e.target.value)
-                                        handleTyping()
-                                    }}
-                                    onFocus={() => {
-                                        setTimeout(() => scrollToBottom(true), 100)
-                                    }}
-                                    onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                                />
-                            </div>
-                            <Button size="icon" onClick={handleSendMessage} data-testid="send-message-button">
-                                <Send className="h-4 w-4" />
-                            </Button>
-                        </div>
-                        {selectedFile && (
-                            <div className="px-4 pb-4 flex items-center justify-between text-xs text-muted-foreground gap-2">
-                                <div className="inline-flex items-center gap-2">
-                                    {previewUrl ? (
-                                        // eslint-disable-next-line @next/next/no-img-element
-                                        <img 
-                                            src={previewUrl} 
-                                            alt="Preview" 
-                                            className="h-12 w-12 object-cover rounded-md border"
+                                <div className="p-4 border-t flex gap-2 flex-none bg-background z-10">
+                                    <div className="flex items-center gap-2 flex-1">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="icon"
+                                            onClick={() => fileInputRef.current?.click()}
+                                        >
+                                            <Paperclip className="h-4 w-4" />
+                                        </Button>
+                                        <Input
+                                            placeholder="Digite sua mensagem..."
+                                            value={newMessage}
+                                            data-testid="message-input"
+                                            onChange={(e) => {
+                                                setNewMessage(e.target.value)
+                                                handleTyping()
+                                            }}
+                                            onFocus={() => {
+                                                setTimeout(() => scrollToBottom(true), 100)
+                                            }}
+                                            onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+                                        />
+                                    </div>
+                                    <Button size="icon" onClick={handleSendMessage} data-testid="send-message-button">
+                                        <Send className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                {selectedFile && (
+                                    <div className="px-4 pb-4 flex items-center justify-between text-xs text-muted-foreground gap-2">
+                                        <div className="inline-flex items-center gap-2">
+                                            {previewUrl ? (
+                                                // eslint-disable-next-line @next/next/no-img-element
+                                                <img 
+                                                    src={previewUrl} 
+                                                    alt="Preview" 
+                                                    className="h-12 w-12 object-cover rounded-md border"
+                                                />
+                                            ) : (
+                                                <FileText className="h-8 w-8 text-muted-foreground/50" />
+                                            )}
+                                            <div className="flex flex-col">
+                                                <span className="truncate inline-block max-w-50 font-medium text-foreground">
+                                                    {selectedFile.name}
+                                                </span>
+                                                <span className="text-[10px]">
+                                                    {(selectedFile.size / 1024).toFixed(1)} KB
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                            onClick={() => setSelectedFile(null)}
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                )}
+                                </TabsContent>
+
+                                <TabsContent value="milestones" className="mt-0 flex flex-1 flex-col overflow-hidden p-4">
+                                    {contractId ? (
+                                        <CampaignTimelineSheet
+                                            contractId={contractId}
+                                            isOpen={activeTab === "milestones"}
+                                            onClose={() => null}
+                                            variant="inline"
                                         />
                                     ) : (
-                                        <FileText className="h-8 w-8 text-muted-foreground/50" />
+                                        <div className="flex flex-1 flex-col items-center justify-center text-sm text-muted-foreground gap-3 border rounded-lg p-6 text-center">
+                                            <Clock className="h-6 w-6 text-muted-foreground/60" />
+                                            <span>Sem contrato vinculado a esta conversa</span>
+                                            {user?.role === "brand" ? (
+                                                <Button
+                                                    size="sm"
+                                                    onClick={() => setIsOfferDialogOpen(true)}
+                                                    className="bg-primary text-primary-foreground hover:bg-primary/90"
+                                                >
+                                                    Criar proposta
+                                                </Button>
+                                            ) : (
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => setActiveTab("messages")}
+                                                >
+                                                    Ver ofertas no chat
+                                                </Button>
+                                            )}
+                                        </div>
                                     )}
-                                    <div className="flex flex-col">
-                                        <span className="truncate inline-block max-w-50 font-medium text-foreground">
-                                            {selectedFile.name}
-                                        </span>
-                                        <span className="text-[10px]">
-                                            {(selectedFile.size / 1024).toFixed(1)} KB
-                                        </span>
-                                    </div>
-                                </div>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                    onClick={() => setSelectedFile(null)}
-                                >
-                                    <X className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        )}
+                                </TabsContent>
+                            </Tabs>
+                        </div>
                         <input
                             ref={fileInputRef}
                             type="file"
@@ -1216,13 +1447,210 @@ export default function MessagesPage() {
                             </DialogContent>
                         </Dialog>
 
-                        {contractId && (
-                            <CampaignTimelineSheet
-                                contractId={contractId}
-                                isOpen={isTimelineOpen}
-                                onClose={() => setIsTimelineOpen(false)}
-                            />
-                        )}
+                        <Dialog open={isCampaignDetailsOpen} onOpenChange={setIsCampaignDetailsOpen}>
+                            <DialogContent className="sm:max-w-3xl">
+                                <DialogHeader>
+                                    <DialogTitle>Detalhes da campanha</DialogTitle>
+                                    <DialogDescription>
+                                        Acompanhe milestones e informações do contrato.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <Tabs
+                                    value={detailsTab}
+                                    onValueChange={(value) => setDetailsTab(value as "milestones" | "contract")}
+                                    className="mt-4"
+                                >
+                                    <TabsList className="grid w-full grid-cols-2">
+                                        <TabsTrigger value="milestones">Milestones</TabsTrigger>
+                                        <TabsTrigger value="contract">Contrato</TabsTrigger>
+                                    </TabsList>
+                                    <TabsContent value="milestones" className="mt-4">
+                                        {contractId ? (
+                                            <CampaignTimelineSheet
+                                                contractId={contractId}
+                                                isOpen={isCampaignDetailsOpen && detailsTab === "milestones"}
+                                                onClose={() => null}
+                                                variant="inline"
+                                            />
+                                        ) : (
+                                            <div className="flex flex-1 flex-col items-center justify-center text-sm text-muted-foreground gap-3 border rounded-lg p-6 text-center">
+                                                <Clock className="h-6 w-6 text-muted-foreground/60" />
+                                                <span>Sem contrato vinculado a esta conversa</span>
+                                                {user?.role === "brand" ? (
+                                                    <Button
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            setIsCampaignDetailsOpen(false)
+                                                            setIsOfferDialogOpen(true)
+                                                        }}
+                                                        className="bg-primary text-primary-foreground hover:bg-primary/90"
+                                                    >
+                                                        Criar proposta
+                                                    </Button>
+                                                ) : (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() => setActiveTab("messages")}
+                                                    >
+                                                        Ver ofertas no chat
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        )}
+                                    </TabsContent>
+                                    <TabsContent value="contract" className="mt-4">
+                                        {isContractDetailsLoading ? (
+                                            <div className="flex items-center justify-center py-10">
+                                                <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-primary" />
+                                            </div>
+                                        ) : contractDetails ? (
+                                            <div className="space-y-4">
+                                                <div className="rounded-lg border p-4 space-y-3">
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <div className="font-semibold">{contractDetails.title}</div>
+                                                        <Badge className={getContractStatusColor(contractDetails.status)}>
+                                                            {getContractStatusLabel(contractDetails.status)}
+                                                        </Badge>
+                                                    </div>
+                                                    <div className="text-sm text-muted-foreground">
+                                                        {contractDetails.description || "Sem descrição"}
+                                                    </div>
+                                                </div>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div className="rounded-lg border p-4 space-y-2 text-sm">
+                                                        <div className="text-xs text-muted-foreground">Campanha</div>
+                                                        <div className="font-medium">{contractDetails.campaign?.title || "—"}</div>
+                                                        <div className="text-xs text-muted-foreground mt-3">Parceiro</div>
+                                                        <div className="font-medium">{contractDetails.other_user?.name || "—"}</div>
+                                                    </div>
+                                                    <div className="rounded-lg border p-4 space-y-2 text-sm">
+                                                        <div className="text-xs text-muted-foreground">Orçamento</div>
+                                                        <div className="font-medium">
+                                                            {contractDetails.formatted_budget || formatCurrency(contractDetails.budget)}
+                                                        </div>
+                                                        <div className="text-xs text-muted-foreground mt-3">Workflow</div>
+                                                        <div className="font-medium">{contractDetails.workflow_status || "—"}</div>
+                                                    </div>
+                                                </div>
+                                                <div className="rounded-lg border p-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                                    <div>
+                                                        <div className="text-xs text-muted-foreground">Início</div>
+                                                        <div className="font-medium">{formatDate(contractDetails.started_at || contractDetails.start_date)}</div>
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-xs text-muted-foreground">Conclusão prevista</div>
+                                                        <div className="font-medium">{formatDate(contractDetails.expected_completion_at || contractDetails.end_date)}</div>
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-xs text-muted-foreground">Concluído em</div>
+                                                        <div className="font-medium">{formatDate(contractDetails.completed_at)}</div>
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-xs text-muted-foreground">Dias estimados</div>
+                                                        <div className="font-medium">{contractDetails.estimated_days ?? "—"}</div>
+                                                    </div>
+                                                </div>
+                                                {contractDetails.requirements && (
+                                                    <div className="rounded-lg border p-4 text-sm">
+                                                        <div className="text-xs text-muted-foreground mb-2">Requisitos</div>
+                                                        <div className="whitespace-pre-wrap">{contractDetails.requirements}</div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-4">
+                                                <div className="flex items-center justify-between gap-3 rounded-lg border p-4 text-sm text-muted-foreground">
+                                                    <span>Sem contrato gerado para esta conversa</span>
+                                                    {user?.role === "brand" ? (
+                                                        <Button
+                                                            size="sm"
+                                                            onClick={() => {
+                                                                setIsCampaignDetailsOpen(false)
+                                                                setIsOfferDialogOpen(true)
+                                                            }}
+                                                            className="bg-primary text-primary-foreground hover:bg-primary/90"
+                                                        >
+                                                            Criar proposta
+                                                        </Button>
+                                                    ) : (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() => setActiveTab("messages")}
+                                                        >
+                                                            Ver ofertas no chat
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                                {pendingOffers.length > 0 && (
+                                                    <div className="rounded-lg border p-4 space-y-3">
+                                                        <div className="text-sm font-medium">Ofertas pendentes</div>
+                                                        {pendingOffers.map(offer => (
+                                                            <div key={offer.id} className="rounded-md border p-3 space-y-2 text-sm">
+                                                                <div className="flex items-center justify-between gap-2">
+                                                                    <div className="font-medium">{offer.title || "Oferta"}</div>
+                                                                    <Badge variant="outline" className="text-[10px] capitalize">
+                                                                        {offer.status || "pending"}
+                                                                    </Badge>
+                                                                </div>
+                                                                {offer.description && (
+                                                                    <div className="text-xs text-muted-foreground">{offer.description}</div>
+                                                                )}
+                                                                <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                                                                    {(offer.formatted_budget || offer.budget) && (
+                                                                        <div className="flex items-center gap-1">
+                                                                            <DollarSign className="h-3 w-3 text-green-600" />
+                                                                            <span>{offer.formatted_budget || offer.budget}</span>
+                                                                        </div>
+                                                                    )}
+                                                                    {typeof offer.estimated_days === "number" && (
+                                                                        <div className="flex items-center gap-1">
+                                                                            <Calendar className="h-3 w-3 text-purple-600" />
+                                                                            <span>
+                                                                                {offer.estimated_days} {offer.estimated_days === 1 ? "dia" : "dias"}
+                                                                            </span>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                                <div className="flex gap-2 justify-end">
+                                                                    {user?.role === "creator" && (
+                                                                        <>
+                                                                            <Button
+                                                                                size="sm"
+                                                                                onClick={() => handleAcceptOffer(offer.id as number)}
+                                                                            >
+                                                                                Aceitar
+                                                                            </Button>
+                                                                            <Button
+                                                                                size="sm"
+                                                                                variant="outline"
+                                                                                onClick={() => handleRejectOffer(offer.id as number)}
+                                                                            >
+                                                                                Rejeitar
+                                                                            </Button>
+                                                                        </>
+                                                                    )}
+                                                                    {user?.role === "brand" && (
+                                                                        <Button
+                                                                            size="sm"
+                                                                            variant="outline"
+                                                                            onClick={() => handleCancelOffer(offer.id as number)}
+                                                                        >
+                                                                            Cancelar
+                                                                        </Button>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </TabsContent>
+                                </Tabs>
+                            </DialogContent>
+                        </Dialog>
 
                         {contractForReview && (
                             <ReviewModal

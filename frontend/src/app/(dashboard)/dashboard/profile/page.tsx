@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/presentation/compone
 import { Avatar, AvatarFallback, AvatarImage } from "@/presentation/components/ui/avatar"
 import { Badge } from "@/presentation/components/ui/badge"
 import { Button } from "@/presentation/components/ui/button"
-import { Mail, MapPin, Calendar, Edit2, Globe, Building2 } from "lucide-react"
+import { Mail, MapPin, Calendar, Edit2, Globe } from "lucide-react"
 import { EditProfile } from "@/presentation/components/creator/edit-profile"
 import { EditBrandProfile } from "@/presentation/components/brand/edit-brand-profile"
 import { UpdateProfileUseCase } from "@/application/use-cases/update-profile.use-case"
@@ -17,6 +17,15 @@ import { toast } from "sonner"
 import { MdOutlineVerified } from "react-icons/md";
 import { BsFacebook, BsInstagram, BsTiktok, BsTwitter, BsYoutube } from "react-icons/bs"
 import { User } from "@/domain/entities/user"
+
+type PortfolioLink = {
+    title?: string
+    url?: string
+}
+
+type PortfolioData = {
+    project_links?: PortfolioLink[]
+}
 
 
 const authRepository = new ApiAuthRepository(api)
@@ -115,9 +124,9 @@ export default function ProfilePage() {
                 if (key === 'languages' && Array.isArray(val)) {
                     form.append('languages', JSON.stringify(val))
                 } else if (key === 'portfolio') {
-                    const portfolio = val as any
+                    const portfolio = val as PortfolioData
                     if (portfolio && Array.isArray(portfolio.project_links)) {
-                        portfolio.project_links.forEach((link: any, index: number) => {
+                        portfolio.project_links.forEach((link, index) => {
                             if (link.url) {
                                 form.append(`project_links[${index}][title]`, link.title || '')
                                 form.append(`project_links[${index}][url]`, link.url)

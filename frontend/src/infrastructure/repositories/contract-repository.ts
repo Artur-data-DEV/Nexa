@@ -45,6 +45,11 @@ export class ApiContractRepository implements ContractRepository {
         return this.http.put<Contract>(`/contracts/${id}/status`, { status })
     }
 
+    async updateWorkflowStatus(id: number, workflowStatus: string): Promise<Contract> {
+        const response = await this.http.post<{ success: boolean; data: Contract }>(`/contracts/${id}/workflow-status`, { workflow_status: workflowStatus })
+        return response.data
+    }
+
     async create(data: Partial<Contract>): Promise<Contract> {
         return this.http.post<Contract>("/contracts", data)
     }

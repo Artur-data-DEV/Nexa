@@ -6,5 +6,6 @@ export interface ContractRepository {
     getContracts(filters?: QueryFilters): Promise<Contract[]>
     getContract(id: number): Promise<Contract>
     updateStatus(id: number, status: string): Promise<Contract>
+    updateWorkflowStatus(id: number, workflowStatus: string): Promise<Contract>
     create(data: Partial<Contract>): Promise<Contract>
 }

@@ -43,11 +43,90 @@ function PaymentMethodsInner() {
     const fundingCanceled = searchParams.get("funding_canceled");
     const offerFundingSuccess = searchParams.get("offer_funding_success");
     const offerFundingCanceled = searchParams.get("offer_funding_canceled");
+    const setupSuccess = searchParams.get("setup_success");
+    const setupCanceled = searchParams.get("setup_canceled");
+    const success = searchParams.get("success");
+    const canceled = searchParams.get("canceled") || searchParams.get("cancelled");
     const sessionId = searchParams.get("session_id");
     const contractId = searchParams.get("contract_id");
+    const action = searchParams.get("action");
+    const chatRoomId = searchParams.get("chat_room_id");
 
-    if (status === "cancelled") {
+    if (status === "cancelled" || canceled === "true" || setupCanceled === "true") {
+      if (canceled === "true" || setupCanceled === "true") {
+        toast("Pagamento cancelado", {
+          description: "Você pode tentar novamente quando quiser.",
+        });
+      }
       router.replace("/dashboard/payment-methods");
+      return;
+    }
+
+    const handleSetupSuccess = async () => {
+      if (!sessionId) return;
+      try {
+        if (role === "brand") {
+          await api.post("/brand-payment/handle-checkout-success", { session_id: sessionId });
+        } else if (role === "creator") {
+          await api.post("/freelancer/stripe-payment-method-checkout-success", { session_id: sessionId });
+        }
+
+        toast.success("Método de pagamento conectado com sucesso.");
+
+        if (action === "send_offer" && typeof window !== "undefined") {
+          const pendingRaw = window.sessionStorage.getItem("pending_offer");
+          if (pendingRaw) {
+            const pending = JSON.parse(pendingRaw) as {
+              creator_id?: number;
+              chat_room_id?: string;
+              title?: string;
+              description?: string;
+              budget?: number;
+              estimated_days?: number;
+            };
+
+            if (
+              pending.creator_id &&
+              pending.chat_room_id &&
+              pending.title &&
+              pending.description &&
+              pending.budget &&
+              pending.estimated_days
+            ) {
+              const offerResponse = await api.post<{ success?: boolean; message?: string }>("/offers", {
+                creator_id: pending.creator_id,
+                chat_room_id: pending.chat_room_id,
+                title: pending.title,
+                description: pending.description,
+                budget: pending.budget,
+                estimated_days: pending.estimated_days,
+              });
+
+              if (offerResponse?.success) {
+                toast.success("Oferta enviada com sucesso!");
+                window.sessionStorage.removeItem("pending_offer");
+                const targetRoom = chatRoomId || pending.chat_room_id;
+                router.replace(`/dashboard/messages?roomId=${targetRoom}`);
+                return;
+              }
+            }
+          }
+        }
+
+        router.replace("/dashboard/payment-methods");
+      } catch (error: unknown) {
+        const axiosError = error as AxiosError<{ message?: string }>;
+        const message =
+          axiosError.response?.data?.message ||
+          axiosError.message ||
+          "Erro ao confirmar método de pagamento.";
+        toast.error(message);
+        router.replace("/dashboard/payment-methods");
+      }
+    };
+
+    if (setupSuccess === "true" || success === "true") {
+      void handleSetupSuccess();
       return;
     }
 
@@ -84,7 +163,10 @@ function PaymentMethodsInner() {
   const handleConnectPaymentMethod = async () => {
     setIsLoadingPaymentMethod(true);
     try {
-      const response = await stripeRepository.createPaymentMethodCheckout();
+      const response =
+        role === "brand"
+          ? await api.post<{ success: boolean; url?: string; message?: string }>("/brand-payment/create-checkout-session")
+          : await stripeRepository.createPaymentMethodCheckout();
 
       if (response.success && response.url) {
         window.location.href = response.url;

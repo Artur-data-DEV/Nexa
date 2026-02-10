@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Check, Loader2, ArrowRight, Smartphone, Mail } from "lucide-react"
 import { toast } from "sonner"
+import type { AxiosError } from "axios"
 
 import { Button } from "@/presentation/components/ui/button"
 import { Input } from "@/presentation/components/ui/input"
@@ -183,10 +184,11 @@ function CreatorSignUpInner() {
       // await authRepository.sendOtp(whatsapp, 'whatsapp') // Uncomment to send via WhatsApp too if needed
       setVerificationSent(true)
       toast.success(`Código de verificação enviado para ${email}`)
-    } catch (error: any) {
-      const message = error?.response?.data?.message || "Erro ao enviar código. Tente novamente."
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError<{ message?: string }>
+      const message = axiosError.response?.data?.message || "Erro ao enviar código. Tente novamente."
       toast.error(message)
-      console.error(error)
+      console.error(axiosError)
     } finally {
       setFormLoading(false)
     }

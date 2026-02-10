@@ -1,12 +1,177 @@
 services:
   db:
-    image: postgres:16
-    container_name: nexa-db-local
+    image: postgres:16-alpine
+    restart: unless-stopped
+    profiles:
+      - local
+      - homolog
+      - prod
     environment:
-      POSTGRES_DB: ${DB_DATABASE:-nexa}
-      POSTGRES_USER: ${DB_USERNAME:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
-    ports:
-      - "5433:5432"
+      POSTGRES_DB: nexa
+      POSTGRES_USER: nexa
+      POSTGRES_PASSWORD: nexa_password
     volumes:
-      - ./postgres_data:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    profiles:
+      - local
+      - homolog
+      - prod
+    command: [ "redis-server", "--appendonly", "yes" ]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    profiles:
+      - local
+      - homolog
+      - prod
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - ./backend/.env
+    environment:
+      APP_ENV: local
+      APP_DEBUG: true
+      CACHE_DRIVER: redis
+      QUEUE_CONNECTION: sync
+      SESSION_DRIVER: file
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: nexa
+      DB_USERNAME: nexa
+      DB_PASSWORD: nexa_password
+      REVERB_HOST: "chat"
+      REVERB_PORT: 8080
+      APP_URL: http://localhost:8000
+      FRONTEND_URL: http://localhost:3000
+      APP_FRONTEND_URL: http://localhost:3000
+      SANCTUM_STATEFUL_DOMAINS: localhost:3000
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_REDIRECT_URI: http://localhost:3000/auth/google/callback
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY}
+    volumes:
+      - ./backend:/var/www/html
+    working_dir: /var/www/html
+    command: >
+      sh -c "mkdir -p bootstrap/cache storage/logs &&
+             chmod -R 777 bootstrap/cache storage &&
+             php artisan key:generate &&
+             php -S 0.0.0.0:8000 -t public"
+    ports:
+      - "8000:8000"
+
+  chat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    profiles:
+      - local
+      - homolog
+      - prod
+    depends_on:
+      - backend
+    env_file:
+      - ./backend/.env
+    environment:
+      CACHE_DRIVER: redis
+      QUEUE_CONNECTION: sync
+      SESSION_DRIVER: file
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REVERB_HOST: "0.0.0.0"
+      REVERB_PORT: 8080
+    volumes:
+      - ./backend:/var/www/html
+    working_dir: /var/www/html
+    command: >
+      sh -c "php artisan reverb:start --host=0.0.0.0 --port=8080"
+    ports:
+      - "8080:8080"
+
+  frontend:
+    image: node:24-alpine
+    restart: unless-stopped
+    profiles:
+      - local
+      - homolog
+      - prod
+    depends_on:
+      - backend
+    environment:
+      NEXT_PUBLIC_BACKEND_URL: http://localhost:8000/api
+      NEXT_PUBLIC_REVERB_HOST: localhost
+      NEXT_PUBLIC_REVERB_PORT: 8080
+      NEXT_PUBLIC_REVERB_SCHEME: http
+      NEXT_PUBLIC_REVERB_APP_KEY: nexa_reverb_key
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY}
+    volumes:
+      - ./frontend:/usr/src/app
+      - frontend_node_modules:/usr/src/app/node_modules
+    working_dir: /usr/src/app
+    command: >
+      sh -c "if [ ! -f node_modules/.bin/next ]; then npm ci; fi &&
+             npm run dev -- -p 3000 -H 0.0.0.0"
+    ports:
+      - "3000:3000"
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    restart: unless-stopped
+    profiles:
+      - local
+      - homolog
+      - prod
+    ports:
+      - "8081:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    restart: unless-stopped
+    profiles:
+      - prod
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+
+  portainer:
+    image: portainer/portainer-ce:2.21.3
+    restart: unless-stopped
+    profiles:
+      - local
+      - homolog
+    ports:
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+
+volumes:
+  db_data:
+  redis_data:
+  frontend_node_modules:
+  portainer_data:

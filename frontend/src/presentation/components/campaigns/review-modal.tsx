@@ -18,6 +18,7 @@ import { toast } from "sonner"
 import { api } from "@/infrastructure/api/axios-adapter"
 import { Contract } from "@/domain/entities/contract"
 import { cn } from "@/lib/utils"
+import type { AxiosError } from "axios"
 
 interface ReviewModalProps {
     isOpen: boolean
@@ -66,9 +67,10 @@ export default function ReviewModal({
             } else {
                 throw new Error(response.message || "Erro ao enviar avaliação")
             }
-        } catch (error: any) {
-            console.error("Error submitting review:", error)
-            toast.error(error.response?.data?.message || "Erro ao enviar avaliação")
+        } catch (error: unknown) {
+            const axiosError = error as AxiosError<{ message?: string }>
+            console.error("Error submitting review:", axiosError)
+            toast.error(axiosError.response?.data?.message || "Erro ao enviar avaliação")
         } finally {
             setIsSubmitting(false)
         }
@@ -115,7 +117,7 @@ export default function ReviewModal({
                         Avaliar Parceria
                     </DialogTitle>
                     <DialogDescription>
-                        Como foi trabalhar em "<span className="font-semibold">{contract.title}</span>"?
+                        Como foi trabalhar em &quot;<span className="font-semibold">{contract.title}</span>&quot;?
                     </DialogDescription>
                 </DialogHeader>
 

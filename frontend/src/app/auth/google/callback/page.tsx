@@ -172,8 +172,12 @@ function GoogleOAuthCallbackInner() {
            await login(response.token, response.user)
            toast.success(`Conta de ${selectedRole === 'creator' ? 'Criador' : 'Marca'} criada com sucesso!`)
            router.push("/dashboard")
-      } catch (err: any) {
-          const msg = err.response?.data?.message || "Erro ao finalizar cadastro"
+      } catch (err: unknown) {
+          const axiosError = err as AxiosError<{ message?: string }>
+          const msg =
+              axiosError.response?.data?.message ||
+              axiosError.message ||
+              "Erro ao finalizar cadastro"
           toast.error(msg)
           setError(msg)
       } finally {

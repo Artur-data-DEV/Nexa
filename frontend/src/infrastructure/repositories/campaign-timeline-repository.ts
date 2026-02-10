@@ -1,4 +1,8 @@
-import { CampaignTimelineRepository } from "@/domain/repositories/campaign-timeline-repository.interface"
+import {
+    CampaignTimelineRepository,
+    CampaignTimelineDownloadInfo,
+    CampaignTimelineStatistics
+} from "@/domain/repositories/campaign-timeline-repository.interface"
 import { CampaignMilestone } from "@/domain/entities/milestone"
 import { HttpClient } from "../api/axios-adapter"
 
@@ -8,6 +12,11 @@ export class ApiCampaignTimelineRepository implements CampaignTimelineRepository
     async getTimeline(contractId: number): Promise<CampaignMilestone[]> {
         const response = await this.http.get<{ success: boolean; data: CampaignMilestone[] }>(`/campaign-timeline?contract_id=${contractId}`)
         return response.data || []
+    }
+
+    async getStatistics(contractId: number): Promise<CampaignTimelineStatistics | null> {
+        const response = await this.http.get<{ success: boolean; data: CampaignTimelineStatistics }>(`/campaign-timeline/statistics?contract_id=${contractId}`)
+        return response.data || null
     }
 
     async createMilestones(contractId: number): Promise<CampaignMilestone[]> {
@@ -38,8 +47,21 @@ export class ApiCampaignTimelineRepository implements CampaignTimelineRepository
         return this.http.post("/campaign-timeline/justify-delay", { milestone_id: milestoneId, justification })
     }
 
+    async markDelayed(milestoneId: number, justification?: string): Promise<{ success: boolean; message: string }> {
+        return this.http.post("/campaign-timeline/mark-delayed", { milestone_id: milestoneId, justification })
+    }
+
     async extendTimeline(milestoneId: number, days: number, reason: string): Promise<{ success: boolean; message: string }> {
-        return this.http.post("/campaign-timeline/extend-timeline", { milestone_id: milestoneId, days, reason })
+        return this.http.post("/campaign-timeline/extend-timeline", {
+            milestone_id: milestoneId,
+            extension_days: days,
+            extension_reason: reason
+        })
+    }
+
+    async downloadFile(milestoneId: number): Promise<CampaignTimelineDownloadInfo | null> {
+        const response = await this.http.get<{ success: boolean; data: CampaignTimelineDownloadInfo }>(`/campaign-timeline/download-file?milestone_id=${milestoneId}`)
+        return response.data || null
     }
 
     async completeContract(contractId: number): Promise<{ success: boolean; message: string }> {

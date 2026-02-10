@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react';
+import type { AxiosError } from "axios";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/presentation/components/ui/card';
 import { Button } from '@/presentation/components/ui/button';
 import { Badge } from '@/presentation/components/ui/badge';
@@ -9,7 +10,6 @@ import { useAuth } from '@/presentation/contexts/auth-provider';
 import { api } from '@/infrastructure/api/axios-adapter';
 import { 
   CreditCard, 
-  Calendar, 
   DollarSign, 
   CheckCircle, 
   XCircle, 
@@ -29,7 +29,7 @@ interface Transaction {
   card_brand?: string;
   card_last4?: string;
   card_holder_name: string;
-  payment_data: any;
+  payment_data: unknown;
   paid_at: string;
   expires_at: string;
   created_at: string;
@@ -49,7 +49,6 @@ interface TransactionHistoryResponse {
 export default function TransactionHistory() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [pagination, setPagination] = useState<any>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const { user } = useAuth();
 
@@ -65,9 +64,9 @@ export default function TransactionHistory() {
       const response = await api.get<TransactionHistoryResponse>('/payment/transactions');
       
       setTransactions(response.transactions);
-      setPagination(response.pagination);
-    } catch (error: any) {
-      console.error('TransactionHistory: API call failed:', error);
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError<{ message?: string }>;
+      console.error('TransactionHistory: API call failed:', axiosError);
       toast.error("Erro", {
         description: "Falha ao carregar histórico de transações",
       });
@@ -133,7 +132,7 @@ export default function TransactionHistory() {
     }
   };
 
-  const getPaymentMethodIcon = (method: string, brand?: string) => {
+  const getPaymentMethodIcon = (method: string) => {
     if (method === 'credit_card') {
       return <CreditCard className="w-4 h-4" />;
     }
@@ -257,7 +256,7 @@ Obrigado pela sua assinatura!
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    {getPaymentMethodIcon(transaction.payment_method, transaction.card_brand)}
+                    {getPaymentMethodIcon(transaction.payment_method)}
                     <div>
                       <div className="font-semibold text-foreground">
                         {formatCurrency(transaction.amount)}

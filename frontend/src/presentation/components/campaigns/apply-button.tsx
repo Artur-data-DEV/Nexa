@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, type FieldErrors, type Resolver } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Loader2, Plus, X, ArrowRight, ArrowLeft, Check } from "lucide-react"
@@ -36,7 +36,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/presentation/components/u
 import { toast } from "sonner"
 import { useAuth } from "@/presentation/contexts/auth-provider"
 import type { AxiosError } from "axios"
-import { Checkbox } from "@/presentation/components/ui/checkbox"
 import { Badge } from "@/presentation/components/ui/badge"
 import { TermsModal } from "@/presentation/components/terms/terms-modal"
 import { TERMS_CONTENT } from "@/presentation/components/terms/terms-content"
@@ -70,7 +69,7 @@ export function ApplyButton({ campaign, onSuccess }: ApplyButtonProps) {
   const [termsAccepted, setTermsAccepted] = useState(false)
 
   const form = useForm<ApplicationFormValues>({
-    resolver: zodResolver(applicationSchema) as any,
+    resolver: zodResolver(applicationSchema) as Resolver<ApplicationFormValues>,
     defaultValues: {
       proposal: "",
       budget: campaign.budget,
@@ -114,7 +113,7 @@ export function ApplyButton({ campaign, onSuccess }: ApplyButtonProps) {
     }
   }
 
-  const onInvalid = (errors: any) => {
+  const onInvalid = (errors: FieldErrors<ApplicationFormValues>) => {
         console.log("Form errors:", errors)
         if (errors.portfolio_links) {
             if (Array.isArray(errors.portfolio_links)) {
@@ -399,22 +398,3 @@ export function ApplyButton({ campaign, onSuccess }: ApplyButtonProps) {
     </>
   )
 }
-
-function CheckIcon(props: React.SVGProps<SVGSVGElement>) {
-    return (
-      <svg
-        {...props}
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <polyline points="20 6 9 17 4 12" />
-      </svg>
-    )
-  }
