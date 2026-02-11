@@ -4,8 +4,8 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/presentation/components/ui/button'
 import { Input } from '@/presentation/components/ui/input'
 import { Textarea } from '@/presentation/components/ui/textarea'
-import { Badge } from '@/presentation/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
+import { Badge } from '@/presentation/components/ui/badge'
 import { ScrollArea } from '@/presentation/components/ui/scroll-area'
 import {
     Sheet,
@@ -80,7 +80,6 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
         if (error instanceof Error && error.message) return error.message
         return fallback
     }
-
     const loadTimeline = useCallback(async () => {
         try {
             setIsLoading(true)

@@ -15,10 +15,10 @@ import { Textarea } from "@/presentation/components/ui/textarea"
 import { Checkbox } from "@/presentation/components/ui/checkbox"
 import { Star, RefreshCw } from "lucide-react"
 import { toast } from "sonner"
+import type { AxiosError } from "axios"
 import { api } from "@/infrastructure/api/axios-adapter"
 import { Contract } from "@/domain/entities/contract"
 import { cn } from "@/lib/utils"
-import type { AxiosError } from "axios"
 
 interface ReviewModalProps {
     isOpen: boolean

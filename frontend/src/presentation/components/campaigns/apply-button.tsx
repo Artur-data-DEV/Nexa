@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useForm, type FieldErrors, type Resolver } from "react-hook-form"
+import { useForm } from "react-hook-form"
+import type { FieldErrors, Resolver } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Loader2, Plus, X, ArrowRight, ArrowLeft, Check } from "lucide-react"
@@ -39,6 +40,7 @@ import type { AxiosError } from "axios"
 import { Badge } from "@/presentation/components/ui/badge"
 import { TermsModal } from "@/presentation/components/terms/terms-modal"
 import { TERMS_CONTENT } from "@/presentation/components/terms/terms-content"
+import Link from "next/link"
 
 const campaignRepository = new ApiCampaignRepository(api)
 const applyToCampaignUseCase = new ApplyToCampaignUseCase(campaignRepository)
@@ -87,6 +89,13 @@ export function ApplyButton({ campaign, onSuccess }: ApplyButtonProps) {
 
   if (!user || user.role !== "creator") {
     return null
+  }
+  if (!user.has_premium) {
+    return (
+      <Button size="lg" variant="outline" className="w-full md:w-auto" asChild>
+        <Link href="/dashboard/subscription">Assinar Premium</Link>
+      </Button>
+    )
   }
 
   const userPortfolioLinks = user.portfolio?.project_links || []

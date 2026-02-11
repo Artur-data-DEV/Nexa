@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/presentation/components/ui/card"
+import type { AxiosError } from "axios"
+import Image from "next/image"
 import { Button } from "@/presentation/components/ui/button"
 import { Badge } from "@/presentation/components/ui/badge"
 import { Input } from "@/presentation/components/ui/input"
@@ -20,7 +22,6 @@ import {
     DropdownMenuSeparator,
 } from "@/presentation/components/ui/dropdown-menu"
 import { Skeleton } from "@/presentation/components/ui/skeleton"
-import Image from "next/image"
 import {
     GraduationCap,
     Search,
@@ -36,7 +37,6 @@ import {
 } from "lucide-react"
 import { api } from "@/infrastructure/api/axios-adapter"
 import { toast } from "sonner"
-import type { AxiosError } from "axios"
 import Link from "next/link"
 
 interface Student {

@@ -113,10 +113,11 @@ function BrandSignUpInner() {
 
     try {
       const { companyName, email, whatsapp, password } = data
+      const normalizedEmail = email.trim().toLowerCase()
 
       const auth = await registerBrandUseCase.execute({
         name: companyName,
-        email,
+        email: normalizedEmail,
         whatsapp,
         password,
         password_confirmation: password,
@@ -162,7 +163,7 @@ function BrandSignUpInner() {
   }
 
   const sendVerificationCode = async () => {
-    const email = form.getValues("email")
+    const email = form.getValues("email").trim().toLowerCase()
     const whatsapp = form.getValues("whatsapp")
 
     if (!email || !whatsapp) {
@@ -197,7 +198,7 @@ function BrandSignUpInner() {
       return
     }
 
-    const email = form.getValues("email")
+    const email = form.getValues("email").trim().toLowerCase()
     setLoading(true)
     try {
       const isValid = await authRepository.verifyOtp(email, 'email', code)

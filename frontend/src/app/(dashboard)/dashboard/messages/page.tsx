@@ -236,9 +236,10 @@ export default function MessagesPage() {
 
     const fetchContractId = useCallback(async (roomId: string) => {
         try {
-            const response = await api.get<{ data: Contract[] }>(`/contracts/chat-room/${roomId}`)
-            if (response.data && response.data.length > 0) {
-                setContractId(response.data[0].id)
+            const response = await api.get<{ data: Contract[] } | Contract[]>(`/contracts/chat-room/${roomId}`)
+            const contracts = Array.isArray(response) ? response : response.data || []
+            if (contracts.length > 0) {
+                setContractId(contracts[0].id)
             } else {
                 setContractId(null)
             }
@@ -278,7 +279,6 @@ export default function MessagesPage() {
             console.error("Failed to refresh messages", error)
         }
     }, [setMessages, updateChatList])
-
     const scrollToBottom = useCallback(
         (force = false) => {
             if (!messagesEndRef.current) return

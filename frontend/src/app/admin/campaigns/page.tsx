@@ -248,7 +248,7 @@ export default function AdminCampaignsPage() {
                 </CardHeader>
                 <CardContent>
                     <div className="flex flex-wrap items-end gap-4">
-                        <div className="flex-1 min-w-[200px]">
+                        <div className="flex-1 min-w-50">
                             <Input
                                 placeholder="Buscar por título ou marca..."
                                 value={searchTerm}
@@ -385,7 +385,7 @@ export default function AdminCampaignsPage() {
                                             <td className="px-4 py-3">
                                                 <div className="flex items-center gap-2">
                                                     <Building className="h-3 w-3 text-muted-foreground" />
-                                                    <span className="truncate max-w-[150px]">
+                                                    <span className="truncate max-w-37.5">
                                                         {campaign.brand.company_name || campaign.brand.name}
                                                     </span>
                                                 </div>
@@ -600,7 +600,7 @@ export default function AdminCampaignsPage() {
                             placeholder="Descreva o motivo da rejeição..."
                             value={rejectReason}
                             onChange={(e) => setRejectReason(e.target.value)}
-                            className="min-h-[100px]"
+                            className="min-h-25"
                         />
                     </div>
                     <DialogFooter>

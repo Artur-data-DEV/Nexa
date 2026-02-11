@@ -298,7 +298,7 @@ export default function AdminGuidesPage() {
                                 <label className="text-sm font-medium">Público Alvo</label>
                                 <Select
                                     value={editingGuide.audience}
-                                    onValueChange={(v: Guide["audience"]) => setEditingGuide(prev => ({ ...prev, audience: v }))}
+                                    onValueChange={(value) => setEditingGuide(prev => ({ ...prev, audience: value as Guide["audience"] }))}
                                 >
                                     <SelectTrigger>
                                         <SelectValue />

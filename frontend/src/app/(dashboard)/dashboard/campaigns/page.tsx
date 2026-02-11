@@ -27,8 +27,14 @@ export default function CampaignsPage() {
   const [statusFilter, setStatusFilter] = useState<"all" | Campaign["status"]>("all")
   const [sortBy, setSortBy] = useState<"recent" | "applications" | "budget_high" | "deadline_asc">("recent")
   const { user } = useAuth()
+  const hasCampaignAccess = user?.role !== "creator" || user?.has_premium
 
   useEffect(() => {
+    if (user?.role === "creator" && !user?.has_premium) {
+      setCampaigns([])
+      setLoading(false)
+      return
+    }
     const fetchCampaigns = async () => {
       setLoading(true)
       try {
@@ -46,7 +52,7 @@ export default function CampaignsPage() {
     }
 
     fetchCampaigns()
-  }, [user?.id, user?.role])
+  }, [user?.id, user?.role, user?.has_premium])
 
   const filteredCampaigns = useMemo(() => {
     const base = Array.isArray(campaigns) ? campaigns : []
@@ -101,83 +107,98 @@ export default function CampaignsPage() {
         )}
       </div>
 
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col md:flex-row w-full items-start md:items-center gap-3">
-          <div className="relative w-full md:max-w-sm">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Buscar campanhas..."
-              className="pl-8"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-          <div className="w-full md:w-52">
-            <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Ordenar" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="recent">Mais recentes</SelectItem>
-                <SelectItem value="applications">Mais candidaturas</SelectItem>
-                <SelectItem value="budget_high">Maior orçamento</SelectItem>
-                <SelectItem value="deadline_asc">Prazo mais próximo</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          {user?.role === "brand" && (
-            <Button className="w-full md:w-auto md:ml-auto" asChild>
-              <Link href="/dashboard/campaigns/create">Nova Campanha</Link>
+      {!hasCampaignAccess ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Campanhas disponíveis no Premium</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Para ver e se candidatar às campanhas, é necessário ter o plano Premium ativo.
+            </p>
+            <Button asChild>
+              <Link href="/dashboard/subscription">Assinar Premium</Link>
             </Button>
-          )}
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col md:flex-row w-full items-start md:items-center gap-3">
+            <div className="relative w-full md:max-w-sm">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Buscar campanhas..."
+                className="pl-8"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <div className="w-full md:w-52">
+              <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Ordenar" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="recent">Mais recentes</SelectItem>
+                  <SelectItem value="applications">Mais candidaturas</SelectItem>
+                  <SelectItem value="budget_high">Maior orçamento</SelectItem>
+                  <SelectItem value="deadline_asc">Prazo mais próximo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {user?.role === "brand" && (
+              <Button className="w-full md:w-auto md:ml-auto" asChild>
+                <Link href="/dashboard/campaigns/create">Nova Campanha</Link>
+              </Button>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={statusFilter === "all" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setStatusFilter("all")}
+            >
+              Todas
+            </Button>
+            <Button
+              variant={statusFilter === "approved" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setStatusFilter("approved")}
+            >
+              Aprovadas
+            </Button>
+            <Button
+              variant={statusFilter === "pending" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setStatusFilter("pending")}
+            >
+              Pendentes
+            </Button>
+            <Button
+              variant={statusFilter === "active" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setStatusFilter("active")}
+            >
+              Ativas
+            </Button>
+            <Button
+              variant={statusFilter === "rejected" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setStatusFilter("rejected")}
+            >
+              Rejeitadas
+            </Button>
+            <Button
+              variant={statusFilter === "archived" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setStatusFilter("archived")}
+            >
+              Arquivadas
+            </Button>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant={statusFilter === "all" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setStatusFilter("all")}
-          >
-            Todas
-          </Button>
-          <Button
-            variant={statusFilter === "approved" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setStatusFilter("approved")}
-          >
-            Aprovadas
-          </Button>
-          <Button
-            variant={statusFilter === "pending" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setStatusFilter("pending")}
-          >
-            Pendentes
-          </Button>
-          <Button
-            variant={statusFilter === "active" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setStatusFilter("active")}
-          >
-            Ativas
-          </Button>
-          <Button
-            variant={statusFilter === "rejected" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setStatusFilter("rejected")}
-          >
-            Rejeitadas
-          </Button>
-          <Button
-            variant={statusFilter === "archived" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setStatusFilter("archived")}
-          >
-            Arquivadas
-          </Button>
-        </div>
-      </div>
-
+      )}
       {user?.role === "brand" && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card>
@@ -206,6 +227,7 @@ export default function CampaignsPage() {
           </Card>
         </div>
       )}
+
 
       {loading ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">

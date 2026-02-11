@@ -29,7 +29,7 @@ interface Transaction {
   card_brand?: string;
   card_last4?: string;
   card_holder_name: string;
-  payment_data: unknown;
+  payment_data: Record<string, unknown>;
   paid_at: string;
   expires_at: string;
   created_at: string;
@@ -150,7 +150,7 @@ export default function TransactionHistory() {
     // Create a simple receipt text
     const receipt = `
 NEXA UGC - Recibo de Pagamento
-==============================
+------------------------------
 
 ID da Transação: ${transaction.pagarme_transaction_id}
 Data: ${formatDate(transaction.created_at)}

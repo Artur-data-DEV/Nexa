@@ -120,10 +120,11 @@ function CreatorSignUpInner() {
 
     try {
       const { nome, email, whatsapp, password } = data
+      const normalizedEmail = email.trim().toLowerCase()
 
       const auth = await registerCreatorUseCase.execute({
         name: nome,
-        email,
+        email: normalizedEmail,
         whatsapp,
         password,
         password_confirmation: password, // Laravel expectation
@@ -169,7 +170,7 @@ function CreatorSignUpInner() {
   }
 
   const sendVerificationCode = async () => {
-    const email = form.getValues("email")
+    const email = form.getValues("email").trim().toLowerCase()
     const whatsapp = form.getValues("whatsapp")
 
     if (!email || !whatsapp) {
@@ -200,7 +201,7 @@ function CreatorSignUpInner() {
       return
     }
 
-    const email = form.getValues("email")
+    const email = form.getValues("email").trim().toLowerCase()
     setFormLoading(true)
     try {
       const isValid = await authRepository.verifyOtp(email, 'email', code)

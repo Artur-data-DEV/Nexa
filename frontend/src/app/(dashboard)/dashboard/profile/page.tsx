@@ -23,7 +23,7 @@ type PortfolioLink = {
     url?: string
 }
 
-type PortfolioData = {
+type Portfolio = {
     project_links?: PortfolioLink[]
 }
 
@@ -116,23 +116,22 @@ export default function ProfilePage() {
             // Exclude fields that should not be sent or are handled separately
             const excludedFields = ['id', 'created_at', 'updated_at', 'email_verified_at', 'avatar', 'avatar_url', 'image', 'balance', 'role', 'has_premium']
 
+            const profileRecord = updatedProfile as unknown as Record<string, unknown>
             Object.keys(updatedProfile || {}).forEach((key) => {
                 if (excludedFields.includes(key)) return
 
-                const val = (updatedProfile as unknown as unknown as unknown as Record<string, unknown>)[key]
+                const val = profileRecord[key]
 
                 if (key === 'languages' && Array.isArray(val)) {
                     form.append('languages', JSON.stringify(val))
                 } else if (key === 'portfolio') {
-                    const portfolio = val as PortfolioData
-                    if (portfolio && Array.isArray(portfolio.project_links)) {
-                        portfolio.project_links.forEach((link, index) => {
-                            if (link.url) {
-                                form.append(`project_links[${index}][title]`, link.title || '')
-                                form.append(`project_links[${index}][url]`, link.url)
-                            }
-                        })
-                    }
+                    const portfolio = val as Portfolio | null | undefined
+                    portfolio?.project_links?.forEach((link, index) => {
+                        if (link.url) {
+                            form.append(`project_links[${index}][title]`, link.title || '')
+                            form.append(`project_links[${index}][url]`, link.url)
+                        }
+                    })
                 } else if (val !== undefined && val !== null) {
                     if (typeof val === 'string' && val.trim() === '') {
                         return

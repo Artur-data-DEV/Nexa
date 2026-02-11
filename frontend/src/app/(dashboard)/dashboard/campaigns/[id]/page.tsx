@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { ArrowLeft, Calendar, MapPin, DollarSign, Building2 } from "lucide-react"
 import Image from "next/image"
+import Link from "next/link"
 
 import { GetCampaignByIdUseCase } from "@/application/use-cases/get-campaign-by-id.use-case"
 import { ApiCampaignRepository } from "@/infrastructure/repositories/campaign-repository"
@@ -17,6 +18,7 @@ import { Skeleton } from "@/presentation/components/ui/skeleton"
 import { Card, CardContent, CardHeader, CardTitle } from "@/presentation/components/ui/card"
 import { Separator } from "@/presentation/components/ui/separator"
 import { ApplyButton } from "@/presentation/components/campaigns/apply-button"
+import { useAuth } from "@/presentation/contexts/auth-provider"
 
 const campaignRepository = new ApiCampaignRepository(api)
 const getCampaignByIdUseCase = new GetCampaignByIdUseCase(campaignRepository)
@@ -28,12 +30,18 @@ export default function CampaignDetailsPage() {
   const router = useRouter()
   const [campaign, setCampaign] = useState<Campaign | null>(null)
   const [loading, setLoading] = useState(true)
+  const { user } = useAuth()
+  const hasCampaignAccess = user?.role !== "creator" || user?.has_premium
 
   useEffect(() => {
+    if (user?.role === "creator" && !user?.has_premium) {
+        setLoading(false)
+        return
+    }
     if (params.id) {
         fetchCampaign(Number(params.id))
     }
-  }, [params.id])
+  }, [params.id, user?.has_premium, user?.role])
 
   const fetchCampaign = async (id: number) => {
     setLoading(true)
@@ -84,6 +92,32 @@ export default function CampaignDetailsPage() {
           .map((req: string) => req.trim())
           .filter(Boolean)
       : []
+
+  if (!hasCampaignAccess) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <Button variant="ghost" onClick={() => router.back()}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Voltar
+          </Button>
+        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Campanhas disponíveis no Premium</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Para acessar os detalhes e se candidatar às campanhas, é necessário ter o plano Premium ativo.
+            </p>
+            <Button asChild>
+              <Link href="/dashboard/subscription">Assinar Premium</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl mx-auto w-full">

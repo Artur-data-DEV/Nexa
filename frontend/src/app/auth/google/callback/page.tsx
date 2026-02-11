@@ -172,8 +172,8 @@ function GoogleOAuthCallbackInner() {
            await login(response.token, response.user)
            toast.success(`Conta de ${selectedRole === 'creator' ? 'Criador' : 'Marca'} criada com sucesso!`)
            router.push("/dashboard")
-      } catch (err: unknown) {
-          const axiosError = err as AxiosError<{ message?: string }>
+      } catch (error: unknown) {
+          const axiosError = error as AxiosError<{ message?: string }>
           const msg =
               axiosError.response?.data?.message ||
               axiosError.message ||
