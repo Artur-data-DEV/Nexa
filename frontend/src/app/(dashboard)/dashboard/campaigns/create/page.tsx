@@ -7,7 +7,7 @@ import { Button } from "@/presentation/components/ui/button"
 import { Card } from "@/presentation/components/ui/card"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
-import { UploadCloud, X, PlusCircle, ArrowRight, ArrowLeft, Check, Play, List, Image as ImageIcon, Filter, DollarSign, Calendar, Wand2, FileText, Stars, User } from "lucide-react"
+import { UploadCloud, X, PlusCircle, ArrowRight, ArrowLeft, Check, Play, List, Image as ImageIcon, Filter, DollarSign, Calendar, Wand2, FileText, User } from "lucide-react"
 import { ptBR } from "date-fns/locale"
 import { CreateCampaignUseCase } from "@/application/use-cases/create-campaign.use-case"
 import { ApiCampaignRepository } from "@/infrastructure/repositories/campaign-repository"
@@ -463,7 +463,7 @@ export default function CreateCampaignPage() {
             </div>
             
             <div className="flex justify-between relative">
-                {STEPS.map((step, index) => {
+                {STEPS.map((step) => {
                     const isActive = step.id === currentStep
                     const isCompleted = step.id < currentStep
                     const Icon = step.icon

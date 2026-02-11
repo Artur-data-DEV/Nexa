@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
+import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/presentation/components/ui/card"
 import { Button } from "@/presentation/components/ui/button"
 import { Badge } from "@/presentation/components/ui/badge"
@@ -279,7 +280,7 @@ export default function AdminUsersPage() {
                 </CardHeader>
                 <CardContent>
                     <div className="flex flex-wrap items-end gap-4">
-                        <div className="flex-1 min-w-[200px]">
+                        <div className="flex-1 min-w-50">
                             <Input
                                 placeholder="Buscar por nome ou email..."
                                 value={searchTerm}
@@ -386,7 +387,14 @@ export default function AdminUsersPage() {
                                                 <div className="flex items-center gap-3">
                                                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
                                                         {user.profile_image ? (
-                                                            <img src={user.profile_image} alt={user.name} className="h-10 w-10 rounded-full object-cover" />
+                                                            <Image
+                                                                src={user.profile_image}
+                                                                alt={user.name}
+                                                                width={40}
+                                                                height={40}
+                                                                className="h-10 w-10 rounded-full object-cover"
+                                                                unoptimized
+                                                            />
                                                         ) : (
                                                             user.name.charAt(0).toUpperCase()
                                                         )}
@@ -499,7 +507,14 @@ export default function AdminUsersPage() {
                             <div className="flex items-center gap-4">
                                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-2xl font-bold text-primary">
                                     {selectedUser.profile_image ? (
-                                        <img src={selectedUser.profile_image} alt={selectedUser.name} className="h-16 w-16 rounded-full object-cover" />
+                                        <Image
+                                            src={selectedUser.profile_image}
+                                            alt={selectedUser.name}
+                                            width={64}
+                                            height={64}
+                                            className="h-16 w-16 rounded-full object-cover"
+                                            unoptimized
+                                        />
                                     ) : (
                                         selectedUser.name.charAt(0).toUpperCase()
                                     )}

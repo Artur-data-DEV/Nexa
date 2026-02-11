@@ -1,10 +1,9 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/presentation/components/ui/button'
 import { Input } from '@/presentation/components/ui/input'
 import { Textarea } from '@/presentation/components/ui/textarea'
-import { Badge } from '@/presentation/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
 import { Alert, AlertDescription } from '@/presentation/components/ui/alert'
 import { ScrollArea } from '@/presentation/components/ui/scroll-area'
@@ -24,9 +23,7 @@ import {
     ChevronDown,
     Plus,
     AlertTriangle,
-    X,
     FileVideo,
-    ImageIcon,
     Check,
     Ban
 } from 'lucide-react'
@@ -38,6 +35,7 @@ import { ApiContractRepository } from '@/infrastructure/repositories/contract-re
 import { api } from '@/infrastructure/api/axios-adapter'
 import { CampaignMilestone } from '@/domain/entities/milestone'
 import { Contract } from '@/domain/entities/contract'
+import type { AxiosError } from 'axios'
 
 interface CampaignTimelineSheetProps {
     contractId: number
@@ -66,17 +64,7 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose }: C
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [isUploading, setIsUploading] = useState(false)
     const [expandedMilestones, setExpandedMilestones] = useState<Set<number>>(new Set())
-    const [materialDescription, setMaterialDescription] = useState('')
-
-    const fileInputRef = useRef<HTMLInputElement>(null)
-
-    useEffect(() => {
-        if (isOpen && contractId) {
-            loadTimeline()
-        }
-    }, [isOpen, contractId])
-
-    const loadTimeline = async () => {
+    const loadTimeline = useCallback(async () => {
         try {
             setIsLoading(true)
             const [milestonesData, contractData] = await Promise.all([
@@ -85,13 +73,20 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose }: C
             ])
             setMilestones(milestonesData)
             setContract(contractData)
-        } catch (error: any) {
-            console.error('Error loading timeline:', error)
-            toast.error(error.response?.data?.message || error.message || "Erro ao carregar dados")
+        } catch (error: unknown) {
+            const axiosError = error as AxiosError<{ message?: string }>
+            console.error('Error loading timeline:', axiosError)
+            toast.error(axiosError.response?.data?.message || axiosError.message || "Erro ao carregar dados")
         } finally {
             setIsLoading(false)
         }
-    }
+    }, [contractId])
+
+    useEffect(() => {
+        if (isOpen && contractId) {
+            loadTimeline()
+        }
+    }, [isOpen, contractId, loadTimeline])
 
     const createMilestones = async () => {
         try {
@@ -99,8 +94,9 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose }: C
             await timelineRepository.createMilestones(contractId)
             toast.success("Milestones criados com sucesso")
             loadTimeline()
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || error.message || "Erro ao criar milestones")
+        } catch (error: unknown) {
+            const axiosError = error as AxiosError<{ message?: string }>
+            toast.error(axiosError.response?.data?.message || axiosError.message || "Erro ao criar milestones")
         } finally {
             setIsLoading(false)
         }
@@ -116,11 +112,11 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose }: C
                 toast.success("Arquivo enviado com sucesso")
                 setShowUploadDialog(false)
                 setSelectedFile(null)
-                setMaterialDescription('')
                 loadTimeline()
             }
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || error.message || "Erro ao enviar arquivo")
+        } catch (error: unknown) {
+            const axiosError = error as AxiosError<{ message?: string }>
+            toast.error(axiosError.response?.data?.message || axiosError.message || "Erro ao enviar arquivo")
         } finally {
             setIsUploading(false)
         }
@@ -138,8 +134,9 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose }: C
                 setComment('')
                 loadTimeline()
             }
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || error.message || "Erro ao processar milestone")
+        } catch (error: unknown) {
+            const axiosError = error as AxiosError<{ message?: string }>
+            toast.error(axiosError.response?.data?.message || axiosError.message || "Erro ao processar milestone")
         }
     }
 
@@ -152,8 +149,9 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose }: C
                 setJustification('')
                 loadTimeline()
             }
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || error.message || "Erro ao justificar atraso")
+        } catch (error: unknown) {
+            const axiosError = error as AxiosError<{ message?: string }>
+            toast.error(axiosError.response?.data?.message || axiosError.message || "Erro ao justificar atraso")
         }
     }
 
@@ -167,8 +165,9 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose }: C
                 setExtensionReason('')
                 loadTimeline()
             }
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || error.message || "Erro ao estender prazo")
+        } catch (error: unknown) {
+            const axiosError = error as AxiosError<{ message?: string }>
+            toast.error(axiosError.response?.data?.message || axiosError.message || "Erro ao estender prazo")
         }
     }
 
@@ -182,8 +181,9 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose }: C
                 toast.success("Campanha finalizada com sucesso! O pagamento está sendo processado.")
                 loadTimeline()
             }
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || error.message || "Erro ao finalizar campanha")
+        } catch (error: unknown) {
+            const axiosError = error as AxiosError<{ message?: string }>
+            toast.error(axiosError.response?.data?.message || axiosError.message || "Erro ao finalizar campanha")
         } finally {
             setIsLoading(false)
         }
@@ -350,7 +350,7 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose }: C
                                 {user?.role === 'brand' && contract?.status === 'active' && (
                                     <div className="pt-4 border-t">
                                         <Button
-                                            className="w-full h-12 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold"
+                                            className="w-full h-12 bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold"
                                             onClick={handleFinalizeContract}
                                         >
                                             <Check className="w-5 h-5 mr-2" />
@@ -398,6 +398,28 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose }: C
                         <div className="flex gap-2">
                             <Button size="sm" variant="outline" className="flex-1" onClick={() => setShowJustificationDialog(false)}>Cancelar</Button>
                             <Button size="sm" className="flex-1 bg-orange-600" disabled={!justification.trim()} onClick={() => handleJustification(selectedMilestone!.id)}>Enviar</Button>
+                        </div>
+                    </div>
+                )}
+                {showExtensionDialog && (
+                    <div className="p-4 border-t bg-card space-y-4">
+                        <h4 className="text-sm font-semibold">Estender prazo</h4>
+                        <div className="space-y-3">
+                            <Input
+                                type="number"
+                                min={1}
+                                value={extensionDays}
+                                onChange={(e) => setExtensionDays(Number(e.target.value))}
+                            />
+                            <Textarea
+                                placeholder="Descreva o motivo..."
+                                value={extensionReason}
+                                onChange={(e) => setExtensionReason(e.target.value)}
+                            />
+                        </div>
+                        <div className="flex gap-2">
+                            <Button size="sm" variant="outline" className="flex-1" onClick={() => setShowExtensionDialog(false)}>Cancelar</Button>
+                            <Button size="sm" className="flex-1" disabled={!extensionReason.trim()} onClick={() => handleExtension(selectedMilestone!.id)}>Enviar</Button>
                         </div>
                     </div>
                 )}

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/pre
 import { Badge } from "@/presentation/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/presentation/components/ui/tabs"
 import { Skeleton } from "@/presentation/components/ui/skeleton"
-import { Trophy, TrendingUp, Users, DollarSign, Medal, Star, CheckCircle } from "lucide-react"
+import { Trophy, TrendingUp, DollarSign, Medal, Star, CheckCircle } from "lucide-react"
 import { api } from "@/infrastructure/api/axios-adapter"
 import { toast } from "sonner"
 

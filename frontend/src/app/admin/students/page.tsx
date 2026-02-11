@@ -1,7 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/presentation/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/presentation/components/ui/card"
+import type { AxiosError } from "axios"
+import Image from "next/image"
 import { Button } from "@/presentation/components/ui/button"
 import { Badge } from "@/presentation/components/ui/badge"
 import { Input } from "@/presentation/components/ui/input"
@@ -128,9 +130,10 @@ export default function AdminStudentsPage() {
             } else {
                 toast.error(response.message || "Falha ao executar ação")
             }
-        } catch (error: any) {
-            console.error(`Failed to ${action} student:`, error)
-            toast.error(error.response?.data?.message || "Falha ao atualizar aluno")
+        } catch (error: unknown) {
+            const axiosError = error as AxiosError<{ message?: string }>
+            console.error(`Failed to ${action} student:`, axiosError)
+            toast.error(axiosError.response?.data?.message || "Falha ao atualizar aluno")
         } finally {
             setProcessingId(null)
         }
@@ -188,7 +191,7 @@ export default function AdminStudentsPage() {
                 </CardHeader>
                 <CardContent>
                     <div className="flex flex-wrap items-end gap-4">
-                        <div className="flex-1 min-w-[200px]">
+                        <div className="flex-1 min-w-50">
                             <Input
                                 placeholder="Buscar por nome, email ou instituição..."
                                 value={searchTerm}
@@ -275,7 +278,14 @@ export default function AdminStudentsPage() {
                                                 <div className="flex items-center gap-3">
                                                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
                                                         {student.profile_image ? (
-                                                            <img src={student.profile_image} alt={student.name} className="h-10 w-10 rounded-full object-cover" />
+                                                            <Image
+                                                                src={student.profile_image}
+                                                                alt={student.name}
+                                                                width={40}
+                                                                height={40}
+                                                                className="h-10 w-10 rounded-full object-cover"
+                                                                unoptimized
+                                                            />
                                                         ) : (
                                                             student.name.charAt(0).toUpperCase()
                                                         )}

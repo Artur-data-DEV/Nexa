@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import {
-    Briefcase,
     Calendar,
     MessageCircle,
     DollarSign,
@@ -19,7 +18,6 @@ import { api } from "@/infrastructure/api/axios-adapter"
 import { ArchivedChat } from "@/domain/entities/chat"
 import { useAuth } from "@/presentation/contexts/auth-provider"
 
-import { Button } from "@/presentation/components/ui/button"
 import { Input } from "@/presentation/components/ui/input"
 import { Card, CardContent } from "@/presentation/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/presentation/components/ui/avatar"

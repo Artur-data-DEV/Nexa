@@ -1,6 +1,8 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
+import type { AxiosError } from "axios"
+import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/presentation/components/ui/card"
 import { Button } from "@/presentation/components/ui/button"
 import { Badge } from "@/presentation/components/ui/badge"
@@ -154,25 +156,12 @@ export default function AdminCampaignsPage() {
 
         setActionLoading(true)
         try {
-            let endpoint = ""
-            let method = ""
-
-            switch (action) {
-                case "approve":
-                    endpoint = `/admin/campaigns/${campaignId}/approve`
-                    method = "patch"
-                    break
-                case "delete":
-                    endpoint = `/admin/campaigns/${campaignId}`
-                    method = "delete"
-                    break
+            let response: { success: boolean; message?: string }
+            if (action === "approve") {
+                response = await api.patch(`/admin/campaigns/${campaignId}/approve`)
+            } else {
+                response = await api.delete(`/admin/campaigns/${campaignId}`)
             }
-
-            // @ts-ignore - dynamic method call
-            const response = await api[method]<{
-                success: boolean
-                message?: string
-            }>(endpoint)
 
             if (response.success) {
                 toast.success(response.message || `Ação realizada com sucesso`)
@@ -181,9 +170,10 @@ export default function AdminCampaignsPage() {
             } else {
                 toast.error(response.message || "Falha ao executar ação")
             }
-        } catch (error: any) {
-            console.error(`Failed to ${action} campaign:`, error)
-            toast.error(error.response?.data?.message || `Falha ao ${action === "delete" ? "excluir" : "aprovar"} campanha`)
+        } catch (error: unknown) {
+            const axiosError = error as AxiosError<{ message?: string }>
+            console.error(`Failed to ${action} campaign:`, axiosError)
+            toast.error(axiosError.response?.data?.message || `Falha ao ${action === "delete" ? "excluir" : "aprovar"} campanha`)
         } finally {
             setActionLoading(false)
         }
@@ -208,9 +198,10 @@ export default function AdminCampaignsPage() {
             } else {
                 toast.error(response.message || "Falha ao rejeitar campanha")
             }
-        } catch (error: any) {
-            console.error("Failed to reject campaign:", error)
-            toast.error(error.response?.data?.message || "Falha ao rejeitar campanha")
+        } catch (error: unknown) {
+            const axiosError = error as AxiosError<{ message?: string }>
+            console.error("Failed to reject campaign:", axiosError)
+            toast.error(axiosError.response?.data?.message || "Falha ao rejeitar campanha")
         } finally {
             setActionLoading(false)
         }
@@ -257,7 +248,7 @@ export default function AdminCampaignsPage() {
                 </CardHeader>
                 <CardContent>
                     <div className="flex flex-wrap items-end gap-4">
-                        <div className="flex-1 min-w-[200px]">
+                        <div className="flex-1 min-w-50">
                             <Input
                                 placeholder="Buscar por título ou marca..."
                                 value={searchTerm}
@@ -369,9 +360,16 @@ export default function AdminCampaignsPage() {
                                         <tr key={campaign.id} className="border-b last:border-0 hover:bg-muted/50">
                                             <td className="px-4 py-3">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="h-10 w-16 overflow-hidden rounded-md bg-muted">
+                                                    <div className="relative h-10 w-16 overflow-hidden rounded-md bg-muted">
                                                         {campaign.cover_image ? (
-                                                            <img src={campaign.cover_image} alt={campaign.title} className="h-full w-full object-cover" />
+                                                            <Image
+                                                                src={campaign.cover_image}
+                                                                alt={campaign.title}
+                                                                fill
+                                                                className="object-cover"
+                                                                sizes="(max-width: 768px) 100vw, 33vw"
+                                                                unoptimized
+                                                            />
                                                         ) : (
                                                             <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground">
                                                                 <Megaphone className="h-4 w-4" />
@@ -387,7 +385,7 @@ export default function AdminCampaignsPage() {
                                             <td className="px-4 py-3">
                                                 <div className="flex items-center gap-2">
                                                     <Building className="h-3 w-3 text-muted-foreground" />
-                                                    <span className="truncate max-w-[150px]">
+                                                    <span className="truncate max-w-37.5">
                                                         {campaign.brand.company_name || campaign.brand.name}
                                                     </span>
                                                 </div>
@@ -496,9 +494,16 @@ export default function AdminCampaignsPage() {
                     {selectedCampaign && (
                         <div className="space-y-6">
                             {/* Cover Image */}
-                            <div className="aspect-video w-full rounded-lg bg-muted overflow-hidden">
+                            <div className="relative aspect-video w-full rounded-lg bg-muted overflow-hidden">
                                 {selectedCampaign.cover_image ? (
-                                    <img src={selectedCampaign.cover_image} alt={selectedCampaign.title} className="h-full w-full object-cover" />
+                                    <Image
+                                        src={selectedCampaign.cover_image}
+                                        alt={selectedCampaign.title}
+                                        fill
+                                        className="object-cover"
+                                        sizes="(max-width: 768px) 100vw, 33vw"
+                                        unoptimized
+                                    />
                                 ) : (
                                     <div className="flex h-full w-full items-center justify-center">
                                         <Megaphone className="h-12 w-12 text-muted-foreground/50" />
@@ -595,7 +600,7 @@ export default function AdminCampaignsPage() {
                             placeholder="Descreva o motivo da rejeição..."
                             value={rejectReason}
                             onChange={(e) => setRejectReason(e.target.value)}
-                            className="min-h-[100px]"
+                            className="min-h-25"
                         />
                     </div>
                     <DialogFooter>

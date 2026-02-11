@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/presentation/compone
 import { Avatar, AvatarFallback, AvatarImage } from "@/presentation/components/ui/avatar"
 import { Badge } from "@/presentation/components/ui/badge"
 import { Button } from "@/presentation/components/ui/button"
-import { Mail, MapPin, Calendar, Edit2, Globe, Building2 } from "lucide-react"
+import { Mail, MapPin, Calendar, Edit2, Globe } from "lucide-react"
 import { EditProfile } from "@/presentation/components/creator/edit-profile"
 import { EditBrandProfile } from "@/presentation/components/brand/edit-brand-profile"
 import { UpdateProfileUseCase } from "@/application/use-cases/update-profile.use-case"
@@ -17,6 +17,15 @@ import { toast } from "sonner"
 import { MdOutlineVerified } from "react-icons/md";
 import { BsFacebook, BsInstagram, BsTiktok, BsTwitter, BsYoutube } from "react-icons/bs"
 import { User } from "@/domain/entities/user"
+
+type PortfolioLink = {
+    title?: string
+    url?: string
+}
+
+type Portfolio = {
+    project_links?: PortfolioLink[]
+}
 
 
 const authRepository = new ApiAuthRepository(api)
@@ -107,23 +116,22 @@ export default function ProfilePage() {
             // Exclude fields that should not be sent or are handled separately
             const excludedFields = ['id', 'created_at', 'updated_at', 'email_verified_at', 'avatar', 'avatar_url', 'image', 'balance', 'role', 'has_premium']
 
+            const profileRecord = updatedProfile as unknown as Record<string, unknown>
             Object.keys(updatedProfile || {}).forEach((key) => {
                 if (excludedFields.includes(key)) return
 
-                const val = (updatedProfile as unknown as unknown as unknown as Record<string, unknown>)[key]
+                const val = profileRecord[key]
 
                 if (key === 'languages' && Array.isArray(val)) {
                     form.append('languages', JSON.stringify(val))
                 } else if (key === 'portfolio') {
-                    const portfolio = val as any
-                    if (portfolio && Array.isArray(portfolio.project_links)) {
-                        portfolio.project_links.forEach((link: any, index: number) => {
-                            if (link.url) {
-                                form.append(`project_links[${index}][title]`, link.title || '')
-                                form.append(`project_links[${index}][url]`, link.url)
-                            }
-                        })
-                    }
+                    const portfolio = val as Portfolio | null | undefined
+                    portfolio?.project_links?.forEach((link, index) => {
+                        if (link.url) {
+                            form.append(`project_links[${index}][title]`, link.title || '')
+                            form.append(`project_links[${index}][url]`, link.url)
+                        }
+                    })
                 } else if (val !== undefined && val !== null) {
                     if (typeof val === 'string' && val.trim() === '') {
                         return

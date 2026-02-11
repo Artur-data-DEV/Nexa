@@ -23,7 +23,6 @@ import { useChat } from "@/presentation/contexts/chat-provider"
 import { toast } from "sonner"
 import CampaignTimelineSheet from "@/presentation/components/campaigns/campaign-timeline-sheet"
 import ReviewModal from "@/presentation/components/campaigns/review-modal"
-import { ApiContractRepository } from "@/infrastructure/repositories/contract-repository"
 import { Contract } from "@/domain/entities/contract"
 
 const chatRepository = new ApiChatRepository(api)
@@ -152,8 +151,6 @@ export default function MessagesPage() {
     const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
     const [contractForReview, setContractForReview] = useState<Contract | null>(null)
 
-    const contractRepository = new ApiContractRepository(api)
-
     const scrollToBottom = useCallback(
         (force = false) => {
             if (!messagesEndRef.current) return
@@ -266,9 +263,10 @@ export default function MessagesPage() {
         // Fetch contract for this room
         const fetchContract = async () => {
             try {
-                const response = await api.get<{ data: any[] }>(`/contracts/chat-room/${roomId}`)
-                if (response.data && response.data.length > 0) {
-                    setContractId(response.data[0].id)
+                const response = await api.get<{ data: Contract[] } | Contract[]>(`/contracts/chat-room/${roomId}`)
+                const contracts = Array.isArray(response) ? response : response.data || []
+                if (contracts.length > 0) {
+                    setContractId(contracts[0].id)
                 } else {
                     setContractId(null)
                 }
@@ -277,7 +275,7 @@ export default function MessagesPage() {
             }
         }
         fetchContract()
-    }, [searchParams, chats, selectedChat, selectChat, router, user?.id])
+    }, [searchParams, chats, selectedChat, selectChat, router, user?.id, sendGuideMessages])
 
     const handleAcceptOffer = async (offerId: number) => {
         if (!offerId || offerId <= 0 || Number.isNaN(offerId)) {

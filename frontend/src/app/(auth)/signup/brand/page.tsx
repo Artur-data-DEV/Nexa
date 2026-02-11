@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Check, Loader2, ArrowRight, Smartphone, Mail } from "lucide-react"
 import { toast } from "sonner"
+import type { AxiosError } from "axios"
 
 import { Button } from "@/presentation/components/ui/button"
 import { Input } from "@/presentation/components/ui/input"
@@ -112,10 +113,11 @@ function BrandSignUpInner() {
 
     try {
       const { companyName, email, whatsapp, password } = data
+      const normalizedEmail = email.trim().toLowerCase()
 
       const auth = await registerBrandUseCase.execute({
         name: companyName,
-        email,
+        email: normalizedEmail,
         whatsapp,
         password,
         password_confirmation: password,
@@ -161,7 +163,7 @@ function BrandSignUpInner() {
   }
 
   const sendVerificationCode = async () => {
-    const email = form.getValues("email")
+    const email = form.getValues("email").trim().toLowerCase()
     const whatsapp = form.getValues("whatsapp")
 
     if (!email || !whatsapp) {
@@ -180,8 +182,9 @@ function BrandSignUpInner() {
       } else {
           toast.success(`Código de verificação enviado para ${email}`)
       }
-    } catch (error: any) {
-      const message = error?.response?.data?.message || "Erro ao enviar código. Tente novamente."
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError<{ message?: string }>
+      const message = axiosError.response?.data?.message || "Erro ao enviar código. Tente novamente."
       toast.error(message)
       console.error(error)
     } finally {
@@ -195,7 +198,7 @@ function BrandSignUpInner() {
       return
     }
 
-    const email = form.getValues("email")
+    const email = form.getValues("email").trim().toLowerCase()
     setLoading(true)
     try {
       const isValid = await authRepository.verifyOtp(email, 'email', code)

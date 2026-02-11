@@ -34,10 +34,6 @@ import {
     Pencil,
     Trash2,
     Video,
-    Image as ImageIcon,
-    Save,
-    X,
-    GripVertical,
     RefreshCw
 } from "lucide-react"
 import { api } from "@/infrastructure/api/axios-adapter"
@@ -199,7 +195,7 @@ export default function AdminGuidesPage() {
         }))
     }
 
-    const updateStep = (index: number, field: keyof GuideStep, value: any) => {
+    const updateStep = (index: number, field: keyof GuideStep, value: GuideStep[keyof GuideStep]) => {
         const newSteps = [...(editingGuide.steps || [])]
         newSteps[index] = { ...newSteps[index], [field]: value }
         setEditingGuide(prev => ({ ...prev, steps: newSteps }))
@@ -263,7 +259,7 @@ export default function AdminGuidesPage() {
                                     </div>
                                 </div>
                                 <CardTitle className="mt-2 line-clamp-1">{guide.title}</CardTitle>
-                                <CardDescription className="line-clamp-2 min-h-[40px]">
+                                <CardDescription className="line-clamp-2 min-h-10">
                                     {guide.description}
                                 </CardDescription>
                             </CardHeader>
@@ -302,7 +298,7 @@ export default function AdminGuidesPage() {
                                 <label className="text-sm font-medium">Público Alvo</label>
                                 <Select
                                     value={editingGuide.audience}
-                                    onValueChange={(v: any) => setEditingGuide(prev => ({ ...prev, audience: v }))}
+                                    onValueChange={(value) => setEditingGuide(prev => ({ ...prev, audience: value as Guide["audience"] }))}
                                 >
                                     <SelectTrigger>
                                         <SelectValue />
@@ -335,7 +331,7 @@ export default function AdminGuidesPage() {
 
                             {editingGuide.steps?.length === 0 && (
                                 <div className="text-center py-8 border-2 border-dashed rounded-lg text-muted-foreground">
-                                    Nenhum passo adicionado. Clique em "Adicionar Passo" para começar.
+                                    Nenhum passo adicionado. Clique em &quot;Adicionar Passo&quot; para começar.
                                 </div>
                             )}
 
