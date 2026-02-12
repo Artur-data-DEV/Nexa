@@ -249,6 +249,8 @@ export default function PortfolioView() {
     const uploadMedia = async () => {
         if (uploadFiles.length === 0) return
         setUploading(true)
+        const loadingToast = toast.loading("Enviando mídia... Aguarde e não feche a página.")
+
         try {
             const formData = new FormData()
             uploadFiles.forEach(f => formData.append("files[]", f))
@@ -259,14 +261,16 @@ export default function PortfolioView() {
             setIsUploadOpen(false)
             setUploadFiles([])
             setUploadPreviews([])
-            toast.success("Mídia enviada!")
+            toast.dismiss(loadingToast)
+            toast.success("Mídia enviada com sucesso!")
         } catch (error: unknown) {
+            toast.dismiss(loadingToast)
             console.error("Failed to upload media", error)
             const axiosError = error as AxiosError<{ message?: string; errors?: { files?: string[] } }>
             const message =
                 axiosError.response?.data?.message ||
                 axiosError.response?.data?.errors?.files?.[0] ||
-                "Erro ao enviar mídia"
+                "Erro ao enviar mídia. Tente novamente."
             toast.error(message)
         } finally {
             setUploading(false)

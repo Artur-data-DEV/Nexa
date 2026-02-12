@@ -74,10 +74,27 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
 
     const getErrorMessage = (error: unknown, fallback: string) => {
         if (error && typeof error === 'object' && 'response' in error) {
-            const response = (error as { response?: { data?: { message?: string } } }).response
+            const axiosError = error as { response?: { status?: number, data?: { message?: string, errors?: Record<string, string[]> } } }
+            const response = axiosError.response
+            
+            // Check for Laravel validation errors
+            if (response?.data?.errors) {
+                const firstError = Object.values(response.data.errors).flat()[0]
+                if (firstError) return firstError
+            }
+            
             if (response?.data?.message) return response.data.message
+            
+            if (response?.status === 413) {
+                return "O arquivo é muito grande para o servidor. Tente compactar ou usar um formato menor."
+            }
         }
-        if (error instanceof Error && error.message) return error.message
+        if (error instanceof Error) {
+            if (error.message === "Network Error") {
+                return "Erro de conexão. Verifique sua internet e tente novamente."
+            }
+            return error.message
+        }
         return fallback
     }
     const loadTimeline = useCallback(async () => {
@@ -119,22 +136,32 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
     const handleFileUpload = async (milestoneId: number) => {
         if (!selectedFile) return
 
-        if (selectedFile.size > 100 * 1024 * 1024) { // 100MB limit
-            toast.error("Arquivo muito grande. O limite máximo é 100MB.")
+        // 100MB limit per user request ("ao inves de aumentar limite...")
+        if (selectedFile.size > 100 * 1024 * 1024) { 
+            toast.error("O arquivo excede o limite de 100MB. Por favor, comprima o vídeo ou divida em partes.")
             return
         }
+
+        const loadingToast = toast.loading("Iniciando upload... Por favor, aguarde.")
 
         try {
             setIsUploading(true)
             const response = await timelineRepository.uploadFile(milestoneId, selectedFile)
+            toast.dismiss(loadingToast)
+            
             if (response.success) {
                 toast.success("Arquivo enviado com sucesso")
                 setShowUploadDialog(false)
                 setSelectedFile(null)
                 loadTimeline()
+            } else {
+                toast.error(response.message || "Erro desconhecido ao enviar arquivo")
             }
         } catch (error: unknown) {
-            toast.error(getErrorMessage(error, "Erro ao enviar arquivo"))
+            toast.dismiss(loadingToast)
+            console.error("Upload error:", error)
+            const errorMsg = getErrorMessage(error, "Erro ao enviar arquivo. Tente novamente.")
+            toast.error(errorMsg, { duration: 5000 }) // Longer duration for reading on mobile
         } finally {
             setIsUploading(false)
         }
@@ -624,7 +651,19 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
             {showUploadDialog && (
                 <div className="p-4 border-t bg-card space-y-4">
                     <h4 className="text-sm font-semibold">Enviar material</h4>
-                    <Input type="file" onChange={(e) => setSelectedFile(e.target.files?.[0] || null)} />
+                    <Input 
+                        type="file" 
+                        accept="image/*,video/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/zip"
+                        onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (file) {
+                                setSelectedFile(file)
+                                toast.info(`Arquivo selecionado: ${file.name}`)
+                            } else {
+                                setSelectedFile(null)
+                            }
+                        }} 
+                    />
                     {selectedFile && (
                         <div className="text-[10px] text-muted-foreground">
                             {selectedFile.name}
