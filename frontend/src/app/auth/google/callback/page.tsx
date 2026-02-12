@@ -114,9 +114,8 @@ function GoogleOAuthCallbackInner() {
           return
         }
 
-        const isNewUser = !response.user.has_premium && response.user.role === "creator"
-
-        if (isNewUser) {
+        // Use the flag returned from backend, defaulting to false if undefined
+        if (response.is_new_user) {
           toast.success("Conta criada com sucesso!")
         } else {
           toast.success("Login realizado com sucesso com Google!")

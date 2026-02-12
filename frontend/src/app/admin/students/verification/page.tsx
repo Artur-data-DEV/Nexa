@@ -56,10 +56,18 @@ export default function AdminStudentVerificationPage() {
     const fetchRequests = async () => {
         setLoading(true)
         try {
-            const response = await api.get<{ success: boolean; data: VerificationRequest[] }>("/admin/student-requests")
-            if (response.success) {
-                setRequests(response.data)
+            // Using unknown to safely handle varied response structures
+            const response = await api.get<unknown>("/admin/student-requests")
+            
+            let requestsData: VerificationRequest[] = []
+            
+            if (Array.isArray(response)) {
+                requestsData = response as VerificationRequest[]
+            } else if (response && typeof response === 'object' && 'data' in response && Array.isArray((response as { data: unknown }).data)) {
+                requestsData = (response as { data: VerificationRequest[] }).data
             }
+            
+            setRequests(requestsData)
         } catch (error) {
             console.error("Failed to fetch verification requests:", error)
             toast.error("Falha ao carregar solicitações")

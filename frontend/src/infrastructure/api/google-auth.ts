@@ -35,6 +35,7 @@ export type GoogleAuthResponse = AuthResponse & {
         email: string
         avatar: string
     }
+    is_new_user?: boolean
 }
 
 export async function handleGoogleCallbackRequest(code: string, role?: "creator" | "brand", isStudent?: boolean) {

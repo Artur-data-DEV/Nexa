@@ -19,6 +19,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/presentation/compone
 import { Separator } from "@/presentation/components/ui/separator"
 import { ApplyButton } from "@/presentation/components/campaigns/apply-button"
 import { useAuth } from "@/presentation/contexts/auth-provider"
+import { Users, Download, ExternalLink } from "lucide-react"
+import { toast } from "sonner"
 
 const campaignRepository = new ApiCampaignRepository(api)
 const getCampaignByIdUseCase = new GetCampaignByIdUseCase(campaignRepository)
@@ -32,6 +34,7 @@ export default function CampaignDetailsPage() {
   const [loading, setLoading] = useState(true)
   const { user } = useAuth()
   const hasCampaignAccess = user?.role !== "creator" || user?.has_premium
+  const isOwnerOrAdmin = user?.role === "admin" || (user?.role === "brand" && campaign?.brand_id === user.id)
 
   useEffect(() => {
     if (user?.role === "creator" && !user?.has_premium) {
@@ -53,6 +56,15 @@ export default function CampaignDetailsPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleExportXLS = async () => {
+    if (!campaign) return
+    
+    // Using the same logic as manage page but simplified for this view if needed, 
+    // or we can redirect to manage page for export. 
+    // For now, let's redirect to manage page for full management features including export.
+    router.push(`/dashboard/campaigns/${campaign.id}/manage`)
   }
 
   if (loading) {
@@ -165,6 +177,33 @@ export default function CampaignDetailsPage() {
       <div className="grid gap-6 md:grid-cols-3">
         {/* Left Column: Description & Briefing */}
         <div className="md:col-span-2 space-y-6">
+            {/* Owner Actions Section */}
+            {isOwnerOrAdmin && (
+              <Card className="border-primary/20 bg-primary/5">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-primary">
+                    <Users className="h-5 w-5" />
+                    Gestão de Candidatos
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Como dono desta campanha, você pode visualizar e gerenciar todos os criadores inscritos.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Button onClick={() => router.push(`/dashboard/campaigns/${campaign.id}/manage`)} className="flex-1">
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      Ver Candidatos Inscritos
+                    </Button>
+                    <Button variant="outline" onClick={() => router.push(`/dashboard/campaigns/${campaign.id}/manage`)} className="flex-1">
+                      <Download className="mr-2 h-4 w-4" />
+                      Baixar Lista (XLS)
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             <Card>
                 <CardHeader>
                     <CardTitle>Sobre a Campanha</CardTitle>
