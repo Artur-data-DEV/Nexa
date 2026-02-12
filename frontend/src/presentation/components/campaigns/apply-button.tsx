@@ -61,7 +61,7 @@ interface ApplyButtonProps {
 }
 
 export function ApplyButton({ campaign, onSuccess }: ApplyButtonProps) {
-  const { user, refreshUser } = useAuth()
+  const { user, refreshUser, loading: authLoading } = useAuth()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -87,9 +87,18 @@ export function ApplyButton({ campaign, onSuccess }: ApplyButtonProps) {
     })
   }, [])
 
-  if (!user || user.role !== "creator") {
-    return null
+  if (authLoading) {
+    return <Button disabled>Carregando...</Button>
   }
+
+  if (!user) {
+      return null
+  }
+
+  if (user.role !== "creator") {
+      return null
+  }
+
   if (!user.has_premium) {
     return (
       <Button size="lg" variant="outline" className="w-full md:w-auto" asChild>

@@ -129,7 +129,7 @@ function CreatorSignUpInner() {
         password,
         password_confirmation: password, // Laravel expectation
       })
-      login(auth.token, auth.user)
+      await login(auth.token, auth.user)
       toast.success("Conta criada com sucesso!")
       const redirectTo = searchParams.get("redirectTo")
       router.replace(redirectTo || "/dashboard")

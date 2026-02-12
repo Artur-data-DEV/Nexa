@@ -102,6 +102,8 @@ export default function CreatorDashboard() {
     const [showFilters, setShowFilters] = useState(false)
     const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null)
     const [loadingStatus, setLoadingStatus] = useState(false)
+    
+    const hasCampaignAccess = user?.role === "creator" && user?.has_premium
 
     const [filters, setFilters] = useState<FilterState>({
         category: "all",
@@ -115,8 +117,12 @@ export default function CreatorDashboard() {
     })
 
     useEffect(() => {
-        fetchCampaigns()
-    }, [])
+        if (hasCampaignAccess) {
+            fetchCampaigns()
+        } else {
+            setIsLoading(false)
+        }
+    }, [hasCampaignAccess])
 
     useEffect(() => {
         const loadStatus = async () => {
@@ -591,6 +597,23 @@ export default function CreatorDashboard() {
                                         </Card>
                                     ))}
                                 </div>
+                            ) : !hasCampaignAccess ? (
+                                <Card className="text-center py-12 border-2 border-dashed">
+                                    <CardContent className="space-y-4 pt-6">
+                                        <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                                            <MdOutlineWorkspacePremium className="w-6 h-6 text-muted-foreground" />
+                                        </div>
+                                        <h3 className="text-lg font-semibold">Conteúdo Exclusivo Premium</h3>
+                                        <p className="text-muted-foreground max-w-md mx-auto">
+                                            As campanhas são exclusivas para assinantes Premium. Assine agora para desbloquear o acesso e começar a se candidatar.
+                                        </p>
+                                        <Button asChild>
+                                            <Link href="/dashboard/subscription">
+                                                Assinar Premium
+                                            </Link>
+                                        </Button>
+                                    </CardContent>
+                                </Card>
                             ) : filteredAndSortedCampaigns.length === 0 ? (
                                 <Card className="text-center py-12">
                                     <CardContent>

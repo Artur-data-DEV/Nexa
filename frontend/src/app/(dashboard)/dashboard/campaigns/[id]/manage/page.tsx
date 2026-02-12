@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, CheckCircle, XCircle, Clock, MessageCircle } from "lucide-react"
+import { ArrowLeft, CheckCircle, XCircle, Clock, MessageCircle, Download } from "lucide-react"
 import Link from "next/link"
 import type { AxiosError } from "axios"
 
@@ -96,6 +96,61 @@ export default function ManageCandidatesPage() {
         }
     }
 
+    const handleExportXLS = () => {
+        if (!applications || applications.length === 0) {
+            toast.error("Nenhum candidato para exportar.")
+            return
+        }
+
+        // CSV Header
+        const headers = [
+            "ID Candidatura",
+            "ID Criador",
+            "Nome do Criador",
+            "Instagram",
+            "TikTok",
+            "Status",
+            "Proposta",
+            "Orçamento Proposto",
+            "Prazo Estimado (dias)",
+            "Data da Candidatura"
+        ]
+
+        // CSV Rows
+        const rows = applications.map(app => {
+            const creator = app.creator || { id: 0, name: "Desconhecido", instagram_handle: "", tiktok_handle: "" }
+            
+            // Format fields to avoid CSV breakages (wrap in quotes if contains delimiter)
+            const cleanText = (text: string | undefined | null) => {
+                if (!text) return ""
+                return `"${text.toString().replace(/"/g, '""')}"` // Escape double quotes
+            }
+
+            return [
+                app.id,
+                creator.id,
+                cleanText(creator.name),
+                cleanText(creator.instagram_handle),
+                cleanText(creator.tiktok_handle),
+                cleanText(app.status === 'pending' ? 'Pendente' : app.status === 'approved' ? 'Aprovado' : 'Rejeitado'),
+                cleanText(app.proposal),
+                app.proposed_budget || app.budget || 0,
+                app.estimated_delivery_days || app.delivery_days || 0,
+                cleanText(new Date(app.created_at).toLocaleDateString('pt-BR'))
+            ].join(";") // Using semicolon for better Excel compatibility in some regions, or comma
+        })
+
+        const csvContent = "\uFEFF" + [headers.join(";"), ...rows].join("\n") // Add BOM for UTF-8 support in Excel
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement("a")
+        link.setAttribute("href", url)
+        link.setAttribute("download", `candidatos_campanha_${campaignId}_${new Date().toISOString().split('T')[0]}.csv`)
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+    }
+
     const handleStatusUpdate = async (applicationId: number, status: 'approved' | 'rejected') => {
         setProcessingId(applicationId)
         try {
@@ -179,14 +234,20 @@ export default function ManageCandidatesPage() {
                 onAccept={handleTermsAccept}
             />
 
-            <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" onClick={() => router.back()}>
-                    <ArrowLeft className="h-4 w-4" />
-                </Button>
-                <div>
-                    <h1 className="text-xl font-semibold">Gerenciar Candidatos</h1>
-                    <p className="text-sm text-muted-foreground">{campaign.title}</p>
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="icon" onClick={() => router.back()}>
+                        <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                    <div>
+                        <h1 className="text-xl font-semibold">Gerenciar Candidatos</h1>
+                        <p className="text-sm text-muted-foreground">{campaign.title}</p>
+                    </div>
                 </div>
+                <Button variant="outline" size="sm" onClick={handleExportXLS} className="gap-2">
+                    <Download className="h-4 w-4" />
+                    Exportar XLS
+                </Button>
             </div>
 
             <Tabs defaultValue="pending" className="w-full">

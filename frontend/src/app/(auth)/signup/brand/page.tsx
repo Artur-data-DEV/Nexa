@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { Check, Loader2, ArrowRight, Smartphone, Mail } from "lucide-react"
+import { Check, Loader2, ArrowRight, Smartphone, Mail, Building } from "lucide-react"
 import { toast } from "sonner"
 import type { AxiosError } from "axios"
 
@@ -45,6 +45,7 @@ const registerBrandUseCase = new RegisterBrandUseCase(authRepository)
 // Schema Validation
 const signUpSchema = z.object({
   companyName: z.string().min(3, "Nome da empresa deve ter no mínimo 3 caracteres"),
+  cnpj: z.string().min(14, "CNPJ inválido").transform(val => val.replace(/\D/g, '')),
   email: z.email("Email corporativo inválido"),
   whatsapp: z.string().min(10, "WhatsApp inválido"),
   password: z.string()
@@ -92,6 +93,7 @@ function BrandSignUpInner() {
     resolver: zodResolver(signUpSchema),
     defaultValues: {
       companyName: "",
+      cnpj: "",
       email: "",
       whatsapp: "",
       password: "",
@@ -112,17 +114,18 @@ function BrandSignUpInner() {
     setServerError(null)
 
     try {
-      const { companyName, email, whatsapp, password } = data
+      const { companyName, cnpj, email, whatsapp, password } = data
       const normalizedEmail = email.trim().toLowerCase()
 
       const auth = await registerBrandUseCase.execute({
         name: companyName,
+        cnpj,
         email: normalizedEmail,
         whatsapp,
         password,
         password_confirmation: password,
       })
-      login(auth.token, auth.user)
+      await login(auth.token, auth.user)
       toast.success("Conta empresarial criada com sucesso!")
       const redirectTo = searchParams.get("redirectTo")
       router.replace(redirectTo || "/dashboard")
@@ -144,8 +147,11 @@ function BrandSignUpInner() {
         if (Array.isArray(apiErrors.whatsapp) && apiErrors.whatsapp.length > 0) {
           form.setError("whatsapp", { message: apiErrors.whatsapp[0] })
         }
-        if (Array.isArray(apiErrors.companyName) && apiErrors.companyName.length > 0) {
-          form.setError("companyName", { message: apiErrors.companyName[0] })
+        if (Array.isArray(apiErrors.cnpj) && apiErrors.cnpj.length > 0) {
+          form.setError("cnpj", { message: apiErrors.cnpj[0] })
+        }
+        if (Array.isArray(apiErrors.name) && apiErrors.name.length > 0) {
+          form.setError("companyName", { message: apiErrors.name[0] })
         }
         const firstMsg = Object.values(apiErrors).flat().at(0)
         if (firstMsg) {
@@ -175,6 +181,7 @@ function BrandSignUpInner() {
     try {
       setCode("")
       const devCode = await authRepository.sendOtp(email, 'email')
+      // await authRepository.sendOtp(whatsapp, 'whatsapp')
       setVerificationSent(true)
       if (devCode) {
           toast.success(`Código de verificação enviado: ${devCode}`)
@@ -223,7 +230,7 @@ function BrandSignUpInner() {
       return
     }
     if (target === 2) {
-      const isValid = await form.trigger(["companyName", "email", "whatsapp"])
+      const isValid = await form.trigger(["companyName", "email", "cnpj", "whatsapp"])
       if (isValid) {
         setStep(2)
       } else {
@@ -242,7 +249,7 @@ function BrandSignUpInner() {
 
   const nextStep = async () => {
     if (step === 1) {
-      const isValid = await form.trigger(["companyName", "email", "whatsapp"])
+      const isValid = await form.trigger(["companyName", "email", "cnpj", "whatsapp"])
       if (isValid) {
         setStep(2)
       }
@@ -342,7 +349,7 @@ function BrandSignUpInner() {
                           <Input
                             placeholder="contato@empresa.com"
                             type="email"
-                            className="text-xs bg-zinc-100/50 dark:bg-white/5 border-2 border-zinc-200 dark:border-white/10 focus-visible:ring-purple-600/50 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 rounded-xl"
+                            className="text-xs bg-zinc-100/50 dark:bg-white/5 border-2 border-zinc-200 dark:border-white/10 focus-visible:ring-pink-500/50 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 rounded-xl"
                             {...field}
                           />
                         </FormControl>
@@ -350,22 +357,41 @@ function BrandSignUpInner() {
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="whatsapp"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">WhatsApp Comercial</FormLabel>
-                        <FormControl>
-                          <PhoneInput
-                            placeholder="(11) 99999-9999"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="cnpj"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs font-black uppercase tracking-widest text-zinc-900 dark:text-zinc-100">CNPJ</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="00.000.000/0000-00"
+                              className="text-xs bg-zinc-100/50 dark:bg-white/5 border-2 border-zinc-200 dark:border-white/10 focus-visible:ring-pink-500/50 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 rounded-xl"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="whatsapp"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs font-black uppercase tracking-widest text-zinc-900 dark:text-zinc-100">WhatsApp</FormLabel>
+                          <FormControl>
+                            <PhoneInput
+                              placeholder="(11) 99999-9999"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                   <Button
                     type="button"
                     className="w-full bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-600/25 h-11 font-bold rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
@@ -393,12 +419,16 @@ function BrandSignUpInner() {
                     <div className="space-y-4">
                       <div className="bg-white/5 border border-white/10 p-4 rounded-xl text-sm space-y-3">
                         <div className="flex items-center gap-3">
-                          <Mail className="h-4 w-4 text-purple-600" />
+                          <Mail className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                           <span className="text-foreground/80">{form.getValues("email")}</span>
                         </div>
                         <div className="flex items-center gap-3">
-                          <Smartphone className="h-4 w-4 text-purple-600" />
+                          <Smartphone className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                           <span className="text-foreground/80">{form.getValues("whatsapp")}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Building className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                          <span className="text-foreground/80">{form.getValues("cnpj")}</span>
                         </div>
                       </div>
                       <Button type="button" onClick={sendVerificationCode} className="w-full bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-600/25 h-11 font-bold rounded-xl transition-all" disabled={loading}>

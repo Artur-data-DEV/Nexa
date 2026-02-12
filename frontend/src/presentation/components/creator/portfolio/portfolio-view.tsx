@@ -30,6 +30,9 @@ const uploadPortfolioMediaUseCase = new UploadPortfolioMediaUseCase(portfolioRep
 const deletePortfolioItemUseCase = new DeletePortfolioItemUseCase(portfolioRepository)
 
 const MAX_TOTAL_FILES = 12
+const MAX_FILE_SIZE_MB = 100
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
+
 const ACCEPTED_TYPES = [
     "image/jpeg", "image/png", "image/jpg", "image/webp", "image/avif", "image/gif", "image/bmp", "image/svg+xml",
     "video/mp4", "video/quicktime", "video/mov", "video/avi", "video/webm", "video/ogg", "video/x-matroska", "video/x-flv", "video/3gpp", "video/x-ms-wmv", "application/octet-stream"
@@ -57,6 +60,7 @@ export default function PortfolioView() {
     const [isEditOpen, setIsEditOpen] = useState(false)
     const [editTitle, setEditTitle] = useState("")
     const [editBio, setEditBio] = useState("")
+    const [editWhatsapp, setEditWhatsapp] = useState("")
     const [editLinks, setEditLinks] = useState<{ title: string, url: string }[]>([])
     const [editAvatar, setEditAvatar] = useState<File | null>(null)
     const [editAvatarPreview, setEditAvatarPreview] = useState<string | null>(null)
@@ -97,11 +101,13 @@ export default function PortfolioView() {
         if (!portfolio) {
             setEditTitle(user?.name || "")
             setEditBio("")
+            setEditWhatsapp(user?.whatsapp || "")
             setEditLinks([{ title: "", url: "" }])
             setEditAvatarPreview(user?.avatar || null)
         } else {
             setEditTitle(portfolio.title || "")
             setEditBio(portfolio.bio || "")
+            setEditWhatsapp(user?.whatsapp || "") // Portfolio usually uses user's whatsapp or we might need to add it to portfolio model if it differs. Sticking to user's for now as "controle de contato".
             setEditLinks(portfolio.project_links ? [...portfolio.project_links] : [{ title: "", url: "" }])
             setEditAvatarPreview(portfolio.profile_picture_url || null)
         }
@@ -138,6 +144,7 @@ export default function PortfolioView() {
             const formData = new FormData()
             formData.append('title', editTitle)
             formData.append('bio', editBio)
+            formData.append('whatsapp', editWhatsapp)
 
             const validLinks = editLinks.filter(l => l.url.trim() !== "")
             if (validLinks.length > 0) {
@@ -167,7 +174,8 @@ export default function PortfolioView() {
                 const nextUser = { 
                     ...user, 
                     avatar: updatedAvatarUrl || user.avatar,
-                    bio: updated.bio || user.bio
+                    bio: updated.bio || user.bio,
+                    whatsapp: editWhatsapp || user.whatsapp
                 }
                 updateUser(nextUser)
                 if (typeof window !== "undefined" && editAvatar) {
@@ -192,7 +200,28 @@ export default function PortfolioView() {
     }
 
     const addFiles = (files: File[]) => {
-        const validFiles = files.filter(f => ACCEPTED_TYPES.includes(f.type))
+        const validFiles = []
+        let hasLargeFile = false
+        let hasInvalidType = false
+
+        for (const f of files) {
+            if (f.size > MAX_FILE_SIZE_BYTES) {
+                hasLargeFile = true
+                continue
+            }
+            if (!ACCEPTED_TYPES.includes(f.type) && !f.type.startsWith("image/") && !f.type.startsWith("video/")) {
+                hasInvalidType = true
+                continue
+            }
+            validFiles.push(f)
+        }
+
+        if (hasLargeFile) {
+            toast.error(`Alguns arquivos excedem o limite de ${MAX_FILE_SIZE_MB}MB.`)
+        }
+        if (hasInvalidType) {
+            toast.error("Alguns arquivos possuem formato inválido.")
+        }
 
         const currentCount = (portfolio?.items?.length || 0) + uploadFiles.length
         if (currentCount + validFiles.length > MAX_TOTAL_FILES) {
@@ -298,7 +327,15 @@ export default function PortfolioView() {
                         <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-4">
                             <div>
                                 <h1 className="text-2xl font-bold">{portfolio?.title || user?.name}</h1>
-                                <p className="text-muted-foreground whitespace-pre-wrap max-w-2xl">
+                                {user?.whatsapp && (
+                                    <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
+                                        <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                                            Apenas para você
+                                        </span>
+                                        WhatsApp: {user.whatsapp}
+                                    </p>
+                                )}
+                                <p className="text-muted-foreground whitespace-pre-wrap max-w-2xl mt-2">
                                     {portfolio?.bio || "Adicione uma bio para contar sua história..."}
                                 </p>
                             </div>
@@ -452,6 +489,16 @@ export default function PortfolioView() {
                         </div>
 
                         <div className="space-y-2">
+                            <Label>WhatsApp (Apenas Interno)</Label>
+                            <Input
+                                value={editWhatsapp}
+                                onChange={(e) => setEditWhatsapp(e.target.value)}
+                                placeholder="(11) 99999-9999"
+                            />
+                            <p className="text-xs text-muted-foreground">Visível apenas para você e administradores.</p>
+                        </div>
+
+                        <div className="space-y-2">
                             <Label>Links de Projetos</Label>
                             {editLinks.map((link, index) => (
                                 <div key={index} className="flex gap-2">
@@ -511,7 +558,10 @@ export default function PortfolioView() {
                         >
                             <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
                             <p className="text-sm text-muted-foreground mb-2">
-                                Arraste e solte arquivos aqui ou clique para selecionar
+                                Arraste e solte arquivos aqui ou clique para selecionar.
+                            </p>
+                            <p className="text-xs text-muted-foreground mb-4">
+                                Suporta Imagens (JPEG, PNG, WEBP) e Vídeos (MP4, MOV, AVI). Máx {MAX_FILE_SIZE_MB}MB.
                             </p>
                             <input
                                 type="file"

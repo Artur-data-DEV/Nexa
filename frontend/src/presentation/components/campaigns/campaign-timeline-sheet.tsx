@@ -119,6 +119,11 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
     const handleFileUpload = async (milestoneId: number) => {
         if (!selectedFile) return
 
+        if (selectedFile.size > 100 * 1024 * 1024) { // 100MB limit
+            toast.error("Arquivo muito grande. O limite máximo é 100MB.")
+            return
+        }
+
         try {
             setIsUploading(true)
             const response = await timelineRepository.uploadFile(milestoneId, selectedFile)
