@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, CheckCircle, XCircle, Clock, MessageCircle, Download } from "lucide-react"
+import { ArrowLeft, CheckCircle, XCircle, Clock, MessageCircle, Download, ExternalLink } from "lucide-react"
 import Link from "next/link"
 import type { AxiosError } from "axios"
 
@@ -22,6 +22,8 @@ import { toast } from "sonner"
 import { TermsModal } from "@/presentation/components/terms/terms-modal"
 import { TERMS_CONTENT } from "@/presentation/components/terms/terms-content"
 import { FaFileCsv } from "react-icons/fa6";
+import { Badge } from "@/presentation/components/ui/badge"
+import { ScrollArea } from "@/presentation/components/ui/scroll-area"
 
 const applicationRepository = new ApiApplicationRepository(api)
 const campaignRepository = new ApiCampaignRepository(api)
@@ -120,7 +122,7 @@ export default function ManageCandidatesPage() {
         // CSV Rows
         const rows = applications.map(app => {
             const creator = app.creator || { id: 0, name: "Desconhecido", instagram_handle: "", tiktok_handle: "" }
-
+            
             // Format fields to avoid CSV breakages (wrap in quotes if contains delimiter)
             const cleanText = (text: string | undefined | null) => {
                 if (!text) return ""
@@ -205,8 +207,8 @@ export default function ManageCandidatesPage() {
         return (
             <div className="flex flex-col gap-6 p-6">
                 <Skeleton className="h-8 w-1/3" />
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {[1, 2, 3].map(i => <Skeleton key={i} className="h-64 w-full" />)}
+                <div className="space-y-4">
+                    {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full" />)}
                 </div>
             </div>
         )
@@ -281,34 +283,39 @@ export default function ManageCandidatesPage() {
                                 Nenhuma candidatura pendente no momento.
                             </div>
                         ) : (
-                            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                                {pendingApplications.map(app => (
-                                    <CandidateCard
-                                        key={app.id}
-                                        application={app}
-                                        onApprove={() => handleApproveClick(app.id)}
-                                        onReject={() => handleStatusUpdate(app.id, 'rejected')}
-                                        isProcessing={processingId === app.id}
-                                    />
-                                ))}
-                            </div>
+                            <CandidatesTable
+                                applications={pendingApplications}
+                                onApprove={handleApproveClick}
+                                onReject={(id) => handleStatusUpdate(id, 'rejected')}
+                                processingId={processingId}
+                            />
                         )}
                     </TabsContent>
 
                     <TabsContent value="approved">
-                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                            {approvedApplications.map(app => (
-                                <CandidateCard key={app.id} application={app} readonly />
-                            ))}
-                        </div>
+                        {approvedApplications.length === 0 ? (
+                            <div className="text-center py-12 text-muted-foreground">
+                                Nenhum candidato aprovado.
+                            </div>
+                        ) : (
+                            <CandidatesTable
+                                applications={approvedApplications}
+                                readonly
+                            />
+                        )}
                     </TabsContent>
 
                     <TabsContent value="rejected">
-                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                            {rejectedApplications.map(app => (
-                                <CandidateCard key={app.id} application={app} readonly />
-                            ))}
-                        </div>
+                        {rejectedApplications.length === 0 ? (
+                            <div className="text-center py-12 text-muted-foreground">
+                                Nenhum candidato rejeitado.
+                            </div>
+                        ) : (
+                            <CandidatesTable
+                                applications={rejectedApplications}
+                                readonly
+                            />
+                        )}
                     </TabsContent>
                 </div>
             </Tabs>
@@ -316,119 +323,132 @@ export default function ManageCandidatesPage() {
     )
 }
 
-function CandidateCard({
-    application,
+function CandidatesTable({
+    applications,
     onApprove,
     onReject,
-    isProcessing,
+    processingId,
     readonly = false
 }: {
-    application: ExtendedApplication,
-    onApprove?: () => void,
-    onReject?: () => void,
-    isProcessing?: boolean,
+    applications: ExtendedApplication[],
+    onApprove?: (id: number) => void,
+    onReject?: (id: number) => void,
+    processingId?: number | null,
     readonly?: boolean
 }) {
     return (
-        <Card>
-            <CardHeader className="flex flex-row items-center gap-4">
-                <Avatar className="h-12 w-12">
-                    <AvatarImage src={application.creator?.avatar} />
-                    <AvatarFallback>{application.creator?.name?.substring(0, 2).toUpperCase()}</AvatarFallback>
-                </Avatar>
-                <div>
-                    <CardTitle className="text-base">{application.creator?.name}</CardTitle>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                        {application.creator?.instagram_handle && (
-                            <span className="bg-pink-100 text-pink-700 px-2 py-0.5 rounded-full">
-                                {application.creator.instagram_handle}
-                            </span>
-                        )}
-                    </div>
-                </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="space-y-2">
-                    <h4 className="text-sm font-medium">Proposta do criador</h4>
-                    <p className="text-sm text-muted-foreground whitespace-pre-line">
-                        {application.proposal}
-                    </p>
-                </div>
-                <div className="grid gap-2 text-sm">
-                    {typeof application.proposed_budget === "number" || application.proposed_budget ? (
-                        <div className="flex justify-between items-center bg-muted p-2 rounded">
-                            <span>Orçamento proposto</span>
-                            <span className="font-semibold">
-                                {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
-                                    Number(application.proposed_budget ?? application.budget ?? 0)
-                                )}
-                            </span>
-                        </div>
-                    ) : application.budget ? (
-                        <div className="flex justify-between items-center bg-muted p-2 rounded">
-                            <span>Orçamento proposto</span>
-                            <span className="font-semibold">
-                                {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(application.budget)}
-                            </span>
-                        </div>
-                    ) : null}
-                    {(application.estimated_delivery_days || application.delivery_days) && (
-                        <div className="flex justify-between items-center bg-muted p-2 rounded">
-                            <span>Prazo estimado</span>
-                            <span className="font-semibold">
-                                {((application.estimated_delivery_days ?? application.delivery_days) ?? 0) + " dias"}
-                            </span>
-                        </div>
-                    )}
-                </div>
-                {Array.isArray(application.portfolio_links) && application.portfolio_links.length > 0 && (
-                    <div className="space-y-1">
-                        <h4 className="text-sm font-medium">Portfólio</h4>
-                        <ul className="space-y-1">
-                            {application.portfolio_links.map((link: string, index: number) => (
-                                <li key={index}>
-                                    <a
-                                        href={link}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-xs text-primary underline break-all"
-                                    >
-                                        {link}
-                                    </a>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                )}
-            </CardContent>
-            <CardFooter className="flex gap-2">
-                {readonly ? (
-                    <Button variant="outline" className="w-full" asChild>
-                        <Link href={`/dashboard/messages?chat=${application.creator_id}`}>
-                            <MessageCircle className="mr-2 h-4 w-4" />
-                            Mensagem
-                        </Link>
-                    </Button>
-                ) : (
-                    <>
-                        <Button
-                            variant="outline"
-                            className="flex-1 border-red-200 hover:bg-red-50 text-red-600 hover:text-red-700"
-                            onClick={onReject}
-                            disabled={isProcessing}
-                        >
-                            Rejeitar
-                        </Button>
-                        <Button
-                            className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                            onClick={onApprove}
-                            disabled={isProcessing}
-                        >
-                            Aprovar
-                        </Button>
-                    </>
-                )}
-            </CardFooter>
-        </Card>
+        <div className="rounded-md border">
+            <div className="w-full overflow-auto">
+                <table className="w-full caption-bottom text-sm">
+                    <thead className="[&_tr]:border-b">
+                        <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Criador</th>
+                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Proposta</th>
+                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Orçamento/Prazo</th>
+                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Portfólio</th>
+                            <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody className="[&_tr:last-child]:border-0">
+                        {applications.map((app) => (
+                            <tr key={app.id} className="border-b transition-colors hover:bg-muted/50">
+                                <td className="p-4 align-top">
+                                    <div className="flex flex-row items-center gap-3">
+                                        <Avatar className="h-10 w-10">
+                                            <AvatarImage src={app.creator?.avatar} />
+                                            <AvatarFallback>{app.creator?.name?.substring(0, 2).toUpperCase()}</AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                            <div className="font-medium">{app.creator?.name}</div>
+                                            <div className="flex gap-2 mt-1">
+                                                {app.creator?.instagram_handle && (
+                                                    <Badge variant="outline" className="text-[10px] bg-pink-50 text-pink-700 border-pink-200">
+                                                        {app.creator.instagram_handle}
+                                                    </Badge>
+                                                )}
+                                                {app.creator?.tiktok_handle && (
+                                                    <Badge variant="outline" className="text-[10px] bg-black text-white border-black">
+                                                        {app.creator.tiktok_handle}
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td className="p-4 align-top max-w-[300px]">
+                                    <ScrollArea className="h-[80px]">
+                                        <p className="text-sm text-muted-foreground whitespace-pre-line">
+                                            {app.proposal}
+                                        </p>
+                                    </ScrollArea>
+                                </td>
+                                <td className="p-4 align-top">
+                                    <div className="space-y-1">
+                                        <div className="text-sm font-medium">
+                                            {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
+                                                Number(app.proposed_budget ?? app.budget ?? 0)
+                                            )}
+                                        </div>
+                                        <div className="text-xs text-muted-foreground">
+                                            {((app.estimated_delivery_days ?? app.delivery_days) ?? 0) + " dias"}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td className="p-4 align-top">
+                                    {Array.isArray(app.portfolio_links) && app.portfolio_links.length > 0 ? (
+                                        <div className="flex flex-col gap-1">
+                                            {app.portfolio_links.map((link, i) => (
+                                                <a 
+                                                    key={i} 
+                                                    href={link} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer"
+                                                    className="flex items-center gap-1 text-xs text-primary hover:underline truncate max-w-[150px]"
+                                                >
+                                                    <ExternalLink className="h-3 w-3" />
+                                                    Link {i + 1}
+                                                </a>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <span className="text-xs text-muted-foreground">-</span>
+                                    )}
+                                </td>
+                                <td className="p-4 align-top text-right">
+                                    {readonly ? (
+                                        <Button variant="outline" size="sm" asChild>
+                                            <Link href={`/dashboard/messages?chat=${app.creator_id}`}>
+                                                <MessageCircle className="mr-2 h-3 w-3" />
+                                                Mensagem
+                                            </Link>
+                                        </Button>
+                                    ) : (
+                                        <div className="flex flex-col gap-2">
+                                            <Button
+                                                size="sm"
+                                                className="bg-green-600 hover:bg-green-700 text-white"
+                                                onClick={() => onApprove?.(app.id)}
+                                                disabled={processingId === app.id}
+                                            >
+                                                Aprovar
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="text-red-600 hover:text-red-700 border-red-200 hover:bg-red-50"
+                                                onClick={() => onReject?.(app.id)}
+                                                disabled={processingId === app.id}
+                                            >
+                                                Rejeitar
+                                            </Button>
+                                        </div>
+                                    )}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     )
 }

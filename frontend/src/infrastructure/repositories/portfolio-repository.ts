@@ -107,12 +107,32 @@ export class ApiPortfolioRepository implements PortfolioRepository {
 
 
   async uploadMedia(data: FormData): Promise<{ items: PortfolioItem[]; total_items: number }> {
-    const response = await this.http.post<{ data: { items: PortfolioItem[]; total_items: number } }>("/portfolio/media", data)
+    // Define a loose type for the response to handle potential structure variations
+    const response = await this.http.post<{ data: any }>("/portfolio/media", data)
+    
+    // Safely extract data, handling both direct and nested structures
+    const responseData = response.data
+    
+    // Check if items exists, default to empty array if not
+    const items = Array.isArray(responseData.items) ? responseData.items : []
+    
+    // Check if total_items exists, default to items length or 0
+    const totalItems = typeof responseData.total_items === 'number' 
+        ? responseData.total_items 
+        : items.length
+
     return {
-      total_items: response.data.total_items,
-      items: response.data.items.map((item) => ({
-        ...item,
+      total_items: totalItems,
+      items: items.map((item: any) => ({
+        id: item.id,
+        title: item.title,
+        description: item.description,
         file_url: this.resolveUrl(item.file_url) || item.file_url,
+        media_type: item.media_type,
+        thumbnail_url: item.thumbnail_url ? (this.resolveUrl(item.thumbnail_url) || item.thumbnail_url) : undefined,
+        order: item.order,
+        created_at: item.created_at,
+        updated_at: item.updated_at
       })),
     }
   }
