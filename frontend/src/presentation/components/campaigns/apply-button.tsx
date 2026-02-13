@@ -95,16 +95,25 @@ export function ApplyButton({ campaign, onSuccess }: ApplyButtonProps) {
       return null
   }
 
-  if (user.role !== "creator") {
+  if (user.role !== "creator" && user.role !== "student") {
       return null
   }
 
-  if (!user.has_premium) {
+  // Check permissions based on role
+  if (user.role === "creator" && !user.has_premium) {
     return (
       <Button size="lg" variant="outline" className="w-full md:w-auto" asChild>
         <Link href="/dashboard/subscription">Assinar Premium</Link>
       </Button>
     )
+  }
+
+  if (user.role === "student" && !user.student_verified) {
+      return (
+          <Button size="lg" variant="outline" className="w-full md:w-auto" disabled title="Verifique sua conta de estudante para se candidatar">
+              Verifique sua conta
+          </Button>
+      )
   }
 
   const userPortfolioLinks = user.portfolio?.project_links || []

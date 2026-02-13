@@ -21,6 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/presentation/compone
 import { toast } from "sonner"
 import { TermsModal } from "@/presentation/components/terms/terms-modal"
 import { TERMS_CONTENT } from "@/presentation/components/terms/terms-content"
+import { FaFileCsv } from "react-icons/fa6";
 
 const applicationRepository = new ApiApplicationRepository(api)
 const campaignRepository = new ApiCampaignRepository(api)
@@ -119,7 +120,7 @@ export default function ManageCandidatesPage() {
         // CSV Rows
         const rows = applications.map(app => {
             const creator = app.creator || { id: 0, name: "Desconhecido", instagram_handle: "", tiktok_handle: "" }
-            
+
             // Format fields to avoid CSV breakages (wrap in quotes if contains delimiter)
             const cleanText = (text: string | undefined | null) => {
                 if (!text) return ""
@@ -155,11 +156,11 @@ export default function ManageCandidatesPage() {
         setProcessingId(applicationId)
         try {
             await applicationRepository.updateStatus(applicationId, status)
-            
-            setApplications(prev => prev.map(app => 
+
+            setApplications(prev => prev.map(app =>
                 app.id === applicationId ? { ...app, status } : app
             ))
-            
+
             if (status === 'approved') {
                 toast.success("Candidato aprovado! O chat foi iniciado automaticamente.")
             } else {
@@ -182,8 +183,8 @@ export default function ManageCandidatesPage() {
                     (data.requires_stripe_account
                         ? "Você precisa configurar sua conta Stripe antes de aprovar propostas."
                         : data.requires_funding
-                        ? "Você precisa configurar um método de pagamento antes de aprovar propostas."
-                        : "Não foi possível aprovar a candidatura. Verifique suas configurações de pagamento.")
+                            ? "Você precisa configurar um método de pagamento antes de aprovar propostas."
+                            : "Não foi possível aprovar a candidatura. Verifique suas configurações de pagamento.")
 
                 toast.error(message)
 
@@ -226,8 +227,8 @@ export default function ManageCandidatesPage() {
 
     return (
         <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8 min-h-[92vh]">
-            <TermsModal 
-                open={showTerms} 
+            <TermsModal
+                open={showTerms}
                 onOpenChange={setShowTerms}
                 title={TERMS_CONTENT.brand_approval.title}
                 content={TERMS_CONTENT.brand_approval.content}
@@ -244,10 +245,17 @@ export default function ManageCandidatesPage() {
                         <p className="text-sm text-muted-foreground">{campaign.title}</p>
                     </div>
                 </div>
-                <Button variant="outline" size="sm" onClick={handleExportXLS} className="gap-2">
-                    <Download className="h-4 w-4" />
-                    Exportar XLS
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleExportXLS}
+                        className="gap-2 bg-chart-2 text-white hover:bg-chart-2/90"
+                    >
+                        <FaFileCsv  className="h-4 w-4" />
+                        Exportar XLS
+                    </Button>
+                </div>
             </div>
 
             <Tabs defaultValue="pending" className="w-full">
@@ -275,9 +283,9 @@ export default function ManageCandidatesPage() {
                         ) : (
                             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                                 {pendingApplications.map(app => (
-                                    <CandidateCard 
-                                        key={app.id} 
-                                        application={app} 
+                                    <CandidateCard
+                                        key={app.id}
+                                        application={app}
                                         onApprove={() => handleApproveClick(app.id)}
                                         onReject={() => handleStatusUpdate(app.id, 'rejected')}
                                         isProcessing={processingId === app.id}
@@ -296,7 +304,7 @@ export default function ManageCandidatesPage() {
                     </TabsContent>
 
                     <TabsContent value="rejected">
-                         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                             {rejectedApplications.map(app => (
                                 <CandidateCard key={app.id} application={app} readonly />
                             ))}
@@ -308,15 +316,15 @@ export default function ManageCandidatesPage() {
     )
 }
 
-function CandidateCard({ 
-    application, 
-    onApprove, 
-    onReject, 
+function CandidateCard({
+    application,
+    onApprove,
+    onReject,
     isProcessing,
-    readonly = false 
-}: { 
-    application: ExtendedApplication, 
-    onApprove?: () => void, 
+    readonly = false
+}: {
+    application: ExtendedApplication,
+    onApprove?: () => void,
     onReject?: () => void,
     isProcessing?: boolean,
     readonly?: boolean
@@ -403,15 +411,15 @@ function CandidateCard({
                     </Button>
                 ) : (
                     <>
-                        <Button 
-                            variant="outline" 
+                        <Button
+                            variant="outline"
                             className="flex-1 border-red-200 hover:bg-red-50 text-red-600 hover:text-red-700"
                             onClick={onReject}
                             disabled={isProcessing}
                         >
                             Rejeitar
                         </Button>
-                        <Button 
+                        <Button
                             className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                             onClick={onApprove}
                             disabled={isProcessing}

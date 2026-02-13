@@ -267,11 +267,26 @@ export default function PortfolioView() {
             toast.dismiss(loadingToast)
             console.error("Failed to upload media", error)
             const axiosError = error as AxiosError<{ message?: string; errors?: { files?: string[] } }>
+            
+            // Log error details for mobile debugging
+            console.log("Upload Error Details:", {
+                message: axiosError.message,
+                response: axiosError.response?.data,
+                status: axiosError.response?.status,
+                headers: axiosError.response?.headers
+            })
+
             const message =
                 axiosError.response?.data?.message ||
                 axiosError.response?.data?.errors?.files?.[0] ||
-                "Erro ao enviar mídia. Tente novamente."
-            toast.error(message)
+                `Erro ao enviar mídia: ${axiosError.message || "Erro desconhecido"}`
+            
+            toast.error(message, { duration: 5000 })
+            
+            // Temporary debug toast
+            if (process.env.NODE_ENV === 'development' || typeof window !== 'undefined') {
+                 toast.error(`DEBUG: ${axiosError.message} | Status: ${axiosError.response?.status}`, { duration: 8000 })
+            }
         } finally {
             setUploading(false)
         }

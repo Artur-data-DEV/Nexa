@@ -5,11 +5,13 @@ export interface User {
   name: string
   email: string
   whatsapp?: string
-  role: "brand" | "creator" | "admin"
+  role: "brand" | "creator" | "admin" | "student"
   avatar?: string
   email_verified_at?: string | null
   created_at: string
   updated_at: string
+  student_verified?: boolean
+  student_expires_at?: string | null
   
   // Extended Profile Fields
   bio?: string
