@@ -375,8 +375,8 @@ function CandidatesTable({
                                         </div>
                                     </div>
                                 </td>
-                                <td className="p-4 align-top max-w-[300px]">
-                                    <ScrollArea className="h-[80px]">
+                                <td className="p-4 align-top max-w-75">
+                                    <ScrollArea className="h-20">
                                         <p className="text-sm text-muted-foreground whitespace-pre-line">
                                             {app.proposal}
                                         </p>
@@ -403,7 +403,7 @@ function CandidatesTable({
                                                     href={link} 
                                                     target="_blank" 
                                                     rel="noopener noreferrer"
-                                                    className="flex items-center gap-1 text-xs text-primary hover:underline truncate max-w-[150px]"
+                                                    className="flex items-center gap-1 text-xs text-primary hover:underline truncate max-w-37.5"
                                                 >
                                                     <ExternalLink className="h-3 w-3" />
                                                     Link {i + 1}

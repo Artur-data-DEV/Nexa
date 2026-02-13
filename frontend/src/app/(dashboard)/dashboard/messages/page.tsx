@@ -990,9 +990,9 @@ export default function MessagesPage() {
                                                                 <div
                                                                     className={cn(
                                                                         "w-full rounded-lg border px-3 py-2 text-sm",
-                                                                        isMe
-                                                                            ? "bg-linear-to-r from-blue-50 to-indigo-50"
-                                                                            : "bg-muted"
+                                                                    isMe
+                                                                        ? "bg-primary/5 border-primary/20"
+                                                                        : "bg-muted border-transparent"
                                                                     )}
                                                                 >
                                                                     <div className="flex items-center justify-between mb-1">
