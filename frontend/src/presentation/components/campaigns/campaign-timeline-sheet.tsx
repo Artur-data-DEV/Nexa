@@ -493,48 +493,55 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
     const steps = [
         {
             id: 1,
-            title: "Contratação do Criador",
+            title: "Contratação",
             icon: UserCheck,
             status: 'completed',
-            description: "Contrato aprovado e ativo",
+            description: "Aprovado - Inscrição aprovada pela marca",
             content: null
         },
         {
             id: 2,
-            title: "Alinhamento e Logística",
+            title: "Pagamento",
+            icon: DollarSign,
+            status: isPaymentCompleted ? 'completed' : isPaymentActive ? 'current' : 'pending',
+            description: isPaymentCompleted ? "Pagamento retido (Escrow)" : "Aguardando Pagamento",
+            content: null
+        },
+        {
+            id: 3,
+            title: "Produto Entregue",
             icon: Package,
-            status: ['material_sent', 'product_sent', 'product_received', 'production_started'].includes(contract?.workflow_status || '') ? 'completed' : 'current',
-            description: "Envio e recebimento de produtos",
+            status: ['material_sent', 'product_sent', 'product_received', 'production_started'].includes(contract?.workflow_status || '') ? 'completed' : (isPaymentCompleted ? 'current' : 'pending'),
+            description: "Aguardando entrega de rastreio",
             content: (
                 <div className="mt-3 p-3 bg-muted/30 rounded-lg border space-y-3">
-                    {contract?.workflow_status === 'active' && (
+                    {contract?.workflow_status === 'active' && isPaymentCompleted && (
                         <div className="flex flex-col gap-2">
-                            <p className="text-xs text-muted-foreground">Aguardando envio de material pela marca.</p>
                             {user?.role === 'brand' ? (
                                 <Button size="sm" onClick={() => handleLogisticsUpdate('material_sent')} disabled={isLoading}>
                                     <Truck className="w-3 h-3 mr-2" />
-                                    Marcar Material Enviado
+                                    Marcar Produto Enviado
                                 </Button>
                             ) : (
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted p-2 rounded">
                                     <Clock className="w-3 h-3" />
-                                    Aguardando a marca enviar o material
+                                    Aguardando envio do produto
                                 </div>
                             )}
                         </div>
                     )}
                     {['material_sent', 'product_sent'].includes(contract?.workflow_status || '') && (
                         <div className="flex flex-col gap-2">
-                            <p className="text-xs text-muted-foreground">Material enviado. Aguardando confirmação do criador.</p>
+                            <p className="text-xs text-muted-foreground">Produto em trânsito. Aguardando confirmação.</p>
                             {user?.role === 'creator' ? (
-                                <Button size="sm" onClick={() => handleLogisticsUpdate('product_received')} disabled={isLoading}>
-                                    <Package className="w-3 h-3 mr-2" />
-                                    Confirmar Recebimento
+                                <Button size="sm" onClick={() => handleLogisticsUpdate('product_received')} disabled={isLoading} className="bg-purple-600 hover:bg-purple-700 text-white w-full">
+                                    <Check className="w-3 h-3 mr-2" />
+                                    Produto chegou
                                 </Button>
                             ) : (
                                 <div className="flex items-center gap-2 text-xs text-blue-600 bg-blue-50 p-2 rounded">
                                     <Truck className="w-3 h-3" />
-                                    Material enviado. Aguardando criador confirmar.
+                                    Produto enviado.
                                 </div>
                             )}
                         </div>
@@ -542,56 +549,64 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
                     {['product_received', 'production_started'].includes(contract?.workflow_status || '') && (
                         <div className="flex items-center gap-2 text-green-600 text-xs bg-green-50 p-2 rounded border border-green-100">
                             <Check className="w-3 h-3" />
-                            <span>Produto recebido. Produção liberada.</span>
+                            <span>Produto Entregue</span>
                         </div>
                     )}
                 </div>
             )
         },
         {
-            id: 3,
-            title: "Roteiro e Planejamento",
+            id: 4,
+            title: "Roteiro Aprovado",
             icon: FileText,
-            status: scriptMilestones.some(m => m.status === 'completed' || m.status === 'approved') ? 'completed' : (scriptMilestones.length > 0 ? 'current' : 'pending'),
-            description: "Criação e aprovação do roteiro",
+            status: scriptMilestones.some(m => m.status === 'completed' || m.status === 'approved') ? 'completed' : (scriptMilestones.length > 0 && ['product_received', 'production_started'].includes(contract?.workflow_status || '') ? 'current' : 'pending'),
+            description: "Roteiro aprovado pela marca",
             content: renderMilestoneList(scriptMilestones)
         },
         {
-            id: 4,
-            title: "Produção de Conteúdo",
+            id: 5,
+            title: "Enviar Gravação",
             icon: Video,
             status: productionMilestones.some(m => m.status === 'completed' || m.status === 'approved') ? 'completed' : (productionMilestones.length > 0 && scriptMilestones.every(m => m.status === 'approved') ? 'current' : 'pending'),
-            description: "Gravação e envio do material",
-            content: renderMilestoneList(productionMilestones)
-        },
-        {
-            id: 5,
-            title: "Aprovação Final",
-            icon: Check,
-            status: approvalMilestones.some(m => m.status === 'completed' || m.status === 'approved') ? 'completed' : (approvalMilestones.length > 0 && productionMilestones.every(m => m.status === 'approved') ? 'current' : 'pending'),
-            description: "Aprovação final pela marca",
-            content: renderMilestoneList(approvalMilestones)
+            description: "Envie até " + (contract?.expected_completion_at ? new Date(contract.expected_completion_at).toLocaleDateString() : 'data final'),
+            content: (
+                <div className="space-y-3 mt-3">
+                    {renderMilestoneList(productionMilestones)}
+                    {productionMilestones.some(m => m.status === 'pending' && user?.role === 'creator') && (
+                        <Button 
+                            className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                            onClick={() => {
+                                const pendingMilestone = productionMilestones.find(m => m.status === 'pending');
+                                if (pendingMilestone) {
+                                    setSelectedMilestone(pendingMilestone);
+                                    setShowUploadDialog(true);
+                                }
+                            }}
+                        >
+                            <Upload className="w-4 h-4 mr-2" />
+                            Enviar Gravação
+                        </Button>
+                    )}
+                </div>
+            )
         },
         {
             id: 6,
-            title: "Pagamento",
-            icon: DollarSign,
-            status: isPaymentCompleted ? 'completed' : isPaymentActive ? 'current' : 'pending',
-            description: paymentStatusLabel,
-            content: null
-        },
-        {
-            id: 7,
-            title: "Encerramento",
-            icon: Archive,
+            title: "Finalizado",
+            icon: Check,
             status: contract?.status === 'completed' ? 'completed' : 'pending',
-            description: "Conclusão do contrato",
-            content: user?.role === 'brand' && contract?.status === 'active' && approvalMilestones.some(m => m.status === 'approved') ? (
-                 <Button onClick={handleFinalizeContract} className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white" size="sm">
-                    <Check className="w-4 h-4 mr-2" />
-                    Finalizar Campanha e Liberar Pagamento
-                 </Button>
-            ) : null
+            description: "Comprovante de pagamento anexado",
+            content: (
+                <div className="space-y-3 mt-3">
+                    {renderMilestoneList(approvalMilestones)}
+                    {user?.role === 'brand' && contract?.status === 'active' && approvalMilestones.some(m => m.status === 'approved') && (
+                        <Button onClick={handleFinalizeContract} className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white" size="sm">
+                            <Check className="w-4 h-4 mr-2" />
+                            Aprovar e Finalizar
+                        </Button>
+                    )}
+                </div>
+            )
         }
     ]
 

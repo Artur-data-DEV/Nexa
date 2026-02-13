@@ -917,20 +917,20 @@ export default function MessagesPage() {
                             </div>
                         </div>
 
-                        <div className="flex flex-1 flex-col overflow-hidden rounded-lg border bg-background">
+                        <div className="flex flex-1 flex-col overflow-hidden rounded-lg border bg-background relative">
                             <Tabs
                                 value={activeTab}
                                 onValueChange={(value) => setActiveTab(value as "messages" | "milestones")}
                                 className="flex flex-1 flex-col overflow-hidden"
                             >
-                                <div className="px-4 py-2 border-b bg-muted/40">
-                                    <TabsList className="grid w-full grid-cols-2">
-                                        <TabsTrigger value="messages" className="flex items-center gap-2">
-                                            <MessageCircle className="h-4 w-4" />
+                                <div className="absolute top-2 right-4 z-10 w-64">
+                                    <TabsList className="grid w-full grid-cols-2 h-9 bg-muted/80 backdrop-blur border">
+                                        <TabsTrigger value="messages" className="flex items-center gap-2 text-xs">
+                                            <MessageCircle className="h-3.5 w-3.5" />
                                             Mensagens
                                         </TabsTrigger>
-                                        <TabsTrigger value="milestones" className="flex items-center gap-2">
-                                            <Clock className="h-4 w-4" />
+                                        <TabsTrigger value="milestones" className="flex items-center gap-2 text-xs">
+                                            <Clock className="h-3.5 w-3.5" />
                                             Milestones
                                         </TabsTrigger>
                                     </TabsList>
