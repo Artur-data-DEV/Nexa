@@ -78,9 +78,11 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
 
     const getErrorMessage = (error: unknown, fallback: string) => {
         if (error && typeof error === 'object' && 'response' in error) {
-            const axiosError = error as { response?: { status?: number, data?: { message?: string, errors?: Record<string, string[]> } } }
+            const axiosError = error as { response?: { status?: number, data?: { message?: string, error?: string, errors?: Record<string, string[]> } } }
             const response = axiosError.response
             
+            if (response?.data?.error) return response.data.error
+
             // Check for Laravel validation errors
             if (response?.data?.errors) {
                 const firstError = Object.values(response.data.errors).flat()[0]
