@@ -125,6 +125,37 @@ function PaymentMethodsInner() {
       }
     };
 
+    const handleContractFundingSuccess = async () => {
+      if (!sessionId || !contractId) return;
+
+      try {
+        const response = await api.post<{
+          success: boolean;
+          message?: string;
+          contract_status?: string;
+          payment_status?: string;
+        }>("/contract-payment/handle-funding-success", {
+          session_id: sessionId,
+          contract_id: Number(contractId),
+        });
+
+        if (response.success) {
+          toast.success(response.message || "Pagamento do contrato confirmado com sucesso.");
+        } else {
+          throw new Error(response.message || "Falha ao confirmar funding do contrato.");
+        }
+      } catch (error: unknown) {
+        const axiosError = error as AxiosError<{ message?: string }>;
+        const message =
+          axiosError.response?.data?.message ||
+          axiosError.message ||
+          "Não foi possível confirmar o pagamento do contrato.";
+        toast.error(message);
+      } finally {
+        router.replace("/dashboard/payment-methods");
+      }
+    };
+
     if (setupSuccess === "true" || success === "true") {
       void handleSetupSuccess();
       return;
@@ -132,8 +163,7 @@ function PaymentMethodsInner() {
 
     if (role === "brand") {
       if (fundingSuccess === "true" && sessionId && contractId) {
-        toast.success("Pagamento do contrato confirmado! O financiamento foi registrado com sucesso.");
-        router.replace("/dashboard/payment-methods");
+        void handleContractFundingSuccess();
         return;
       }
 

@@ -55,6 +55,7 @@ Este guia descreve os passos para testar o fluxo principal da plataforma, desde 
     *   *Nota:* Se estiver em modo de simulação, o pagamento será aprovado automaticamente. Se for Stripe Test, use os cartões de teste (ex: 4242...).
 3.  **Verificação:**
     *   O contrato deve mudar para status **"Ativo"**.
+    *   O valor do contrato deve ficar em **escrow retido** até a finalização.
     *   O dinheiro saiu da conta da marca (simbolicamente).
 
 ## Passo 5: Execução e Milestones (Criador)
@@ -85,9 +86,9 @@ Este guia descreve os passos para testar o fluxo principal da plataforma, desde 
 2.  Vá para **"Carteira"** ou "Extrato Financeiro".
 3.  Verifique o valor recebido.
     *   **Valor do Contrato:** R$ 100,00
-    *   **Taxa da Plataforma (10%):** R$ 10,00
-    *   **Valor Líquido Esperado:** R$ 90,00
-4.  Se o saldo mostrar **R$ 90,00**, o cálculo da comissão está correto.
+    *   **Taxa da Plataforma (5%):** R$ 5,00
+    *   **Valor Líquido Esperado:** R$ 95,00
+4.  Se o saldo mostrar **R$ 95,00**, o cálculo da comissão está correto.
 5.  Verifique se há um registro de transação detalhando a entrada e a taxa.
 
 ---

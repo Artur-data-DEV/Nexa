@@ -29,6 +29,7 @@ export interface User {
   facebook_page?: string
   twitter_handle?: string
   niche?: string
+  niches?: string[]
   industry?: string
   profession?: string
   languages?: string[]

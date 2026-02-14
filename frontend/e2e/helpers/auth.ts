@@ -14,8 +14,7 @@ export async function loginAs(page: Page, userType: UserType): Promise<void> {
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-            await page.goto('/login');
-            await page.waitForLoadState('networkidle');
+            await page.goto('/login', { waitUntil: 'domcontentloaded' });
 
             // Check if already logged in (redirected to dashboard)
             if (page.url().includes('/dashboard')) {
@@ -23,9 +22,13 @@ export async function loginAs(page: Page, userType: UserType): Promise<void> {
                 return;
             }
 
-            await page.fill(selectors.auth.emailInput, user.email);
-            await page.fill(selectors.auth.passwordInput, user.password);
-            await page.click(selectors.auth.loginButton);
+            const emailInput = page.getByLabel(/email/i).first();
+            const passwordInput = page.getByLabel(/senha|password/i).first();
+            const loginButton = page.getByRole('button', { name: /entrar na plataforma|entrar|login/i }).first();
+
+            await emailInput.fill(user.email);
+            await passwordInput.fill(user.password);
+            await loginButton.click();
 
             // Check for rate limiting
             const rateLimit = page.getByText('Muitas tentativas. Aguarde um pouco e tente novamente.');
@@ -66,12 +69,10 @@ export async function loginAs(page: Page, userType: UserType): Promise<void> {
  */
 export async function verifyTestUsersExist(page: Page): Promise<boolean> {
     try {
-        await page.goto('/login');
-        await page.waitForLoadState('networkidle');
-
-        await page.fill(selectors.auth.emailInput, testUsers.brand.email);
-        await page.fill(selectors.auth.passwordInput, testUsers.brand.password);
-        await page.click(selectors.auth.loginButton);
+        await page.goto('/login', { waitUntil: 'domcontentloaded' });
+        await page.getByLabel(/email/i).first().fill(testUsers.brand.email);
+        await page.getByLabel(/senha|password/i).first().fill(testUsers.brand.password);
+        await page.getByRole('button', { name: /entrar na plataforma|entrar|login/i }).first().click();
 
         // Wait briefly for response
         await page.waitForTimeout(3000);

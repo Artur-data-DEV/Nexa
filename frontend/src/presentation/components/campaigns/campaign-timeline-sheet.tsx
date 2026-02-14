@@ -28,9 +28,9 @@ import {
     Package,
     UserCheck,
     DollarSign,
-    Archive,
     Video,
-    Truck
+    Truck,
+    Loader2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -69,8 +69,12 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
     const [extensionReason, setExtensionReason] = useState('')
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [isUploading, setIsUploading] = useState(false)
+    const [isFundingCheckoutLoading, setIsFundingCheckoutLoading] = useState(false)
     const [expandedMilestones, setExpandedMilestones] = useState<Set<number>>(new Set())
     const [approvalMode, setApprovalMode] = useState<'approve' | 'reject'>('approve')
+    const [showTrackingDialog, setShowTrackingDialog] = useState(false)
+    const [trackingCodeInput, setTrackingCodeInput] = useState('')
+    const [trackingStatusToUpdate, setTrackingStatusToUpdate] = useState<'material_sent' | 'product_sent'>('material_sent')
 
     const getErrorMessage = (error: unknown, fallback: string) => {
         if (error && typeof error === 'object' && 'response' in error) {
@@ -116,7 +120,7 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
 
     useEffect(() => {
         if (isOpen && contractId) {
-            loadTimeline()
+            void loadTimeline()
         }
     }, [isOpen, contractId, loadTimeline])
 
@@ -125,7 +129,7 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
             setIsLoading(true)
             await timelineRepository.createMilestones(contractId)
             toast.success("Milestones criados com sucesso")
-            loadTimeline()
+            await loadTimeline()
         } catch (error: unknown) {
             toast.error(getErrorMessage(error, "Erro ao criar milestones"))
         } finally {
@@ -153,7 +157,8 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
                 toast.success("Arquivo enviado com sucesso")
                 setShowUploadDialog(false)
                 setSelectedFile(null)
-                loadTimeline()
+                setSelectedMilestone(null)
+                await loadTimeline()
             } else {
                 toast.error(response.message || "Erro desconhecido ao enviar arquivo")
             }
@@ -169,6 +174,7 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
 
     const handleApproval = async (milestoneId: number, isApproved: boolean) => {
         try {
+            setIsLoading(true)
             const response = isApproved
                 ? await timelineRepository.approveMilestone(milestoneId, comment)
                 : await timelineRepository.rejectMilestone(milestoneId, comment)
@@ -177,53 +183,68 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
                 toast.success(isApproved ? "Milestone aprovado com sucesso" : "Milestone rejeitado com sucesso")
                 setShowApprovalDialog(false)
                 setComment('')
-                loadTimeline()
+                setSelectedMilestone(null)
+                await loadTimeline()
             }
         } catch (error: unknown) {
             toast.error(getErrorMessage(error, "Erro ao processar milestone"))
+        } finally {
+            setIsLoading(false)
         }
     }
 
     const handleJustification = async (milestoneId: number) => {
         try {
+            setIsLoading(true)
             const response = await timelineRepository.justifyDelay(milestoneId, justification)
             if (response.success) {
                 toast.success("Atraso justificado com sucesso")
                 setShowJustificationDialog(false)
                 setJustification('')
-                loadTimeline()
+                setSelectedMilestone(null)
+                await loadTimeline()
             }
         } catch (error: unknown) {
             toast.error(getErrorMessage(error, "Erro ao justificar atraso"))
+        } finally {
+            setIsLoading(false)
         }
     }
 
     const handleMarkDelayed = async (milestoneId: number) => {
         try {
+            setIsLoading(true)
             const response = await timelineRepository.markDelayed(milestoneId, justification || undefined)
             if (response.success) {
                 toast.success("Atraso registrado com sucesso")
                 setShowDelayDialog(false)
                 setJustification('')
-                loadTimeline()
+                setSelectedMilestone(null)
+                await loadTimeline()
             }
         } catch (error: unknown) {
             toast.error(getErrorMessage(error, "Erro ao registrar atraso"))
+        } finally {
+            setIsLoading(false)
         }
     }
 
     const handleExtension = async (milestoneId: number) => {
         try {
+            setIsLoading(true)
             const response = await timelineRepository.extendTimeline(milestoneId, extensionDays, extensionReason)
             if (response.success) {
                 toast.success("Prazo estendido com sucesso")
                 setShowExtensionDialog(false)
                 setExtensionDays(1)
                 setExtensionReason('')
-                loadTimeline()
+                setSelectedMilestone(null)
+                await loadTimeline()
             }
         } catch (error: unknown) {
             toast.error(getErrorMessage(error, "Erro ao estender prazo"))
+        } finally {
+            setIsLoading(false)
         }
     }
 
@@ -235,7 +256,7 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
             const response = await timelineRepository.completeContract(contractId)
             if (response.success) {
                 toast.success("Campanha finalizada com sucesso! O pagamento está sendo processado.")
-                loadTimeline()
+                await loadTimeline()
             }
         } catch (error: unknown) {
             toast.error(getErrorMessage(error, "Erro ao finalizar campanha"))
@@ -244,16 +265,63 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
         }
     }
 
-    const handleLogisticsUpdate = async (status: string) => {
+    const handleStartFundingCheckout = async () => {
+        if (!contract?.id) return
+
+        try {
+            setIsFundingCheckoutLoading(true)
+            const response = await api.post<{ success: boolean; url?: string; message?: string }>("/contract-payment/checkout-session", {
+                contract_id: contract.id,
+            })
+
+            if (response.success && response.url) {
+                window.location.href = response.url
+                return
+            }
+
+            throw new Error(response.message || "Não foi possível iniciar o checkout do contrato.")
+        } catch (error: unknown) {
+            toast.error(getErrorMessage(error, "Erro ao iniciar checkout do contrato"))
+        } finally {
+            setIsFundingCheckoutLoading(false)
+        }
+    }
+
+    const handleLogisticsUpdate = async (status: string, trackingCode?: string): Promise<boolean> => {
         try {
             setIsLoading(true)
-            await contractRepository.updateWorkflowStatus(contractId, status)
+            await contractRepository.updateWorkflowStatus(contractId, status, {
+                trackingCode,
+            })
             toast.success("Status de logística atualizado com sucesso")
-            loadTimeline()
+            await loadTimeline()
+            return true
         } catch (error: unknown) {
             toast.error(getErrorMessage(error, "Erro ao atualizar logística"))
+            return false
         } finally {
             setIsLoading(false)
+        }
+    }
+
+
+    const openTrackingDialog = (status: 'material_sent' | 'product_sent' = 'material_sent') => {
+        setTrackingStatusToUpdate(status)
+        setTrackingCodeInput(contract?.tracking_code || '')
+        setShowTrackingDialog(true)
+    }
+
+    const handleSubmitTrackingCode = async () => {
+        const trackingCode = trackingCodeInput.trim()
+        if (!trackingCode) {
+            toast.error("Informe um codigo de rastreio para continuar")
+            return
+        }
+
+        const updated = await handleLogisticsUpdate(trackingStatusToUpdate, trackingCode)
+        if (updated) {
+            setShowTrackingDialog(false)
+            setTrackingCodeInput('')
         }
     }
 
@@ -315,9 +383,10 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
                     const isExpanded = expandedMilestones.has(milestone.id)
                     const canUpload = milestone.can_upload_file && user?.role === 'creator'
                     const canApprove = milestone.can_be_approved && user?.role === 'brand'
+                    const canReject = milestone.can_be_rejected && user?.role === 'brand'
                     const canExtend = milestone.can_be_extended && user?.role === 'brand'
                     const canJustify = milestone.can_justify_delay && user?.role === 'brand'
-                    const canMarkDelayed = milestone.is_overdue && !milestone.is_delayed && (user?.role === 'brand' || user?.role === 'creator')
+                    const canMarkDelayed = milestone.status === 'pending' && milestone.is_overdue && !milestone.is_delayed && (user?.role === 'brand' || user?.role === 'creator')
 
                     return (
                         <Card key={milestone.id} className={cn(
@@ -380,7 +449,7 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
 
                                     <div className="flex flex-col gap-2">
                                         {canUpload && (
-                                            <Button size="sm" onClick={() => {
+                                            <Button size="sm" disabled={isLoading || isUploading} onClick={() => {
                                                 setSelectedMilestone(milestone)
                                                 setShowUploadDialog(true)
                                             }}>
@@ -389,31 +458,35 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
                                             </Button>
                                         )}
 
-                                        {canApprove && (
+                                        {(canApprove || canReject) && (
                                             <div className="flex gap-2">
-                                                <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700" onClick={() => {
-                                                    setSelectedMilestone(milestone)
-                                                    setApprovalMode('approve')
-                                                    setComment('')
-                                                    setShowApprovalDialog(true)
-                                                }}>
-                                                    <Check className="w-3 h-3 mr-2" />
-                                                    Aprovar
-                                                </Button>
-                                                <Button size="sm" variant="outline" className="flex-1 text-destructive hover:bg-destructive/10" onClick={() => {
-                                                    setSelectedMilestone(milestone)
-                                                    setApprovalMode('reject')
-                                                    setComment('')
-                                                    setShowApprovalDialog(true)
-                                                }}>
-                                                    <Ban className="w-3 h-3 mr-2" />
-                                                    Rejeitar
-                                                </Button>
+                                                {canApprove && (
+                                                    <Button size="sm" disabled={isLoading} className="flex-1 bg-green-600 hover:bg-green-700" onClick={() => {
+                                                        setSelectedMilestone(milestone)
+                                                        setApprovalMode('approve')
+                                                        setComment('')
+                                                        setShowApprovalDialog(true)
+                                                    }}>
+                                                        <Check className="w-3 h-3 mr-2" />
+                                                        Aprovar
+                                                    </Button>
+                                                )}
+                                                {canReject && (
+                                                    <Button size="sm" disabled={isLoading} variant="outline" className="flex-1 text-destructive hover:bg-destructive/10" onClick={() => {
+                                                        setSelectedMilestone(milestone)
+                                                        setApprovalMode('reject')
+                                                        setComment('')
+                                                        setShowApprovalDialog(true)
+                                                    }}>
+                                                        <Ban className="w-3 h-3 mr-2" />
+                                                        Rejeitar
+                                                    </Button>
+                                                )}
                                             </div>
                                         )}
 
                                         {canMarkDelayed && (
-                                            <Button size="sm" variant="outline" className="border-orange-500 text-orange-600" onClick={() => {
+                                            <Button size="sm" disabled={isLoading} variant="outline" className="border-orange-500 text-orange-600" onClick={() => {
                                                 setSelectedMilestone(milestone)
                                                 setShowDelayDialog(true)
                                             }}>
@@ -423,7 +496,7 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
                                         )}
 
                                         {canJustify && (
-                                            <Button size="sm" variant="outline" className="border-orange-500 text-orange-600" onClick={() => {
+                                            <Button size="sm" disabled={isLoading} variant="outline" className="border-orange-500 text-orange-600" onClick={() => {
                                                 setSelectedMilestone(milestone)
                                                 setShowJustificationDialog(true)
                                             }}>
@@ -433,7 +506,7 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
                                         )}
 
                                         {canExtend && (
-                                            <Button size="sm" variant="outline" onClick={() => {
+                                            <Button size="sm" disabled={isLoading} variant="outline" onClick={() => {
                                                 setSelectedMilestone(milestone)
                                                 setShowExtensionDialog(true)
                                             }}>
@@ -480,15 +553,23 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
     }
 
     const paymentWorkflowStatus = contract?.workflow_status
+    const isFundingPending = contract?.status === 'pending' && paymentWorkflowStatus === 'payment_pending'
     const isPaymentCompleted = paymentWorkflowStatus === 'payment_available' || paymentWorkflowStatus === 'payment_withdrawn'
-    const isPaymentActive = paymentWorkflowStatus === 'payment_pending' || paymentWorkflowStatus === 'waiting_review'
+    const isEscrowFunded = isPaymentCompleted
+        || contract?.status === 'active'
+        || contract?.status === 'completed'
+        || ['active', 'material_sent', 'product_sent', 'product_received', 'production_started', 'waiting_review'].includes(paymentWorkflowStatus || '')
+
     const paymentStatusLabel = isPaymentCompleted
         ? "Pagamento liberado"
-        : paymentWorkflowStatus === 'payment_pending'
-          ? "Pagamento pendente"
-          : paymentWorkflowStatus === 'waiting_review'
-            ? "Aguardando review"
-            : "Aguardando conclusão"
+        : isEscrowFunded
+          ? "Pagamento confirmado em escrow"
+          : "Pagamento pendente"
+    const normalizedTrackingCode = (contract?.tracking_code || '').trim()
+    const hasTrackingCode = normalizedTrackingCode.length > 0
+    const productDeliveryDescription = hasTrackingCode
+        ? `Codigo de rastreio: ${normalizedTrackingCode}`
+        : "Aguardando entrega de rastreio"
 
     const steps = [
         {
@@ -503,22 +584,43 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
             id: 2,
             title: "Pagamento",
             icon: DollarSign,
-            status: isPaymentCompleted ? 'completed' : isPaymentActive ? 'current' : 'pending',
-            description: isPaymentCompleted ? "Pagamento retido (Escrow)" : "Aguardando Pagamento",
-            content: null
+            status: isEscrowFunded ? 'completed' : isFundingPending ? 'current' : 'pending',
+            description: paymentStatusLabel,
+            content: (
+                <div className="mt-3 p-3 bg-muted/30 rounded-lg border space-y-2">
+                    {isFundingPending ? (
+                        user?.role === 'brand' ? (
+                            <Button size="sm" onClick={handleStartFundingCheckout} disabled={isFundingCheckoutLoading || isLoading}>
+                                {isFundingCheckoutLoading ? <Loader2 className="w-3 h-3 mr-2 animate-spin" /> : <DollarSign className="w-3 h-3 mr-2" />}
+                                Financiar contrato
+                            </Button>
+                        ) : (
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted p-2 rounded">
+                                <Clock className="w-3 h-3" />
+                                Aguardando a marca confirmar o pagamento.
+                            </div>
+                        )
+                    ) : (
+                        <div className="flex items-center gap-2 text-xs text-green-700 bg-green-50 p-2 rounded border border-green-100">
+                            <Check className="w-3 h-3" />
+                            Pagamento confirmado.
+                        </div>
+                    )}
+                </div>
+            )
         },
         {
             id: 3,
             title: "Produto Entregue",
             icon: Package,
-            status: ['material_sent', 'product_sent', 'product_received', 'production_started'].includes(contract?.workflow_status || '') ? 'completed' : (isPaymentCompleted ? 'current' : 'pending'),
-            description: "Aguardando entrega de rastreio",
+            status: ['material_sent', 'product_sent', 'product_received', 'production_started'].includes(contract?.workflow_status || '') ? 'completed' : (isEscrowFunded ? 'current' : 'pending'),
+            description: productDeliveryDescription,
             content: (
                 <div className="mt-3 p-3 bg-muted/30 rounded-lg border space-y-3">
-                    {contract?.workflow_status === 'active' && isPaymentCompleted && (
+                    {contract?.workflow_status === 'active' && isEscrowFunded && (
                         <div className="flex flex-col gap-2">
                             {user?.role === 'brand' ? (
-                                <Button size="sm" onClick={() => handleLogisticsUpdate('material_sent')} disabled={isLoading}>
+                                <Button size="sm" onClick={() => openTrackingDialog('material_sent')} disabled={isLoading}>
                                     <Truck className="w-3 h-3 mr-2" />
                                     Marcar Produto Enviado
                                 </Button>
@@ -533,16 +635,27 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
                     {['material_sent', 'product_sent'].includes(contract?.workflow_status || '') && (
                         <div className="flex flex-col gap-2">
                             <p className="text-xs text-muted-foreground">Produto em trânsito. Aguardando confirmação.</p>
+                            {hasTrackingCode && (
+                                <div className="rounded-md border bg-background/60 p-2">
+                                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Codigo de rastreio</div>
+                                    <div className="text-xs font-medium break-all">{normalizedTrackingCode}</div>
+                                </div>
+                            )}
                             {user?.role === 'creator' ? (
                                 <Button size="sm" onClick={() => handleLogisticsUpdate('product_received')} disabled={isLoading} className="bg-purple-600 hover:bg-purple-700 text-white w-full">
                                     <Check className="w-3 h-3 mr-2" />
                                     Produto chegou
                                 </Button>
                             ) : (
-                                <div className="flex items-center gap-2 text-xs text-blue-600 bg-blue-50 p-2 rounded">
-                                    <Truck className="w-3 h-3" />
-                                    Produto enviado.
-                                </div>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => openTrackingDialog(contract?.workflow_status === 'product_sent' ? 'product_sent' : 'material_sent')}
+                                    disabled={isLoading}
+                                    className="w-full"
+                                >
+                                    Editar codigo de rastreio
+                                </Button>
                             )}
                         </div>
                     )}
@@ -574,6 +687,7 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
                     {renderMilestoneList(productionMilestones)}
                     {productionMilestones.some(m => m.status === 'pending' && user?.role === 'creator') && (
                         <Button 
+                            disabled={isLoading || isUploading}
                             className="w-full bg-purple-600 hover:bg-purple-700 text-white"
                             onClick={() => {
                                 const pendingMilestone = productionMilestones.find(m => m.status === 'pending');
@@ -600,7 +714,7 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
                 <div className="space-y-3 mt-3">
                     {renderMilestoneList(approvalMilestones)}
                     {user?.role === 'brand' && contract?.status === 'active' && approvalMilestones.some(m => m.status === 'approved') && (
-                        <Button onClick={handleFinalizeContract} className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white" size="sm">
+                        <Button onClick={handleFinalizeContract} disabled={isLoading} className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white" size="sm">
                             <Check className="w-4 h-4 mr-2" />
                             Aprovar e Finalizar
                         </Button>
@@ -610,16 +724,27 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
         }
     ]
 
+    const header = variant === 'sheet' ? (
+        <SheetHeader className="p-4 border-b bg-background sticky top-0 z-10">
+            <SheetTitle className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-primary" />
+                Fluxo da Campanha
+            </SheetTitle>
+        </SheetHeader>
+    ) : (
+        <div className="p-4 border-b bg-background sticky top-0 z-10">
+            <div className="flex items-center gap-2 text-lg font-semibold text-foreground">
+                <Clock className="w-5 h-5 text-primary" />
+                Fluxo da Campanha
+            </div>
+        </div>
+    )
+
     const content = (
         <>
-            <SheetHeader className="p-4 border-b bg-background sticky top-0 z-10">
-                <SheetTitle className="flex items-center gap-2">
-                    <Clock className="w-5 h-5 text-primary" />
-                    Fluxo da Campanha
-                </SheetTitle>
-            </SheetHeader>
+            {header}
 
-            <ScrollArea className="flex-1 bg-muted/5">
+            <ScrollArea className="h-full min-h-0 flex-1 bg-muted/5">
                 <div className="p-4 space-y-0 relative">
                     {/* Vertical Line */}
                     <div className="absolute left-7.75 top-8 bottom-8 w-0.5 bg-border -z-10" />
@@ -685,8 +810,12 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
                         </div>
                     )}
                     <div className="flex gap-2">
-                        <Button size="sm" variant="outline" className="flex-1" onClick={() => setShowUploadDialog(false)}>Cancelar</Button>
-                        <Button size="sm" className="flex-1" disabled={!selectedFile || isUploading} onClick={() => handleFileUpload(selectedMilestone!.id)}>
+                        <Button size="sm" variant="outline" className="flex-1" onClick={() => {
+                            setShowUploadDialog(false)
+                            setSelectedMilestone(null)
+                            setSelectedFile(null)
+                        }}>Cancelar</Button>
+                        <Button size="sm" className="flex-1" disabled={!selectedFile || isUploading || !selectedMilestone} onClick={() => selectedMilestone && handleFileUpload(selectedMilestone.id)}>
                             {isUploading ? "Enviando..." : "Enviar"}
                         </Button>
                     </div>
@@ -698,11 +827,16 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
                     <h4 className="text-sm font-semibold">{approvalMode === 'approve' ? "Aprovar milestone" : "Rejeitar milestone"}</h4>
                     <Textarea placeholder="Comentário (opcional)" value={comment} onChange={(e) => setComment(e.target.value)} />
                     <div className="flex gap-2">
-                        <Button size="sm" variant="outline" className="flex-1" onClick={() => setShowApprovalDialog(false)}>Voltar</Button>
+                        <Button size="sm" variant="outline" className="flex-1" onClick={() => {
+                            setShowApprovalDialog(false)
+                            setSelectedMilestone(null)
+                            setComment('')
+                        }}>Voltar</Button>
                         <Button
                             size="sm"
+                            disabled={isLoading || !selectedMilestone}
                             className={cn("flex-1", approvalMode === 'approve' ? "bg-green-600 hover:bg-green-700" : "bg-destructive hover:bg-destructive/90")}
-                            onClick={() => handleApproval(selectedMilestone!.id, approvalMode === 'approve')}
+                            onClick={() => selectedMilestone && handleApproval(selectedMilestone.id, approvalMode === 'approve')}
                         >
                             {approvalMode === 'approve' ? "Confirmar" : "Rejeitar"}
                         </Button>
@@ -715,8 +849,12 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
                     <h4 className="text-sm font-semibold">Justificar atraso</h4>
                     <Textarea placeholder="Descreva o motivo..." value={justification} onChange={(e) => setJustification(e.target.value)} />
                     <div className="flex gap-2">
-                        <Button size="sm" variant="outline" className="flex-1" onClick={() => setShowJustificationDialog(false)}>Cancelar</Button>
-                        <Button size="sm" className="flex-1 bg-orange-600" disabled={!justification.trim()} onClick={() => handleJustification(selectedMilestone!.id)}>Enviar</Button>
+                        <Button size="sm" variant="outline" className="flex-1" onClick={() => {
+                            setShowJustificationDialog(false)
+                            setSelectedMilestone(null)
+                            setJustification('')
+                        }}>Cancelar</Button>
+                        <Button size="sm" className="flex-1 bg-orange-600" disabled={!justification.trim() || isLoading || !selectedMilestone} onClick={() => selectedMilestone && handleJustification(selectedMilestone.id)}>Enviar</Button>
                     </div>
                 </div>
             )}
@@ -726,8 +864,12 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
                     <h4 className="text-sm font-semibold">Marcar atraso</h4>
                     <Textarea placeholder="Descreva o motivo (opcional)..." value={justification} onChange={(e) => setJustification(e.target.value)} />
                     <div className="flex gap-2">
-                        <Button size="sm" variant="outline" className="flex-1" onClick={() => setShowDelayDialog(false)}>Cancelar</Button>
-                        <Button size="sm" className="flex-1 bg-orange-600" onClick={() => handleMarkDelayed(selectedMilestone!.id)}>Enviar</Button>
+                        <Button size="sm" variant="outline" className="flex-1" onClick={() => {
+                            setShowDelayDialog(false)
+                            setSelectedMilestone(null)
+                            setJustification('')
+                        }}>Cancelar</Button>
+                        <Button size="sm" className="flex-1 bg-orange-600" disabled={isLoading || !selectedMilestone} onClick={() => selectedMilestone && handleMarkDelayed(selectedMilestone.id)}>Enviar</Button>
                     </div>
                 </div>
             )}
@@ -749,9 +891,52 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
                         />
                     </div>
                     <div className="flex gap-2">
-                        <Button size="sm" variant="outline" className="flex-1" onClick={() => setShowExtensionDialog(false)}>Cancelar</Button>
-                        <Button size="sm" className="flex-1" disabled={!extensionReason.trim() || extensionDays < 1} onClick={() => handleExtension(selectedMilestone!.id)}>
+                        <Button size="sm" variant="outline" className="flex-1" onClick={() => {
+                            setShowExtensionDialog(false)
+                            setSelectedMilestone(null)
+                            setExtensionDays(1)
+                            setExtensionReason('')
+                        }}>Cancelar</Button>
+                        <Button size="sm" className="flex-1" disabled={!extensionReason.trim() || extensionDays < 1 || isLoading || !selectedMilestone} onClick={() => selectedMilestone && handleExtension(selectedMilestone.id)}>
                             Confirmar
+                        </Button>
+                    </div>
+                </div>
+            )}
+
+            {showTrackingDialog && (
+                <div className="p-4 border-t bg-card space-y-4">
+                    <h4 className="text-sm font-semibold">
+                        {['material_sent', 'product_sent'].includes(contract?.workflow_status || '')
+                            ? "Editar codigo de rastreio"
+                            : "Marcar produto enviado"}
+                    </h4>
+                    <Input
+                        placeholder="Ex: BR123456789XYZ"
+                        value={trackingCodeInput}
+                        onChange={(e) => setTrackingCodeInput(e.target.value)}
+                    />
+                    <div className="flex gap-2">
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1"
+                            onClick={() => {
+                                setShowTrackingDialog(false)
+                                setTrackingCodeInput('')
+                            }}
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            size="sm"
+                            className="flex-1"
+                            disabled={isLoading || !trackingCodeInput.trim()}
+                            onClick={handleSubmitTrackingCode}
+                        >
+                            {['material_sent', 'product_sent'].includes(contract?.workflow_status || '')
+                                ? "Salvar codigo"
+                                : "Salvar e marcar enviado"}
                         </Button>
                     </div>
                 </div>
@@ -762,7 +947,7 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
     if (variant === 'inline') {
         if (!isOpen) return null
         return (
-            <div className="flex h-full flex-col rounded-lg border bg-background overflow-hidden">
+            <div className="flex h-full min-h-0 max-h-full flex-col rounded-lg border bg-background overflow-hidden">
                 {content}
             </div>
         )

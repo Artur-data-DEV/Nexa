@@ -51,9 +51,9 @@ sequenceDiagram
     
     rect rgb(240, 255, 240)
         Note right of Plataforma: Distribuição Financeira
-        Plataforma->>Plataforma: Calcula Taxa da Plataforma (10%)
-        Plataforma->>Plataforma: Deduz R$ 10,00 (Receita Nexa)
-        Plataforma->>Plataforma: Libera R$ 90,00 para Saldo do Criador
+        Plataforma->>Plataforma: Calcula Taxa da Plataforma (5%)
+        Plataforma->>Plataforma: Deduz R$ 5,00 (Receita Nexa)
+        Plataforma->>Plataforma: Libera R$ 95,00 para Saldo do Criador
     end
 
     Plataforma-->>Criador: Notifica Pagamento Liberado
@@ -66,4 +66,4 @@ sequenceDiagram
 
 *   **Campanha:** `Draft` -> `Published` -> `In Progress` -> `Completed`
 *   **Contrato:** `Draft` -> `Pending Payment` -> `Active` -> `Completed`
-*   **Pagamento:** `Pending` -> `Held` (Escrow) -> `Released` (Pago)
+*   **Pagamento:** `Pending` (Escrow retido) -> `Completed` (Liberado ao criador)

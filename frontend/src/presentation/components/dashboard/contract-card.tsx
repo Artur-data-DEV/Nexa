@@ -45,7 +45,7 @@ export function ContractCard({ contract, onPay }: ContractCardProps) {
                     </div>
                     <div className="flex items-center gap-2">
                         <DollarSign className="h-4 w-4" />
-                        <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(contract.amount)}</span>
+                        <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(contract.budget ?? contract.amount ?? 0)}</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4" />

@@ -68,11 +68,11 @@ export const timeouts = {
 
 export const selectors = {
     auth: {
-        emailInput: 'input[name="email"]',
-        passwordInput: 'input[name="password"]',
-        loginButton: 'button[type="submit"]',
+        emailInput: '[data-testid="email-input"]',
+        passwordInput: '[data-testid="password-input"]',
+        loginButton: '[data-testid="login-button"]',
         logoutButton: 'div[role="menuitem"]:has-text("Sair")',
-        errorMessage: 'div[role="alert"]',
+        errorMessage: '[data-testid="error-message"]',
         sendOtpButton: 'button:has-text("Próxima etapa")',
         verifyOtpButton: 'button:has-text("Confirmar Código")',
     },

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, CheckCircle, XCircle, Clock, MessageCircle, Download, ExternalLink } from "lucide-react"
+import { ArrowLeft, CheckCircle, XCircle, Clock, MessageCircle, ExternalLink } from "lucide-react"
 import Link from "next/link"
 import type { AxiosError } from "axios"
 
@@ -16,7 +16,6 @@ import { Campaign } from "@/domain/entities/campaign"
 import { Button } from "@/presentation/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/presentation/components/ui/avatar"
 import { Skeleton } from "@/presentation/components/ui/skeleton"
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/presentation/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/presentation/components/ui/tabs"
 import { toast } from "sonner"
 import { TermsModal } from "@/presentation/components/terms/terms-modal"
@@ -157,14 +156,22 @@ export default function ManageCandidatesPage() {
     const handleStatusUpdate = async (applicationId: number, status: 'approved' | 'rejected') => {
         setProcessingId(applicationId)
         try {
-            await applicationRepository.updateStatus(applicationId, status)
+            const result = await applicationRepository.updateStatus(applicationId, status)
 
             setApplications(prev => prev.map(app =>
-                app.id === applicationId ? { ...app, status } : app
+                app.id === applicationId ? { ...app, ...(result.application || {}), status } : app
             ))
 
             if (status === 'approved') {
-                toast.success("Candidato aprovado! O chat foi iniciado automaticamente.")
+                toast.success(
+                    result.contract_id
+                        ? "Candidato aprovado! Contrato criado e pronto para financiamento."
+                        : "Candidato aprovado! O chat foi iniciado automaticamente."
+                )
+
+                if (result.chat_room_id) {
+                    router.push(`/dashboard/messages?roomId=${result.chat_room_id}`)
+                }
             } else {
                 toast.success(`Candidato ${status === 'rejected' ? 'rejeitado' : 'atualizado'} com sucesso!`)
             }
@@ -395,24 +402,37 @@ function CandidatesTable({
                                     </div>
                                 </td>
                                 <td className="p-4 align-top">
-                                    {Array.isArray(app.portfolio_links) && app.portfolio_links.length > 0 ? (
-                                        <div className="flex flex-col gap-1">
-                                            {app.portfolio_links.map((link, i) => (
-                                                <a 
-                                                    key={i} 
-                                                    href={link} 
-                                                    target="_blank" 
-                                                    rel="noopener noreferrer"
-                                                    className="flex items-center gap-1 text-xs text-primary hover:underline truncate max-w-37.5"
-                                                >
-                                                    <ExternalLink className="h-3 w-3" />
-                                                    Link {i + 1}
-                                                </a>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <span className="text-xs text-muted-foreground">-</span>
-                                    )}
+                                    <div className="flex flex-col gap-2">
+                                        {Array.isArray(app.portfolio_links) && app.portfolio_links.length > 0 ? (
+                                            <div className="flex flex-col gap-1">
+                                                {app.portfolio_links.map((link, i) => (
+                                                    <a
+                                                        key={i}
+                                                        href={link}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="flex items-center gap-1 text-xs text-primary hover:underline truncate max-w-37.5"
+                                                    >
+                                                        <ExternalLink className="h-3 w-3" />
+                                                        Link {i + 1}
+                                                    </a>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <span className="text-xs text-muted-foreground">Sem links externos</span>
+                                        )}
+
+                                        {typeof app.creator?.id === "number" ? (
+                                            <Button variant="outline" size="sm" asChild className="w-fit h-7 px-2 text-xs">
+                                                <Link href={`/dashboard/creators/${app.creator.id}/portfolio`}>
+                                                    <ExternalLink className="mr-1 h-3 w-3" />
+                                                    Ver portfólio
+                                                </Link>
+                                            </Button>
+                                        ) : (
+                                            <span className="text-xs text-muted-foreground">Criador sem perfil público</span>
+                                        )}
+                                    </div>
                                 </td>
                                 <td className="p-4 align-top text-right">
                                     {readonly ? (

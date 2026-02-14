@@ -75,6 +75,17 @@ type ContractEvent = {
     senderId?: number
 }
 
+type OfferAcceptResponse = {
+    success: boolean
+    message?: string
+    data?: {
+        contract_id?: number | string | null
+        contract?: {
+            id?: number | string
+        } | null
+    }
+}
+
 const toOfferData = (data: Record<string, unknown>): OfferData => {
     const rawId = data.id ?? (data as { offer_id?: unknown }).offer_id
     const id =
@@ -166,6 +177,7 @@ export default function MessagesPage() {
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [previewUrl, setPreviewUrl] = useState<string | null>(null)
     const fileInputRef = useRef<HTMLInputElement | null>(null)
+    const fundingRedirectKeyRef = useRef<string | null>(null)
 
     useEffect(() => {
         if (selectedFile && selectedFile.type.startsWith('image/')) {
@@ -234,19 +246,66 @@ export default function MessagesPage() {
 
     const pendingOffers = offerMessages.filter(offer => (offer.status || "pending") === "pending")
 
+    const getContractIdFromOfferMessages = useCallback((): number | null => {
+        for (let index = messages.length - 1; index >= 0; index -= 1) {
+            const msg = messages[index]
+            if (msg.message_type !== "offer" || !msg.offer_data || typeof msg.offer_data !== "object") {
+                continue
+            }
+
+            const offer = toOfferData(msg.offer_data as Record<string, unknown>)
+            if (typeof offer.contract_id === "number" && Number.isFinite(offer.contract_id)) {
+                return offer.contract_id
+            }
+        }
+
+        return null
+    }, [messages])
+
     const fetchContractId = useCallback(async (roomId: string) => {
         try {
-            const response = await api.get<{ data: Contract[] } | Contract[]>(`/contracts/chat-room/${roomId}`)
-            const contracts = Array.isArray(response) ? response : response.data || []
-            if (contracts.length > 0) {
-                setContractId(contracts[0].id)
-            } else {
-                setContractId(null)
+            const contract = await contractRepository.getContractForRoom(roomId)
+            if (contract?.id) {
+                setContractId(contract.id)
+                setContractDetails(contract)
+                return
             }
+
+            const fallbackContractId = getContractIdFromOfferMessages()
+            if (fallbackContractId) {
+                setContractId(fallbackContractId)
+                return
+            }
+
+            setContractId(null)
+            setContractDetails(null)
         } catch (err) {
             console.error("Error fetching contract for room:", err)
+            const fallbackContractId = getContractIdFromOfferMessages()
+            if (fallbackContractId) {
+                setContractId(fallbackContractId)
+            }
         }
-    }, [])
+    }, [getContractIdFromOfferMessages])
+
+    // Função para recarregar o contrato explicitamente
+    const refreshContract = useCallback(async () => {
+        if (!selectedChat?.room_id) return;
+        
+        try {
+            const data = await contractRepository.getContractForRoom(selectedChat.room_id);
+            if (data?.id) {
+                setContractId(data.id);
+                setContractDetails(data);
+                return;
+            }
+
+            await fetchContractId(selectedChat.room_id)
+        } catch {
+            // Silently fail if no contract found yet
+            console.log("No contract found for room yet during refresh");
+        }
+    }, [selectedChat?.room_id, fetchContractId]);
 
     const loadContractDetails = useCallback(async () => {
         if (!contractId) return
@@ -392,6 +451,110 @@ export default function MessagesPage() {
         fetchContractId(roomId)
     }, [searchParams, chats, selectedChat, selectChat, router, user?.id, fetchContractId, sendGuideMessages])
 
+    useEffect(() => {
+        if (user?.role !== "brand") return
+
+        const fundingSuccess = searchParams.get("funding_success")
+        const fundingCanceled = searchParams.get("funding_canceled")
+        const sessionId = searchParams.get("session_id")
+        const contractIdParam = searchParams.get("contract_id")
+        const roomIdParam = searchParams.get("roomId")
+
+        if (fundingSuccess !== "true" && fundingCanceled !== "true") return
+
+        const requestKey = `${fundingSuccess}|${fundingCanceled}|${sessionId ?? ""}|${contractIdParam ?? ""}|${roomIdParam ?? ""}`
+        if (fundingRedirectKeyRef.current === requestKey) {
+            return
+        }
+        fundingRedirectKeyRef.current = requestKey
+
+        const sanitizedParams = new URLSearchParams(searchParams.toString())
+        sanitizedParams.delete("funding_success")
+        sanitizedParams.delete("funding_canceled")
+        sanitizedParams.delete("session_id")
+        sanitizedParams.delete("contract_id")
+
+        const sanitizedQuery = sanitizedParams.toString()
+        const sanitizedUrl = sanitizedQuery ? `/dashboard/messages?${sanitizedQuery}` : "/dashboard/messages"
+
+        const finalizeRedirect = async () => {
+            if (roomIdParam) {
+                await fetchContractId(roomIdParam)
+            }
+            router.replace(sanitizedUrl)
+        }
+
+        if (fundingCanceled === "true") {
+            toast("Pagamento cancelado", {
+                description: "O financiamento do contrato foi cancelado. Você pode tentar novamente quando quiser.",
+            })
+            void finalizeRedirect()
+            return
+        }
+
+        const parsedContractId = contractIdParam ? Number(contractIdParam) : Number.NaN
+        if (!sessionId || !Number.isFinite(parsedContractId) || parsedContractId <= 0) {
+            toast.error("Não foi possível confirmar o pagamento do contrato.")
+            void finalizeRedirect()
+            return
+        }
+
+        const handleFundingSuccess = async () => {
+            try {
+                const response = await api.post<{
+                    success: boolean
+                    message?: string
+                    contract_status?: string
+                    payment_status?: string
+                }>("/contract-payment/handle-funding-success", {
+                    session_id: sessionId,
+                    contract_id: parsedContractId,
+                })
+
+                if (response.success) {
+                    toast.success(response.message || "Pagamento do contrato confirmado com sucesso.")
+                } else {
+                    throw new Error(response.message || "Falha ao confirmar funding do contrato.")
+                }
+            } catch (error: unknown) {
+                const axiosError = error as AxiosError<{ message?: string }>
+                const message =
+                    axiosError.response?.data?.message ||
+                    axiosError.message ||
+                    "Não foi possível confirmar o pagamento do contrato."
+                toast.error(message)
+            } finally {
+                await finalizeRedirect()
+            }
+        }
+
+        void handleFundingSuccess()
+    }, [searchParams, user?.role, fetchContractId, router])
+
+    useEffect(() => {
+        if (!selectedChat?.room_id) return
+        if (contractId) return
+
+        const hasAcceptedOffer = messages.some((msg) => {
+            if (msg.message_type !== "offer" || !msg.offer_data || typeof msg.offer_data !== "object") {
+                return false
+            }
+            const offer = toOfferData(msg.offer_data as Record<string, unknown>)
+            return offer.status === "accepted"
+        })
+
+        if (hasAcceptedOffer) {
+            void refreshContract()
+        }
+    }, [messages, selectedChat?.room_id, contractId, refreshContract])
+
+    useEffect(() => {
+        if (!selectedChat?.room_id) return
+        if (activeTab !== "milestones") return
+        if (contractId) return
+        void refreshContract()
+    }, [activeTab, selectedChat?.room_id, contractId, refreshContract])
+
     const handleAcceptOffer = async (offerId: number) => {
         if (!offerId || offerId <= 0 || Number.isNaN(offerId)) {
             toast.error("ID da oferta inválido")
@@ -400,19 +563,38 @@ export default function MessagesPage() {
         if (!selectedChat) return
 
         try {
-            const response = await api.post<{ success: boolean; message?: string }>(`/offers/${offerId}/accept`)
+            const response = await api.post<OfferAcceptResponse>(`/offers/${offerId}/accept`)
             if (response.success) {
+                const rawContractId = response.data?.contract_id ?? response.data?.contract?.id
+                const acceptedContractId =
+                    typeof rawContractId === "number"
+                        ? rawContractId
+                        : typeof rawContractId === "string"
+                            ? Number(rawContractId)
+                            : null
+
                 toast.success("Oferta aceita com sucesso! Contrato criado.")
                 setMessages(prev => prev.map(msg => {
                     if (msg.message_type === "offer" && msg.offer_data) {
                         const parsed = toOfferData(msg.offer_data as Record<string, unknown>)
                         if (parsed.id === offerId) {
-                            const updatedData = { ...(msg.offer_data as Record<string, unknown>), status: "accepted" }
+                            const updatedData = {
+                                ...(msg.offer_data as Record<string, unknown>),
+                                status: "accepted",
+                                ...(acceptedContractId && Number.isFinite(acceptedContractId)
+                                    ? { contract_id: acceptedContractId }
+                                    : {}),
+                            }
                             return { ...msg, offer_data: updatedData }
                         }
                     }
                     return msg
                 }))
+
+                if (acceptedContractId && Number.isFinite(acceptedContractId)) {
+                    setContractId(acceptedContractId)
+                }
+
                 await Promise.all([
                     refreshRoomMessages(selectedChat.room_id),
                     fetchContractId(selectedChat.room_id),
@@ -659,9 +841,21 @@ export default function MessagesPage() {
             if (incoming.sender_id !== user?.id) {
                 chatRepository.markAsRead(selectedChat.room_id, [incoming.id])
             }
+            
+            // Check if the message is an offer acceptance or contract creation notification
+            const isOfferAccepted = incoming.message_type === "system" && incoming.message?.toLowerCase().includes("oferta aceita");
+            const isContractCreated = incoming.message_type === "system" && incoming.message?.toLowerCase().includes("contrato criado");
+            
+            if (isOfferAccepted || isContractCreated || incoming.offer_data?.status === 'accepted') {
+                // Force contract refresh
+                refreshContract();
+            }
+
             const offerObj = e.offerData && typeof e.offerData === "object" ? toOfferData(e.offerData as Record<string, unknown>) : {}
             if (offerObj.contract_id && Number.isFinite(offerObj.contract_id)) {
                 setContractId(offerObj.contract_id!)
+                // Force contract refresh when we get a contract ID
+                refreshContract();
             }
         })
 
@@ -671,6 +865,7 @@ export default function MessagesPage() {
             const id = typeof rawId === "number" ? rawId : typeof rawId === "string" ? Number(rawId) : undefined
             if (Number.isFinite(id)) {
                 setContractId(id!)
+                refreshContract();
             }
             refreshRoomMessages(selectedChat.room_id)
         }
@@ -727,7 +922,7 @@ export default function MessagesPage() {
             channel.stopListening('.messages_read')
             statusChannel.stopListening('.user_status_updated')
         }
-    }, [selectedChat, echo, scrollToBottom, user?.id, setChats, setMessages, updateChatList, refreshRoomMessages])
+    }, [selectedChat, echo, scrollToBottom, user?.id, setChats, setMessages, updateChatList, refreshRoomMessages, refreshContract])
 
     const renderChatList = () => (
         <div className="flex flex-col gap-1 p-2" data-testid="chat-room-list">
@@ -923,7 +1118,7 @@ export default function MessagesPage() {
                                 onValueChange={(value) => setActiveTab(value as "messages" | "milestones")}
                                 className="flex flex-1 flex-col overflow-hidden"
                             >
-                                <div className="absolute top-2 right-4 z-10 w-64">
+                                <div className="absolute top-2 right-4 z-70 w-64">
                                     <TabsList className="grid w-full grid-cols-2 h-9 bg-muted/80 backdrop-blur border">
                                         <TabsTrigger value="messages" className="flex items-center gap-2 text-xs">
                                             <MessageCircle className="h-3.5 w-3.5" />
@@ -1328,7 +1523,7 @@ export default function MessagesPage() {
                                 )}
                                 </TabsContent>
 
-                                <TabsContent value="milestones" className="mt-0 flex flex-1 flex-col overflow-hidden p-4">
+                                <TabsContent value="milestones" className="mt-0 flex flex-1 min-h-0 flex-col overflow-hidden p-4 pt-14">
                                     {contractId ? (
                                         <CampaignTimelineSheet
                                             contractId={contractId}
@@ -1448,7 +1643,7 @@ export default function MessagesPage() {
                         </Dialog>
 
                         <Dialog open={isCampaignDetailsOpen} onOpenChange={setIsCampaignDetailsOpen}>
-                            <DialogContent className="sm:max-w-3xl">
+                            <DialogContent className="sm:max-w-3xl h-[90vh] max-h-[calc(100vh-2rem)] min-h-0 overflow-hidden flex flex-col">
                                 <DialogHeader>
                                     <DialogTitle>Detalhes da campanha</DialogTitle>
                                     <DialogDescription>
@@ -1458,20 +1653,22 @@ export default function MessagesPage() {
                                 <Tabs
                                     value={detailsTab}
                                     onValueChange={(value) => setDetailsTab(value as "milestones" | "contract")}
-                                    className="mt-4"
+                                    className="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden"
                                 >
                                     <TabsList className="grid w-full grid-cols-2">
                                         <TabsTrigger value="milestones">Milestones</TabsTrigger>
                                         <TabsTrigger value="contract">Contrato</TabsTrigger>
                                     </TabsList>
-                                    <TabsContent value="milestones" className="mt-4">
+                                    <TabsContent value="milestones" className="mt-4 flex h-full min-h-0 flex-1 flex-col overflow-hidden">
                                         {contractId ? (
-                                            <CampaignTimelineSheet
-                                                contractId={contractId}
-                                                isOpen={isCampaignDetailsOpen && detailsTab === "milestones"}
-                                                onClose={() => null}
-                                                variant="inline"
-                                            />
+                                            <div className="h-full min-h-0 flex-1 overflow-hidden">
+                                                <CampaignTimelineSheet
+                                                    contractId={contractId}
+                                                    isOpen={isCampaignDetailsOpen && detailsTab === "milestones"}
+                                                    onClose={() => null}
+                                                    variant="inline"
+                                                />
+                                            </div>
                                         ) : (
                                             <div className="flex flex-1 flex-col items-center justify-center text-sm text-muted-foreground gap-3 border rounded-lg p-6 text-center">
                                                 <Clock className="h-6 w-6 text-muted-foreground/60" />
@@ -1499,7 +1696,7 @@ export default function MessagesPage() {
                                             </div>
                                         )}
                                     </TabsContent>
-                                    <TabsContent value="contract" className="mt-4">
+                                    <TabsContent value="contract" className="mt-4 min-h-0 flex-1 overflow-y-auto pr-1">
                                         {isContractDetailsLoading ? (
                                             <div className="flex items-center justify-center py-10">
                                                 <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-primary" />

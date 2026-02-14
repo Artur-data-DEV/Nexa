@@ -35,14 +35,25 @@ interface EditBrandProfileProps {
 }
 
 export const EditBrandProfile: React.FC<EditBrandProfileProps> = ({ initialProfile, onCancel, onSave, isLoading = false }) => {
-  const [profile, setProfile] = useState<BrandProfile & { image?: File | null }>({ ...initialProfile })
+  const [profile, setProfile] = useState<BrandProfile & { image?: File | null }>(() => {
+    const niches = Array.isArray(initialProfile.niches)
+      ? initialProfile.niches
+      : initialProfile.niche
+        ? [initialProfile.niche]
+        : []
+
+    return {
+      ...initialProfile,
+      niches,
+      niche: niches[0],
+    }
+  })
   const [imagePreview, setImagePreview] = useState<string | null>(initialProfile.logo_url || null)
   const [error, setError] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
   const requiredFieldLabels: Record<string, string> = {
     company_name: "Nome da Empresa",
     cnpj: "CNPJ",
-    niche: "Nicho",
     description: "Sobre a Empresa",
     address: "Endereço",
     city: "Cidade",
@@ -85,21 +96,47 @@ export const EditBrandProfile: React.FC<EditBrandProfileProps> = ({ initialProfi
     setProfile((p) => ({ ...p, [name]: value }))
   }
 
+  const handleNicheToggle = (niche: string) => {
+    const currentNiches = profile.niches || []
+    const nextNiches = currentNiches.includes(niche)
+      ? currentNiches.filter((item) => item !== niche)
+      : [...currentNiches, niche]
+
+    setProfile((p) => ({
+      ...p,
+      niches: nextNiches,
+      niche: nextNiches[0],
+    }))
+  }
+
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault()
+
+    const selectedNiches = profile.niches && profile.niches.length > 0
+      ? profile.niches
+      : profile.niche
+        ? [profile.niche]
+        : []
 
     const missingFields = Object.keys(requiredFieldLabels).filter((field) => {
       const value = (profile as unknown as Record<string, unknown>)[field]
       if (typeof value === "string") return value.trim() === ""
       return !value
     })
+    if (selectedNiches.length === 0) {
+      missingFields.push("niches")
+    }
     if (missingFields.length > 0) {
-      setError(`Preencha os campos obrigatórios: ${missingFields.map((field) => requiredFieldLabels[field]).join(", ")}`)
+      setError(`Preencha os campos obrigatórios: ${missingFields.map((field) => requiredFieldLabels[field] || "Nichos").join(", ")}`)
       return
     }
 
     setError("")
-    onSave(profile)
+    onSave({
+      ...profile,
+      niches: selectedNiches,
+      niche: selectedNiches[0],
+    })
   }
 
   return (
@@ -188,23 +225,36 @@ export const EditBrandProfile: React.FC<EditBrandProfileProps> = ({ initialProfi
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Nicho *</label>
+            <label className="text-sm font-medium">Nichos *</label>
             <Select
-              value={profile.niche}
-              onValueChange={(val) => setProfile((p) => ({ ...p, niche: val }))}
+              onValueChange={(value) => {
+                if (value && !profile.niches?.includes(value)) {
+                  handleNicheToggle(value)
+                }
+              }}
               disabled={isLoading}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Selecione" />
+                <SelectValue placeholder="Adicionar nicho" />
               </SelectTrigger>
               <SelectContent>
-                {NICHES.map((niche) => (
+                {NICHES.filter((niche) => !profile.niches?.includes(niche)).map((niche) => (
                   <SelectItem key={niche} value={niche}>
                     {niche}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {profile.niches?.map((niche) => (
+                <div key={niche} className="flex items-center gap-1 bg-secondary text-secondary-foreground px-2 py-1 rounded-full text-sm">
+                  <span>{niche}</span>
+                  <button type="button" onClick={() => handleNicheToggle(niche)} className="hover:text-destructive">
+                    <XIcon className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="col-span-1 sm:col-span-2 space-y-2">
@@ -278,3 +328,4 @@ export const EditBrandProfile: React.FC<EditBrandProfileProps> = ({ initialProfi
     </div>
   )
 }
+

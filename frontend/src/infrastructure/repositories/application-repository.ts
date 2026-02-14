@@ -1,4 +1,4 @@
-import { ApplicationRepository } from "@/domain/repositories/application-repository.interface"
+import { ApplicationRepository, ApplicationStatusUpdateResult } from "@/domain/repositories/application-repository.interface"
 import { Application } from "@/domain/entities/application"
 import { HttpClient } from "../api/axios-adapter"
 
@@ -66,12 +66,35 @@ export class ApiApplicationRepository implements ApplicationRepository {
         return response as Application
     }
 
-    async updateStatus(id: number, status: 'approved' | 'rejected'): Promise<Application> {
+    async updateStatus(id: number, status: 'approved' | 'rejected'): Promise<ApplicationStatusUpdateResult> {
         const action = status === "approved" ? "approve" : "reject"
         const response = await this.http.post<unknown, Record<string, never>>(`/applications/${id}/${action}`, {})
-        if (isRecord(response) && isRecord(response["data"])) {
-            return response["data"] as unknown as Application
+
+        if (isRecord(response)) {
+            const payload = response["data"]
+            const application = isRecord(payload) ? (payload as unknown as Application) : ({} as Application)
+
+            const contractIdRaw = response["contract_id"]
+            const contractId =
+                typeof contractIdRaw === "number"
+                    ? contractIdRaw
+                    : typeof contractIdRaw === "string"
+                        ? Number(contractIdRaw)
+                        : undefined
+
+            return {
+                application,
+                message: typeof response["message"] === "string" ? response["message"] : undefined,
+                chat_room_id: typeof response["chat_room_id"] === "string" ? response["chat_room_id"] : undefined,
+                contract_id: Number.isFinite(contractId) ? contractId : undefined,
+                contract_status: typeof response["contract_status"] === "string" ? response["contract_status"] : undefined,
+                contract_workflow_status:
+                    typeof response["contract_workflow_status"] === "string" ? response["contract_workflow_status"] : undefined,
+            }
         }
-        return response as Application
+
+        return {
+            application: response as Application,
+        }
     }
 }

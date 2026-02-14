@@ -586,11 +586,12 @@ function PaymentsTab() {
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <Button variant="outline" asChild>
-                                            <Link href={`/dashboard/campaigns/${c.id}/manage`}>Ver contrato</Link>
-                                        </Button>
-                                        <Button asChild>
-                                            <Link href="/dashboard/payment-methods">Financiar</Link>
+                                        <Button
+                                            onClick={() => handleCreateCheckout(c.id)}
+                                            disabled={actionLoadingId === c.id}
+                                        >
+                                            {actionLoadingId === c.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                                            Financiar contrato
                                         </Button>
                                     </div>
                                 </div>

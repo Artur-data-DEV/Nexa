@@ -15,6 +15,7 @@ export interface Contract {
     start_date?: string
     end_date?: string
     workflow_status?: string
+    tracking_code?: string | null
     budget?: number
     formatted_budget?: string
     creator_amount?: number

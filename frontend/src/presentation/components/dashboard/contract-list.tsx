@@ -39,15 +39,20 @@ export default function ContractList() {
 
     const handlePay = async (id: number) => {
         try {
-            // Mock payment processing
-            toast.info("Processando pagamento...")
-            await new Promise(resolve => setTimeout(resolve, 2000))
-            await contractRepository.updateStatus(id, 'active')
-            setContracts(prev => prev.map(c => c.id === id ? { ...c, status: 'active' } : c))
-            toast.success("Pagamento realizado com sucesso! Contrato ativado.")
+            toast.info("Redirecionando para o checkout do contrato...")
+            const response = await api.post<{ success: boolean; url?: string; message?: string }>("/contract-payment/checkout-session", {
+                contract_id: id,
+            })
+
+            if (response.success && response.url) {
+                window.location.href = response.url
+                return
+            }
+
+            throw new Error(response.message || "Não foi possível iniciar o checkout.")
         } catch (error) {
             console.error("Payment failed", error)
-            toast.error("Falha no pagamento.")
+            toast.error("Falha ao iniciar pagamento do contrato.")
         }
     }
 

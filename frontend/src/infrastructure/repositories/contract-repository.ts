@@ -8,6 +8,47 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 export class ApiContractRepository implements ContractRepository {
     constructor(private http: HttpClient) {}
 
+    private extractContractsFromResponse(response: unknown): Contract[] {
+        if (Array.isArray(response)) {
+            return response as Contract[]
+        }
+
+        if (!isRecord(response)) {
+            return []
+        }
+
+        const data = response["data"]
+        if (Array.isArray(data)) {
+            return data as Contract[]
+        }
+
+        if (isRecord(data)) {
+            const nestedData = data["data"]
+            if (Array.isArray(nestedData)) {
+                return nestedData as Contract[]
+            }
+
+            if (isRecord(nestedData) && typeof nestedData["id"] === "number") {
+                return [nestedData as unknown as Contract]
+            }
+
+            if (typeof data["id"] === "number") {
+                return [data as unknown as Contract]
+            }
+        }
+
+        if (typeof response["id"] === "number") {
+            return [response as unknown as Contract]
+        }
+
+        return []
+    }
+
+    private extractSingleContract(response: unknown): Contract | null {
+        const contracts = this.extractContractsFromResponse(response)
+        return contracts.length > 0 ? contracts[0] : null
+    }
+
     private buildParams(filters?: Record<string, string | number | boolean | null | undefined>) {
         const params = new URLSearchParams()
         if (!filters) return params
@@ -22,35 +63,51 @@ export class ApiContractRepository implements ContractRepository {
         const params = this.buildParams(filters).toString()
         const url = params ? `/contracts?${params}` : "/contracts"
         const response = await this.http.get<unknown>(url)
-        
-        // Handle Laravel Paginator: { success: true, data: { data: [...] } }
-        if (isRecord(response)) {
-            const data = response["data"]
-            if (isRecord(data) && Array.isArray(data["data"])) {
-                return data["data"] as Contract[]
-            }
-            if (Array.isArray(data)) {
-                return data as Contract[]
-            }
-        }
-        // Fallback
-        return Array.isArray(response) ? (response as Contract[]) : []
+
+        return this.extractContractsFromResponse(response)
     }
 
     async getContract(id: number): Promise<Contract> {
-        return this.http.get<Contract>(`/contracts/${id}`)
+        const response = await this.http.get<unknown>(`/contracts/${id}`)
+        const contract = this.extractSingleContract(response)
+        if (!contract) {
+            throw new Error("Contract not found in API response")
+        }
+        return contract
     }
 
     async updateStatus(id: number, status: string): Promise<Contract> {
         return this.http.put<Contract>(`/contracts/${id}/status`, { status })
     }
 
-    async updateWorkflowStatus(id: number, workflowStatus: string): Promise<Contract> {
-        const response = await this.http.post<{ success: boolean; data: Contract }>(`/contracts/${id}/workflow-status`, { workflow_status: workflowStatus })
+    async updateWorkflowStatus(
+        id: number,
+        workflowStatus: string,
+        options?: { trackingCode?: string }
+    ): Promise<Contract> {
+        const payload: { workflow_status: string; tracking_code?: string } = {
+            workflow_status: workflowStatus,
+        }
+
+        if (typeof options?.trackingCode === "string") {
+            payload.tracking_code = options.trackingCode
+        }
+
+        const response = await this.http.post<{ success: boolean; data: Contract }>(`/contracts/${id}/workflow-status`, payload)
         return response.data
     }
 
     async create(data: Partial<Contract>): Promise<Contract> {
         return this.http.post<Contract>("/contracts", data)
+    }
+
+    async getContractForRoom(roomId: string): Promise<Contract | null> {
+        try {
+            const response = await this.http.get<unknown>(`/contracts/chat-room/${roomId}`)
+            return this.extractSingleContract(response)
+        } catch {
+            // Return null instead of throwing if not found, to allow graceful handling
+            return null
+        }
     }
 }

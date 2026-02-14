@@ -54,6 +54,16 @@ export default function ProfilePage() {
     }, [user?.role])
 
     if (!user) return null
+    const creatorNiches = user.niches && user.niches.length > 0
+        ? user.niches
+        : user.niche
+            ? [user.niche]
+            : []
+    const brandNiches = brandProfile?.niches && brandProfile.niches.length > 0
+        ? brandProfile.niches
+        : brandProfile?.niche
+            ? [brandProfile.niche]
+            : []
 
     const handleSaveBrandProfile = async (updatedProfile: BrandProfile & { image?: File | null }) => {
         setIsLoading(true)
@@ -114,7 +124,7 @@ export default function ProfilePage() {
             }
 
             // Exclude fields that should not be sent or are handled separately
-            const excludedFields = ['id', 'created_at', 'updated_at', 'email_verified_at', 'avatar', 'avatar_url', 'image', 'balance', 'role', 'has_premium']
+            const excludedFields = ['id', 'created_at', 'updated_at', 'email_verified_at', 'avatar', 'avatar_url', 'image', 'balance', 'role', 'has_premium', 'niche']
 
             const profileRecord = updatedProfile as unknown as Record<string, unknown>
             Object.keys(updatedProfile || {}).forEach((key) => {
@@ -124,6 +134,8 @@ export default function ProfilePage() {
 
                 if (key === 'languages' && Array.isArray(val)) {
                     form.append('languages', JSON.stringify(val))
+                } else if (key === 'niches' && Array.isArray(val)) {
+                    form.append('niches', JSON.stringify(val))
                 } else if (key === 'portfolio') {
                     const portfolio = val as Portfolio | null | undefined
                     portfolio?.project_links?.forEach((link, index) => {
@@ -255,8 +267,8 @@ export default function ProfilePage() {
                                         <div className="font-medium">{brandProfile.cnpj || "Não informado"}</div>
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs font-medium text-muted-foreground uppercase">Nicho</label>
-                                        <div className="font-medium">{brandProfile.niche || "Não informado"}</div>
+                                        <label className="text-xs font-medium text-muted-foreground uppercase">Nichos</label>
+                                        <div className="font-medium">{brandNiches.length > 0 ? brandNiches.join(", ") : "Não informado"}</div>
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-xs font-medium text-muted-foreground uppercase">Endereço</label>
@@ -366,8 +378,8 @@ export default function ProfilePage() {
                                     <div className="font-medium">{user.profession || "Não informado"}</div>
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-xs font-medium text-muted-foreground uppercase">Nicho</label>
-                                    <div className="font-medium">{user.niche || "Não informado"}</div>
+                                    <label className="text-xs font-medium text-muted-foreground uppercase">Nichos</label>
+                                    <div className="font-medium">{creatorNiches.length > 0 ? creatorNiches.join(", ") : "Não informado"}</div>
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-xs font-medium text-muted-foreground uppercase">Tipo de Criador</label>
@@ -449,3 +461,4 @@ export default function ProfilePage() {
         </div>
     )
 }
+

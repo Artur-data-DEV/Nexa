@@ -27,6 +27,8 @@ export interface CampaignMilestone {
     total_extension_days?: number
     can_upload_file: boolean
     can_be_approved: boolean
+    can_be_rejected: boolean
+    can_request_approval: boolean
     can_justify_delay: boolean
     can_be_extended: boolean
     file_path?: string

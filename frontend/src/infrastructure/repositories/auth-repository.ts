@@ -26,6 +26,7 @@ type RawProfile = {
   facebook_page?: string
   twitter_handle?: string
   niche?: string
+  niches?: string[] | string
   industry?: string
   profession?: string
   languages?: string[]
@@ -57,8 +58,41 @@ export class ApiAuthRepository implements AuthRepository {
     return path.startsWith("/") ? `${rootUrl}${path}` : path
   }
 
+  private normalizeNiches(niches: RawProfile['niches'], legacyNiche?: string): string[] {
+    let values: string[] = []
+
+    if (Array.isArray(niches)) {
+      values = niches
+    } else if (typeof niches === "string" && niches.trim().length > 0) {
+      try {
+        const decoded = JSON.parse(niches)
+        if (Array.isArray(decoded)) {
+          values = decoded.filter((item): item is string => typeof item === "string")
+        } else {
+          values = [niches]
+        }
+      } catch {
+        values = [niches]
+      }
+    }
+
+    if (values.length === 0 && legacyNiche && legacyNiche.trim().length > 0) {
+      values = [legacyNiche]
+    }
+
+    const unique: string[] = []
+    values.forEach((value) => {
+      const normalized = value.trim()
+      if (!normalized || unique.includes(normalized)) return
+      unique.push(normalized)
+    })
+
+    return unique
+  }
+
   private normalizeProfile(profile: RawProfile): User {
     const avatar = this.resolveUrl(profile?.avatar_url || profile?.avatar)
+    const niches = this.normalizeNiches(profile.niches, profile.niche)
     return {
       id: profile.id,
       name: profile.name,
@@ -81,7 +115,8 @@ export class ApiAuthRepository implements AuthRepository {
       youtube_channel: profile.youtube_channel,
       facebook_page: profile.facebook_page,
       twitter_handle: profile.twitter_handle,
-      niche: profile.niche,
+      niche: niches[0] ?? profile.niche,
+      niches,
       industry: profile.industry,
       profession: profile.profession,
       languages: profile.languages,
@@ -139,6 +174,15 @@ export class ApiAuthRepository implements AuthRepository {
           payload.languages = JSON.parse(payload.languages as string)
         } catch {
           payload.languages = [payload.languages]
+        }
+      }
+      if (Array.isArray(payload.niches)) {
+        payload.niches = payload.niches
+      } else if (typeof payload.niches === 'string') {
+        try {
+          payload.niches = JSON.parse(payload.niches as string)
+        } catch {
+          payload.niches = [payload.niches]
         }
       }
       if (hasAvatar) {
