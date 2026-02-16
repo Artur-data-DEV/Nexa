@@ -25,11 +25,44 @@ import { useChat } from "@/presentation/contexts/chat-provider"
 import { toast } from "sonner"
 import CampaignTimelineSheet from "@/presentation/components/campaigns/campaign-timeline-sheet"
 import ReviewModal from "@/presentation/components/campaigns/review-modal"
+import { ContractBriefing } from "@/presentation/components/dashboard/contract-briefing"
 import { Contract } from "@/domain/entities/contract"
 import { ApiContractRepository } from "@/infrastructure/repositories/contract-repository"
 
 const chatRepository = new ApiChatRepository(api)
 const contractRepository = new ApiContractRepository(api)
+
+const formatCurrency = (value: number | string | undefined | null) => {
+    if (value === undefined || value === null) return "R$ 0,00";
+    const num = Number(value);
+    if (isNaN(num)) return "R$ 0,00";
+    return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(num);
+}
+
+const getWorkflowStatusLabel = (status: string | undefined | null) => {
+    if (!status) return "—";
+    const statusMap: Record<string, string> = {
+        'product_received': 'Produto Recebido',
+        'product_sent': 'Produto Enviado',
+        'material_sent': 'Material Enviado',
+        'production_started': 'Produção Iniciada',
+        'alignment_preparation': 'Preparação de Alinhamento',
+        'active': 'Ativo',
+        'completed': 'Concluído',
+        'cancelled': 'Cancelado',
+        'pending': 'Pendente',
+        'draft': 'Rascunho',
+        'review': 'Em Análise',
+        'approved': 'Aprovado',
+        'rejected': 'Rejeitado',
+    };
+    return statusMap[status] || status;
+};
+
+const formatDate = (date: string | undefined | null) => {
+    if (!date) return "—";
+    return new Date(date).toLocaleDateString('pt-BR');
+}
 
 type OfferData = {
     id?: number
@@ -195,7 +228,7 @@ export default function MessagesPage() {
     const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
     const [contractForReview, setContractForReview] = useState<Contract | null>(null)
     const [isCampaignDetailsOpen, setIsCampaignDetailsOpen] = useState(false)
-    const [detailsTab, setDetailsTab] = useState<"milestones" | "contract">("milestones")
+    const [detailsTab, setDetailsTab] = useState<"briefing" | "contract" | "milestones">("milestones")
     const [contractDetails, setContractDetails] = useState<Contract | null>(null)
     const [isContractDetailsLoading, setIsContractDetailsLoading] = useState(false)
 
@@ -206,9 +239,11 @@ export default function MessagesPage() {
         return date.toLocaleDateString("pt-BR")
     }
 
-    const formatCurrency = (value?: number | null) => {
+    const formatCurrency = (value?: number | string | null) => {
         if (value === null || value === undefined) return "—"
-        return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value)
+        const num = Number(value)
+        if (isNaN(num)) return "—"
+        return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(num)
     }
 
     const getContractStatusLabel = (status?: Contract["status"]) => {
@@ -1118,8 +1153,8 @@ export default function MessagesPage() {
                                 onValueChange={(value) => setActiveTab(value as "messages" | "milestones")}
                                 className="flex flex-1 flex-col overflow-hidden"
                             >
-                                <div className="absolute top-2 right-4 z-70 w-64">
-                                    <TabsList className="grid w-full grid-cols-2 h-9 bg-muted/80 backdrop-blur border">
+                                <div className="border-b px-3 py-2 flex justify-end bg-background/95">
+                                    <TabsList className="grid w-full sm:w-64 grid-cols-2 h-9 bg-muted/80 backdrop-blur border">
                                         <TabsTrigger value="messages" className="flex items-center gap-2 text-xs">
                                             <MessageCircle className="h-3.5 w-3.5" />
                                             Mensagens
@@ -1134,7 +1169,7 @@ export default function MessagesPage() {
                                 <TabsContent value="messages" className="mt-0 flex flex-1 flex-col overflow-hidden">
                                 <div
                                     ref={messagesContainerRef}
-                                    className="flex-1 overflow-y-auto px-4 py-0 mb-1"
+                                    className="flex-1 overflow-y-auto px-4 py-3 mb-1"
                                     id="messages-container"
                                     onScroll={handleScroll}
                                 >
@@ -1523,7 +1558,7 @@ export default function MessagesPage() {
                                 )}
                                 </TabsContent>
 
-                                <TabsContent value="milestones" className="mt-0 flex flex-1 min-h-0 flex-col overflow-hidden p-4 pt-14">
+                                <TabsContent value="milestones" className="mt-0 flex flex-1 min-h-0 flex-col overflow-hidden p-4">
                                     {contractId ? (
                                         <CampaignTimelineSheet
                                             contractId={contractId}
@@ -1643,22 +1678,40 @@ export default function MessagesPage() {
                         </Dialog>
 
                         <Dialog open={isCampaignDetailsOpen} onOpenChange={setIsCampaignDetailsOpen}>
-                            <DialogContent className="sm:max-w-3xl h-[90vh] max-h-[calc(100vh-2rem)] min-h-0 overflow-hidden flex flex-col">
+                            <DialogContent className="sm:max-w-3xl h-[90vh] max-h-[calc(100vh-2rem)] min-h-0 overflow-hidden flex flex-col z-100">
                                 <DialogHeader>
                                     <DialogTitle>Detalhes da campanha</DialogTitle>
-                                    <DialogDescription>
-                                        Acompanhe milestones e informações do contrato.
-                                    </DialogDescription>
                                 </DialogHeader>
                                 <Tabs
                                     value={detailsTab}
-                                    onValueChange={(value) => setDetailsTab(value as "milestones" | "contract")}
+                                    onValueChange={(value) => setDetailsTab(value as "briefing" | "contract" | "milestones")}
                                     className="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden"
                                 >
-                                    <TabsList className="grid w-full grid-cols-2">
-                                        <TabsTrigger value="milestones">Milestones</TabsTrigger>
+                                    <TabsList className="grid w-full grid-cols-3">
+                                        <TabsTrigger value="briefing">Briefing</TabsTrigger>
                                         <TabsTrigger value="contract">Contrato</TabsTrigger>
+                                        <TabsTrigger value="milestones">Milestones</TabsTrigger>
                                     </TabsList>
+                                    <TabsContent value="briefing" className="mt-4 min-h-0 flex-1 overflow-y-auto pr-1">
+                                        {isContractDetailsLoading ? (
+                                            <div className="flex items-center justify-between py-10">
+                                                <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-primary" />
+                                            </div>
+                                        ) : contractDetails ? (
+                                            <div className="pt-4">
+                                                <ContractBriefing 
+                                                    contract={contractDetails}
+                                                    onUpdate={setContractDetails}
+                                                    isEditable={user?.role === 'brand' || user?.role === 'admin'}
+                                                />
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-1 flex-col items-center justify-center text-sm text-muted-foreground gap-3 border rounded-lg p-6 text-center">
+                                                <FileText className="h-6 w-6 text-muted-foreground/60" />
+                                                <span>Sem contrato vinculado a esta conversa</span>
+                                            </div>
+                                        )}
+                                    </TabsContent>
                                     <TabsContent value="milestones" className="mt-4 flex h-full min-h-0 flex-1 flex-col overflow-hidden">
                                         {contractId ? (
                                             <div className="h-full min-h-0 flex-1 overflow-hidden">
@@ -1702,7 +1755,7 @@ export default function MessagesPage() {
                                                 <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-primary" />
                                             </div>
                                         ) : contractDetails ? (
-                                            <div className="space-y-4">
+                                            <div className="space-y-4 pt-4">
                                                 <div className="rounded-lg border p-4 space-y-3">
                                                     <div className="flex items-center justify-between gap-2">
                                                         <div className="font-semibold">{contractDetails.title}</div>
@@ -1727,7 +1780,7 @@ export default function MessagesPage() {
                                                             {contractDetails.formatted_budget || formatCurrency(contractDetails.budget)}
                                                         </div>
                                                         <div className="text-xs text-muted-foreground mt-3">Workflow</div>
-                                                        <div className="font-medium">{contractDetails.workflow_status || "—"}</div>
+                                                        <div className="font-medium">{getWorkflowStatusLabel(contractDetails.workflow_status)}</div>
                                                     </div>
                                                 </div>
                                                 <div className="rounded-lg border p-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
@@ -1751,7 +1804,42 @@ export default function MessagesPage() {
                                                 {contractDetails.requirements && (
                                                     <div className="rounded-lg border p-4 text-sm">
                                                         <div className="text-xs text-muted-foreground mb-2">Requisitos</div>
-                                                        <div className="whitespace-pre-wrap">{contractDetails.requirements}</div>
+                                                        <div className="space-y-1">
+                                                            {(() => {
+                                                                let reqs: any = contractDetails.requirements;
+                                                                if (typeof reqs === 'string') {
+                                                                    try {
+                                                                        reqs = JSON.parse(reqs);
+                                                                    } catch {
+                                                                        return <div className="whitespace-pre-wrap">{reqs}</div>;
+                                                                    }
+                                                                }
+
+                                                                if (typeof reqs === 'object' && reqs !== null) {
+                                                                    if (Array.isArray(reqs)) {
+                                                                         return reqs.map((req: any, i: number) => (
+                                                                            <div key={i}>• {typeof req === 'string' ? req : JSON.stringify(req)}</div>
+                                                                        ));
+                                                                    }
+                                                                    
+                                                                    const items = Object.entries(reqs).map(([key, value]) => {
+                                                                        if (key === '_logistics_workflow_status') {
+                                                                            return <div key={key}><strong>Status Logístico:</strong> {getWorkflowStatusLabel(String(value))}</div>;
+                                                                        }
+                                                                        if (key === '_tracking_code') {
+                                                                            return <div key={key}><strong>Código de Rastreio:</strong> {String(value)}</div>;
+                                                                        }
+                                                                        if (key.startsWith('_')) return null;
+
+                                                                        return <div key={key}><strong>{key}:</strong> {String(value)}</div>;
+                                                                    }).filter(Boolean);
+
+                                                                    if (items.length === 0) return <div className="text-muted-foreground italic">Nenhum requisito adicional.</div>;
+                                                                    return <>{items}</>;
+                                                                }
+                                                                return <div className="whitespace-pre-wrap">{String(reqs)}</div>;
+                                                            })()}
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>

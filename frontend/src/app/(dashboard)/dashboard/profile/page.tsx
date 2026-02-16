@@ -105,9 +105,19 @@ export default function ProfilePage() {
 
             setIsEditing(false)
             toast.success("Perfil da marca atualizado com sucesso!")
-        } catch (error) {
+        } catch (error: unknown) {
             console.error("Failed to update brand profile", error)
-            toast.error("Falha ao atualizar perfil da marca")
+            const errorData = typeof error === "object" && error !== null && "response" in error
+                ? (error as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } }).response?.data
+                : undefined
+            const msg = errorData?.message || "Falha ao atualizar perfil da marca"
+            const errors = errorData?.errors
+            if (errors) {
+                const firstError = Object.values(errors)[0] as string[]
+                toast.error(`${msg}: ${firstError[0]}`)
+            } else {
+                toast.error(msg)
+            }
         } finally {
             setIsLoading(false)
         }
@@ -138,12 +148,9 @@ export default function ProfilePage() {
                     form.append('niches', JSON.stringify(val))
                 } else if (key === 'portfolio') {
                     const portfolio = val as Portfolio | null | undefined
-                    portfolio?.project_links?.forEach((link, index) => {
-                        if (link.url) {
-                            form.append(`project_links[${index}][title]`, link.title || '')
-                            form.append(`project_links[${index}][url]`, link.url)
-                        }
-                    })
+                    if (portfolio?.project_links) {
+                        form.append('project_links', JSON.stringify(portfolio.project_links))
+                    }
                 } else if (val !== undefined && val !== null) {
                     if (typeof val === 'string' && val.trim() === '') {
                         return
@@ -153,20 +160,38 @@ export default function ProfilePage() {
             })
 
             const newUser = await updateProfileUseCase.execute(form)
-            const bust = typeof window !== "undefined" ? `?t=${Date.now()}` : ""
-            const nextUser = {
+            const mergedUser = {
+                ...user,
                 ...newUser,
-                avatar: newUser.avatar ? `${newUser.avatar}${bust}` : newUser.avatar
+                portfolio: newUser.portfolio ?? user.portfolio,
+            }
+            const bust = typeof window !== "undefined" ? `t=${Date.now()}` : ""
+            const avatarUrl = mergedUser.avatar || ""
+            const sep = avatarUrl.includes("?") ? "&" : "?"
+            const nextUser = {
+                ...mergedUser,
+                avatar: avatarUrl ? `${avatarUrl}${sep}${bust}` : avatarUrl
             }
             updateUser(nextUser)
-            if (typeof window !== "undefined" && updatedProfile.image instanceof Blob) {
-                window.location.reload()
-            }
+            
+            // Force image reload in the DOM if needed, but the state update with query param should trigger it.
+            // Removing window.location.reload() to prevent full page refresh and let React handle the update.
+            
             setIsEditing(false)
             toast.success("Perfil atualizado com sucesso!")
-        } catch (error) {
+        } catch (error: unknown) {
             console.error("Failed to update profile", error)
-            toast.error("Falha ao atualizar perfil")
+            const errorData = typeof error === "object" && error !== null && "response" in error
+                ? (error as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } }).response?.data
+                : undefined
+            const msg = errorData?.message || "Falha ao atualizar perfil"
+            const errors = errorData?.errors
+            if (errors) {
+                const firstError = Object.values(errors)[0] as string[]
+                toast.error(`${msg}: ${firstError[0]}`)
+            } else {
+                toast.error(msg)
+            }
         } finally {
             setIsLoading(false)
         }
@@ -449,6 +474,29 @@ export default function ProfilePage() {
                                         )}
                                         {!user.instagram_handle && !user.tiktok_handle && !user.youtube_channel && !user.twitter_handle && !user.facebook_page && (
                                             <span className="text-sm text-muted-foreground">Nenhuma rede social vinculada.</span>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="text-base">Links do Portfólio</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="space-y-2">
+                                        {user.portfolio?.project_links && user.portfolio.project_links.length > 0 ? (
+                                            user.portfolio.project_links.map((link, index) => (
+                                                <a
+                                                    key={`${link.url}-${index}`}
+                                                    href={link.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="block text-sm text-primary hover:underline truncate"
+                                                    title={link.title || link.url}
+                                                >
+                                                    {link.title || link.url}
+                                                </a>
+                                            ))
+                                        ) : (
+                                            <span className="text-sm text-muted-foreground">Nenhum link de portfólio cadastrado.</span>
                                         )}
                                     </CardContent>
                                 </Card>

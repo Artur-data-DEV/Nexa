@@ -21,7 +21,7 @@ export interface Contract {
     creator_amount?: number
     platform_fee?: number
     estimated_days?: number
-    requirements?: string
+    requirements?: Record<string, any> | null
     started_at?: string
     expected_completion_at?: string
     completed_at?: string | null
@@ -40,6 +40,15 @@ export interface Contract {
     has_brand_review?: boolean
     has_creator_review?: boolean
     has_both_reviews?: boolean
+    briefing?: {
+        objectives?: string
+        target_audience?: string
+        key_messages?: string
+        channels?: string
+        deadlines?: string
+        brand_requirements?: string
+        [key: string]: any
+    } | null
     
     // Relations
     campaign?: Campaign

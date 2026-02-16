@@ -108,8 +108,8 @@ export default function AdminCampaignsPage() {
 
             const response = await api.get<{
                 success: boolean
-                data: {
-                    data: Campaign[]
+                data: Campaign[]
+                pagination: {
                     current_page: number
                     last_page: number
                     per_page: number
@@ -118,12 +118,12 @@ export default function AdminCampaignsPage() {
             }>(`/admin/campaigns?${params.toString()}`)
 
             if (response.success) {
-                setCampaigns(response.data.data || [])
+                setCampaigns(Array.isArray(response.data) ? response.data : [])
                 setPagination({
-                    current_page: response.data.current_page,
-                    last_page: response.data.last_page,
-                    per_page: response.data.per_page,
-                    total: response.data.total,
+                    current_page: response.pagination.current_page,
+                    last_page: response.pagination.last_page,
+                    per_page: response.pagination.per_page,
+                    total: response.pagination.total,
                 })
             }
         } catch (error) {

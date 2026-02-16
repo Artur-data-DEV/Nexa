@@ -97,6 +97,15 @@ export class ApiContractRepository implements ContractRepository {
         return response.data
     }
 
+    async update(id: number, data: Partial<Contract>): Promise<Contract> {
+        const response = await this.http.put<unknown>(`/contracts/${id}`, data)
+        const contract = this.extractSingleContract(response)
+        if (!contract) {
+            throw new Error("Contract not found in API response")
+        }
+        return contract
+    }
+
     async create(data: Partial<Contract>): Promise<Contract> {
         return this.http.post<Contract>("/contracts", data)
     }

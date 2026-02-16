@@ -10,17 +10,25 @@ import { Badge } from "@/presentation/components/ui/badge"
 import { Alert, AlertDescription, AlertTitle } from "@/presentation/components/ui/alert"
 import { Skeleton } from "@/presentation/components/ui/skeleton"
 
-import { ApiCampaignRepository } from "@/infrastructure/repositories/campaign-repository"
 import { api } from "@/infrastructure/api/axios-adapter"
-import { Campaign } from "@/domain/entities/campaign"
-import { ListPendingCampaignsUseCase } from "@/application/use-cases/list-pending-campaigns.use-case"
 import type { AxiosError } from "axios"
 
-const campaignRepository = new ApiCampaignRepository(api)
-const listPendingCampaignsUseCase = new ListPendingCampaignsUseCase(campaignRepository)
+interface PendingCampaign {
+  id: number
+  title: string
+  description: string
+  budget: number
+  category?: string
+  created_at: string
+  brand?: {
+    id: number
+    name?: string
+    company_name?: string
+  }
+}
 
 export default function AdminPendingCampaignsPage() {
-  const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const [campaigns, setCampaigns] = useState<PendingCampaign[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [processingId, setProcessingId] = useState<number | null>(null)
@@ -30,8 +38,19 @@ export default function AdminPendingCampaignsPage() {
       setIsLoading(true)
       setError(null)
       try {
-        const data = await listPendingCampaignsUseCase.execute()
-        setCampaigns(data)
+        const response = await api.get<{
+          success: boolean
+          data: PendingCampaign[]
+        }>("/admin/campaigns?status=pending&per_page=20")
+
+        setCampaigns(
+          Array.isArray(response.data)
+            ? response.data.map((campaign) => ({
+              ...campaign,
+              budget: Number(campaign.budget) || 0,
+            }))
+            : []
+        )
       } catch (err: unknown) {
         const axiosError = err as AxiosError<{ message?: string; error?: string }>
         const message =
@@ -52,7 +71,7 @@ export default function AdminPendingCampaignsPage() {
     setProcessingId(id)
     setError(null)
     try {
-      await api.patch(`/campaigns/${id}/approve`)
+      await api.patch(`/admin/campaigns/${id}/approve`)
       setCampaigns(prev => prev.filter(campaign => campaign.id !== id))
     } catch (err: unknown) {
       const axiosError = err as AxiosError<{ message?: string; error?: string }>
@@ -71,7 +90,7 @@ export default function AdminPendingCampaignsPage() {
     setProcessingId(id)
     setError(null)
     try {
-      await api.patch(`/campaigns/${id}/reject`, { rejection_reason: null })
+      await api.patch(`/admin/campaigns/${id}/reject`, { reason: "Rejected by admin panel" })
       setCampaigns(prev => prev.filter(campaign => campaign.id !== id))
     } catch (err: unknown) {
       const axiosError = err as AxiosError<{ message?: string; error?: string }>
@@ -156,7 +175,7 @@ export default function AdminPendingCampaignsPage() {
                     </Badge>
                     <CardTitle className="text-lg">{campaign.title}</CardTitle>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {campaign.brand?.name || "Marca desconhecida"}
+                      {campaign.brand?.company_name || campaign.brand?.name || "Marca desconhecida"}
                     </p>
                   </div>
                   <span className="text-xs text-muted-foreground">
@@ -194,7 +213,7 @@ export default function AdminPendingCampaignsPage() {
                       variant="outline"
                       asChild
                     >
-                      <Link href={`/dashboard/campaigns/${campaign.id}`}>
+                      <Link href="/admin/campaigns">
                         Ver detalhes
                       </Link>
                     </Button>

@@ -7,6 +7,7 @@ export interface ContractRepository {
     getContract(id: number): Promise<Contract>
     updateStatus(id: number, status: string): Promise<Contract>
     updateWorkflowStatus(id: number, workflowStatus: string, options?: { trackingCode?: string }): Promise<Contract>
+    update(id: number, data: Partial<Contract>): Promise<Contract>
     create(data: Partial<Contract>): Promise<Contract>
     getContractForRoom(roomId: string): Promise<Contract | null>
 }

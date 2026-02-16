@@ -24,6 +24,19 @@ export function ContractCard({ contract, onPay }: ContractCardProps) {
     const isBrand = user?.role === 'brand'
     const showPayButton = isBrand && contract.status === 'pending'
 
+    const formatBudget = (value: string | number | null | undefined) => {
+        if (value === null || value === undefined) return 'R$ 0,00'
+        
+        const numValue = typeof value === 'string' ? parseFloat(value) : value
+        
+        if (isNaN(numValue)) return 'R$ 0,00'
+        
+        return new Intl.NumberFormat('pt-BR', { 
+            style: 'currency', 
+            currency: 'BRL' 
+        }).format(numValue)
+    }
+
     return (
         <Card className="hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -45,7 +58,7 @@ export function ContractCard({ contract, onPay }: ContractCardProps) {
                     </div>
                     <div className="flex items-center gap-2">
                         <DollarSign className="h-4 w-4" />
-                        <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(contract.budget ?? contract.amount ?? 0)}</span>
+                        <span>{formatBudget(contract.budget ?? contract.amount)}</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4" />

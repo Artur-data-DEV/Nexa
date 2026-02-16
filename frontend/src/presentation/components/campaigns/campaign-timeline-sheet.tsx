@@ -350,7 +350,8 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
         }
     }
 
-    const getMilestoneStatusLabel = (status: CampaignMilestone["status"]) => {
+    const getMilestoneStatusLabel = (status: CampaignMilestone["status"], hasFile: boolean) => {
+        if (status === 'pending' && hasFile) return 'Em Análise'
         switch (status) {
             case 'pending': return 'Pendente'
             case 'approved': return 'Aprovado'
@@ -361,7 +362,8 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
         }
     }
 
-    const getMilestoneStatusColor = (status: CampaignMilestone["status"]) => {
+    const getMilestoneStatusColor = (status: CampaignMilestone["status"], hasFile: boolean) => {
+        if (status === 'pending' && hasFile) return 'bg-purple-500/20 text-purple-700'
         switch (status) {
             case 'pending': return 'bg-yellow-500/20 text-yellow-700'
             case 'approved': return 'bg-blue-500/20 text-blue-700'
@@ -412,8 +414,8 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <Badge variant="outline" className={cn("text-[10px]", getMilestoneStatusColor(milestone.status))}>
-                                        {getMilestoneStatusLabel(milestone.status)}
+                                    <Badge variant="outline" className={cn("text-[10px]", getMilestoneStatusColor(milestone.status, !!milestone.file_path))}>
+                                        {getMilestoneStatusLabel(milestone.status, !!milestone.file_path)}
                                     </Badge>
                                     {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                                 </div>
@@ -456,7 +458,10 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
                                                 setShowUploadDialog(true)
                                             }}>
                                                 <Upload className="w-3 h-3 mr-2" />
-                                                {milestone.milestone_type === 'script_submission' ? 'Enviar Script' : 'Enviar Arquivo'}
+                                                {milestone.milestone_type === 'script_submission' 
+                                                    ? (milestone.file_path ? 'Substituir Script' : 'Enviar Script')
+                                                    : (milestone.file_path ? 'Substituir Arquivo' : 'Enviar Arquivo')
+                                                }
                                             </Button>
                                         )}
 
@@ -687,7 +692,7 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
             content: (
                 <div className="space-y-3 mt-3">
                     {renderMilestoneList(productionMilestones)}
-                    {productionMilestones.some(m => m.status === 'pending' && user?.role === 'creator') && (
+                    {productionMilestones.some(m => m.status === 'pending' && !m.file_path && user?.role === 'creator') && (
                         <Button 
                             disabled={isLoading || isUploading}
                             className="w-full bg-purple-600 hover:bg-purple-700 text-white"

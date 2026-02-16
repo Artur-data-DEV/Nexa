@@ -158,50 +158,34 @@ export class ApiAuthRepository implements AuthRepository {
   }
 
   async updateProfile(data: Record<string, unknown> | FormData): Promise<User> {
+    const form = new FormData()
+
     if (data instanceof FormData) {
-      const avatar = data.get('avatar') || data.get('image')
-      const hasAvatar = avatar instanceof Blob
-      const payload: Record<string, unknown> = {}
       data.forEach((value, key) => {
-        if (key !== 'avatar' && key !== 'image') {
-          payload[key] = value
+        form.append(key, value)
+      })
+    } else {
+      Object.entries(data).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+            if (Array.isArray(value) || typeof value === 'object') {
+                form.append(key, JSON.stringify(value))
+            } else {
+                form.append(key, String(value))
+            }
         }
       })
-      if (Array.isArray(payload.languages)) {
-        payload.languages = payload.languages
-      } else if (typeof payload.languages === 'string') {
-        try {
-          payload.languages = JSON.parse(payload.languages as string)
-        } catch {
-          payload.languages = [payload.languages]
-        }
-      }
-      if (Array.isArray(payload.niches)) {
-        payload.niches = payload.niches
-      } else if (typeof payload.niches === 'string') {
-        try {
-          payload.niches = JSON.parse(payload.niches as string)
-        } catch {
-          payload.niches = [payload.niches]
-        }
-      }
-      if (hasAvatar) {
-        try {
-          const form = new FormData()
-          form.append('avatar', avatar as Blob)
-          await this.http.post<unknown>("/profile/avatar", form)
-        } catch {
-          // continue updating other fields even if avatar upload fails
-        }
-      }
-      const putResp = await this.http.put<unknown>("/profile", payload)
-      const r = putResp as { profile?: unknown; data?: { profile?: unknown } }
-      const raw = r?.profile ?? r?.data?.profile ?? putResp
-      return this.normalizeProfile(raw as RawProfile)
     }
-    const putResp = await this.http.put<unknown>("/profile", data as Record<string, unknown>)
-    const r = putResp as { profile?: unknown; data?: { profile?: unknown } }
-    const raw = r?.profile ?? r?.data?.profile ?? putResp
+
+    form.append('_method', 'PUT')
+
+    const response = await this.http.post<unknown>("/profile", form, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    })
+    
+    const r = response as { profile?: unknown; data?: { profile?: unknown } }
+    const raw = r?.profile ?? r?.data?.profile ?? response
     return this.normalizeProfile(raw as RawProfile)
   }
 

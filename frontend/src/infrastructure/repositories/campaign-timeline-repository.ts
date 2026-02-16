@@ -65,6 +65,6 @@ export class ApiCampaignTimelineRepository implements CampaignTimelineRepository
     }
 
     async completeContract(contractId: number): Promise<{ success: boolean; message: string }> {
-        return this.http.post(`/contracts/${contractId}/complete`)
+        return this.http.post(`/campaign-timeline/complete-contract`, { contract_id: contractId })
     }
 }

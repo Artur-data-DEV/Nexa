@@ -302,8 +302,18 @@ export default function CreateCampaignPage() {
       setCurrentStep(prev => Math.max(prev - 1, 1))
   }
 
+  const validateAllSteps = (): boolean => {
+      for (let i = 1; i <= 6; i++) {
+          if (!validateStep(i)) {
+              setCurrentStep(i)
+              return false
+          }
+      }
+      return true
+  }
+
   const handleSubmit = async () => {
-    if (!validateStep(currentStep)) return
+    if (!validateAllSteps()) return
 
     setIsCreating(true)
 
@@ -369,9 +379,24 @@ export default function CreateCampaignPage() {
       resetForm()
       setTimeout(() => setIsSubmitted(false), 5000)
 
-    } catch (err) {
-      console.error(err)
-      toast.error("Erro inesperado ao criar campanha.")
+    } catch (err: any) {
+      console.error("Erro detalhado:", err)
+      if (err.response?.data?.errors) {
+        // Validation errors
+        const errors = err.response.data.errors
+        Object.keys(errors).forEach(key => {
+            const messages = errors[key]
+            if (Array.isArray(messages)) {
+                messages.forEach(msg => toast.error(`${key}: ${msg}`))
+            } else {
+                toast.error(`${key}: ${messages}`)
+            }
+        })
+      } else if (err.response?.data?.message) {
+          toast.error(err.response.data.message)
+      } else {
+          toast.error("Erro inesperado ao criar campanha. Verifique o console.")
+      }
     } finally {
       setIsCreating(false)
     }
@@ -582,7 +607,7 @@ export default function CreateCampaignPage() {
                             <input
                                 ref={fileInputRef}
                                 type="file"
-                                accept="image/*"
+                                accept="image/*,image/avif"
                                 className="hidden"
                                 onChange={handleFileChange}
                             />
@@ -622,7 +647,7 @@ export default function CreateCampaignPage() {
                                 ref={attachmentInputRef}
                                 type="file"
                                 multiple
-                                accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                                accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,video/x-msvideo,video/avi,video/mp4,video/quicktime,video/x-ms-wmv"
                                 className="hidden"
                                 onChange={handleAttachmentChange}
                             />

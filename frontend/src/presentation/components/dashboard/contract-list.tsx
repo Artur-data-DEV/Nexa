@@ -63,7 +63,7 @@ export default function ContractList() {
     })
 
     return (
-        <Card className="min-h-[500px]">
+        <Card className="min-h-125">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <FileText className="h-5 w-5" />
@@ -88,7 +88,7 @@ export default function ContractList() {
                 </div>
 
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
-                    <TabsList className="grid w-full grid-cols-4 lg:w-[600px]">
+                    <TabsList className="grid w-full grid-cols-4 lg:w-150">
                         <TabsTrigger value="all">Todos</TabsTrigger>
                         <TabsTrigger value="active">Ativos</TabsTrigger>
                         <TabsTrigger value="completed">Concluídos</TabsTrigger>
@@ -99,7 +99,7 @@ export default function ContractList() {
                         {isLoading ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {[1, 2, 3].map(i => (
-                                    <Skeleton key={i} className="h-[200px] w-full" />
+                                    <Skeleton key={i} className="h-50 w-full" />
                                 ))}
                             </div>
                         ) : filteredContracts.length === 0 ? (

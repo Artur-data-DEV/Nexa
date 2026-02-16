@@ -10,8 +10,9 @@ import {
   SelectItem,
 } from "@/presentation/components/ui/select"
 import { NICHES } from "@/lib/niches"
-import { UploadIcon, XIcon, Plus, Trash2 } from "lucide-react"
+import { UploadIcon, XIcon, Plus, Trash2, Save } from "lucide-react"
 import { Button } from "@/presentation/components/ui/button"
+import { toast } from "sonner"
 import DatePicker, { registerLocale } from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
 import { ptBR } from "date-fns/locale"
@@ -199,8 +200,17 @@ export const EditProfile: React.FC<EditProfileProps> = ({ initialProfile, onCanc
     }))
   }
 
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSaveLink = (index: number) => {
+    const link = profile.portfolio?.project_links?.[index]
+    if (!link?.title?.trim() || !link?.url?.trim()) {
+      toast.error("Preencha o título e a URL do link.")
+      return
+    }
+    // toast removed as per user request
+  }
+
+  const handleSave = (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
 
     const selectedNiches = profile.niches && profile.niches.length > 0
       ? profile.niches
@@ -217,6 +227,20 @@ export const EditProfile: React.FC<EditProfileProps> = ({ initialProfile, onCanc
       !profile.instagram_handle?.trim()
     ) {
       return setError("Instagram é obrigatório para influenciadores")
+    }
+
+    // Validate Project Links
+    if (profile.portfolio?.project_links) {
+      for (const link of profile.portfolio.project_links) {
+        if (!link.title?.trim() || !link.url?.trim()) {
+          return setError("Preencha o título e a URL de todos os links do portfólio")
+        }
+        try {
+          new URL(link.url)
+        } catch {
+          return setError(`A URL "${link.url}" é inválida. Certifique-se de incluir http:// ou https://`)
+        }
+      }
     }
 
     setError("")
@@ -501,6 +525,16 @@ export const EditProfile: React.FC<EditProfileProps> = ({ initialProfile, onCanc
                             onChange={(e) => handleLinkChange(index, "url", e.target.value)}
                             className="flex-2"
                         />
+                        <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-primary hover:text-primary/90"
+                            onClick={() => handleSaveLink(index)}
+                            title="Validar link"
+                        >
+                            <Save className="w-4 h-4" />
+                        </Button>
                         <Button 
                             type="button" 
                             variant="ghost" 

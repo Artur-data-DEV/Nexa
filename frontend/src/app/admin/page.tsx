@@ -35,17 +35,19 @@ interface PendingCampaign {
   title: string
   brand: string
   type: string
-  budget: number
+  budget?: number
+  value?: number
 }
 
 interface RecentUser {
   id: number
   name: string
-  email: string
+  email?: string
   role: string
   avatar?: string
-  registeredDaysAgo: number
-  created_at: string
+  tag?: string
+  registeredDaysAgo?: number
+  created_at?: string
 }
 
 export default function AdminDashboardPage() {
@@ -63,12 +65,8 @@ export default function AdminDashboardPage() {
     try {
       setLoading(true)
 
-      // Define response types
-      interface ApiResponse<T> {
-        data: T
-      }
-
       interface MetricsResponse {
+        success?: boolean
         data?: DashboardMetrics
         pendingCampaignsCount?: number
         allActiveCampaignCount?: number
@@ -76,39 +74,93 @@ export default function AdminDashboardPage() {
         allUserCount?: number
       }
 
-      interface CampaignsResponse {
+      interface AdminCampaignListItem {
+        id: number
+        title: string
+        campaign_type?: string
+        budget?: number | string | null
+        brand?: {
+          name?: string
+          company_name?: string
+        }
+      }
+
+      interface AdminCampaignsResponse {
+        success?: boolean
+        data?: AdminCampaignListItem[]
+      }
+
+      interface PendingCampaignWidgetResponse {
+        success?: boolean
         data?: PendingCampaign[]
         campaigns?: PendingCampaign[]
       }
 
       interface UsersResponse {
+        success?: boolean
         data?: RecentUser[]
         users?: RecentUser[]
       }
 
       // Fetch all data in parallel
       const [metricsRes, campaignsRes, usersRes] = await Promise.all([
-        api.get<MetricsResponse>("/admin/dashboard/metrics").catch(() => ({ data: {} as MetricsResponse })),
-        api.get<CampaignsResponse>("/admin/campaigns/pending", { params: { limit: 5 } }).catch(() => ({ data: { data: [] } as CampaignsResponse })),
-        api.get<UsersResponse>("/admin/users/recent", { params: { limit: 5 } }).catch(() => ({ data: { data: [] } as UsersResponse }))
-      ]) as [ApiResponse<MetricsResponse>, ApiResponse<CampaignsResponse>, ApiResponse<UsersResponse>]
+        api.get<MetricsResponse>("/admin/dashboard-metrics").catch(() => ({}) as MetricsResponse),
+        api.get<AdminCampaignsResponse>("/admin/campaigns", { params: { status: "pending", per_page: 5 } }).catch(() => ({ data: [] }) as AdminCampaignsResponse),
+        api.get<UsersResponse>("/admin/recent-users", { params: { limit: 5 } }).catch(() => ({ data: [] }) as UsersResponse),
+      ])
 
-      const metricsData = metricsRes.data
+      const metricsData = metricsRes.data ?? metricsRes
       setMetrics({
-        pendingCampaignsCount: metricsData?.data?.pendingCampaignsCount ?? metricsData?.pendingCampaignsCount ?? 0,
-        allActiveCampaignCount: metricsData?.data?.allActiveCampaignCount ?? metricsData?.allActiveCampaignCount ?? 0,
-        allRejectCampaignCount: metricsData?.data?.allRejectCampaignCount ?? metricsData?.allRejectCampaignCount ?? 0,
-        allUserCount: metricsData?.data?.allUserCount ?? metricsData?.allUserCount ?? 0
+        pendingCampaignsCount: metricsData?.pendingCampaignsCount ?? 0,
+        allActiveCampaignCount: metricsData?.allActiveCampaignCount ?? 0,
+        allRejectCampaignCount: metricsData?.allRejectCampaignCount ?? 0,
+        allUserCount: metricsData?.allUserCount ?? 0
       })
 
-      // Handle various response formats
-      const campaignsData = campaignsRes.data?.data || campaignsRes.data?.campaigns || []
-      setPendingCampaigns(Array.isArray(campaignsData) ? campaignsData.slice(0, 5) : [])
+      let campaignsData: PendingCampaign[] = Array.isArray(campaignsRes.data)
+        ? campaignsRes.data.map((campaign) => ({
+          id: campaign.id,
+          title: campaign.title,
+          brand: campaign.brand?.company_name || campaign.brand?.name || "Marca desconhecida",
+          type: campaign.campaign_type || "Geral",
+          budget: Number(campaign.budget ?? 0) || 0,
+        }))
+        : []
 
-      const usersData = usersRes.data?.data || usersRes.data?.users || []
+      // Fallback to dashboard widget endpoint when list endpoint returns empty
+      // but metrics indicate pending campaigns exist.
+      if (campaignsData.length === 0 && (metricsData?.pendingCampaignsCount ?? 0) > 0) {
+        const fallbackRes = await api.get<PendingCampaignWidgetResponse>("/admin/pending-campaigns", { params: { limit: 5 } }).catch(() => ({ data: [] }) as PendingCampaignWidgetResponse)
+        const fallbackData = Array.isArray(fallbackRes.data)
+          ? fallbackRes.data
+          : Array.isArray(fallbackRes.campaigns)
+            ? fallbackRes.campaigns
+            : []
+        campaignsData = fallbackData
+      }
+
+      setPendingCampaigns(
+        Array.isArray(campaignsData)
+          ? campaignsData.slice(0, 5).map((campaign: PendingCampaign) => ({
+            ...campaign,
+            budget: Number(campaign.budget ?? campaign.value ?? 0) || 0,
+          }))
+          : []
+      )
+
+      const usersData = Array.isArray(usersRes.data)
+        ? usersRes.data
+        : Array.isArray(usersRes.users)
+          ? usersRes.users
+          : []
       setRecentUsers(Array.isArray(usersData) ? usersData.slice(0, 5).map((user: RecentUser) => ({
         ...user,
-        registeredDaysAgo: user.registeredDaysAgo || Math.floor((Date.now() - new Date(user.created_at).getTime()) / (1000 * 60 * 60 * 24))
+        registeredDaysAgo:
+          typeof user.registeredDaysAgo === 'number'
+            ? user.registeredDaysAgo
+            : user.created_at
+              ? Math.floor((Date.now() - new Date(user.created_at).getTime()) / (1000 * 60 * 60 * 24))
+              : 0
       })) : [])
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error)
@@ -124,10 +176,10 @@ export default function AdminDashboardPage() {
       setLoadingCampaigns(prev => [...prev, campaignId])
 
       if (action === 'approve') {
-        await api.post(`/admin/campaigns/${campaignId}/approve`)
+        await api.patch(`/admin/campaigns/${campaignId}/approve`)
         toast.success("Campanha aprovada com sucesso")
       } else {
-        await api.post(`/admin/campaigns/${campaignId}/reject`)
+        await api.patch(`/admin/campaigns/${campaignId}/reject`)
         toast.success("Campanha rejeitada com sucesso")
       }
 
@@ -249,7 +301,7 @@ export default function AdminDashboardPage() {
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-foreground truncate">{campaign.title}</div>
                       <div className="text-sm text-muted-foreground">
-                        {campaign.brand} • {campaign.type} • R$ {typeof campaign.budget === 'number' ? campaign.budget.toLocaleString('pt-BR') : campaign.budget}
+                        {campaign.brand} • {campaign.type} • R$ {(campaign.budget ?? 0).toLocaleString('pt-BR')}
                       </div>
                     </div>
                     <div className="flex gap-2 mt-3 sm:mt-0 sm:ml-4">
@@ -321,7 +373,7 @@ export default function AdminDashboardPage() {
                       <div className="min-w-0">
                         <div className="font-medium text-foreground text-sm truncate">{user.name}</div>
                         <div className="text-xs text-muted-foreground truncate">
-                          {user.email} • Registrado há {user.registeredDaysAgo} {user.registeredDaysAgo === 1 ? 'dia' : 'dias'}
+                          {user.email ? `${user.email} • ` : ''}Registrado há {user.registeredDaysAgo} {user.registeredDaysAgo === 1 ? 'dia' : 'dias'}
                         </div>
                       </div>
                     </div>
