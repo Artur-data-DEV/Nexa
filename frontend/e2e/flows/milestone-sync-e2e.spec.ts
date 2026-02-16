@@ -143,10 +143,6 @@ test.describe('Milestone Sync End-to-End', () => {
             await expandMilestone(brandDialogApproveScript, 'Envio do Roteiro')
             await moderateMilestone(brandDialogApproveScript, 'approve')
 
-            const brandDialogApproveScriptGate = await openMilestonesDialog(brandPage, roomId)
-            await expandMilestone(brandDialogApproveScriptGate, 'Aprovação do Roteiro')
-            await moderateMilestone(brandDialogApproveScriptGate, 'approve')
-
             const creatorDialogVideo = await openMilestonesDialog(creatorPage, roomId)
             await expandMilestone(creatorDialogVideo, 'Envio de Imagem e Vídeo')
             await expect(creatorDialogVideo.getByRole('button', { name: 'Enviar Arquivo' })).toBeVisible()
@@ -155,12 +151,7 @@ test.describe('Milestone Sync End-to-End', () => {
             const brandDialogApproveVideo = await openMilestonesDialog(brandPage, roomId)
             await expandMilestone(brandDialogApproveVideo, 'Envio de Imagem e Vídeo')
             await moderateMilestone(brandDialogApproveVideo, 'approve')
-
-            const brandDialogFinalApproval = await openMilestonesDialog(brandPage, roomId)
-            await expandMilestone(brandDialogFinalApproval, 'Aprovação Final')
-            await moderateMilestone(brandDialogFinalApproval, 'approve')
-
-            await expect(brandDialogFinalApproval.getByText(/Aprovado/i).first()).toBeVisible()
+            await expect(brandDialogApproveVideo.getByText(/Aprovado/i).first()).toBeVisible()
         } finally {
             await brandContext.close()
             await creatorContext.close()

@@ -133,6 +133,29 @@ export function ContractBriefing({ contract, onUpdate, isEditable }: ContractBri
         return <p className="text-xs text-red-500 mt-1">{errors[field]}</p>
     }
 
+    const parsedBudget =
+        typeof contract.budget === "number"
+            ? contract.budget
+            : typeof contract.budget === "string"
+                ? (() => {
+                    const rawBudget = contract.budget.trim()
+                    if (!rawBudget) return 0
+
+                    if (rawBudget.includes(",")) {
+                        return Number(rawBudget.replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", "."))
+                    }
+
+                    return Number(rawBudget.replace(/[^\d.-]/g, ""))
+                })()
+                : 0
+
+    const budgetDisplay =
+        typeof contract.formatted_budget === "string" && contract.formatted_budget.trim() !== ""
+            ? contract.formatted_budget
+            : Number.isFinite(parsedBudget)
+                ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(parsedBudget)
+                : "—"
+
     return (
         <div className="space-y-6">
             {/* Printable Header - Only visible when printing */}
@@ -145,7 +168,7 @@ export function ContractBriefing({ contract, onUpdate, isEditable }: ContractBri
                 <div className="grid grid-cols-2 gap-6 text-sm">
                     <div>
                         <h3 className="font-semibold text-muted-foreground">Orçamento</h3>
-                        <p className="text-lg">{new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(contract.budget || 0)}</p>
+                        <p className="text-lg">{budgetDisplay}</p>
                     </div>
                     <div>
                         <h3 className="font-semibold text-muted-foreground">Prazo Estimado</h3>

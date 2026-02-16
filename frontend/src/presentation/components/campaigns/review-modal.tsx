@@ -53,7 +53,8 @@ export default function ReviewModal({
         setIsSubmitting(true)
 
         try {
-            const response = await api.post<{ success: boolean; message?: string }>(`/contracts/${contract.id}/review`, {
+            const response = await api.post<{ success: boolean; message?: string }>("/reviews", {
+                contract_id: contract.id,
                 rating,
                 comment: comment.trim() || undefined,
                 rating_categories: ratingCategories,

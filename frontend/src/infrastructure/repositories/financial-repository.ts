@@ -23,7 +23,7 @@ export class ApiFinancialRepository implements FinancialRepository {
       return response.data
   }
 
-  async requestWithdrawal(data: { amount: number; method: string; bank_account_id?: string }): Promise<void> {
+  async requestWithdrawal(data: { amount: number; withdrawal_method: string; bank_account_id?: string }): Promise<void> {
     await this.http.post("/freelancer/withdrawals", data)
   }
 

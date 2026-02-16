@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useRef, useCallback, useLayoutEffect, useEffect, FormEvent, ChangeEvent } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/presentation/components/u
 import { Button } from "@/presentation/components/ui/button"
 import { Input } from "@/presentation/components/ui/input"
 import { ScrollArea } from "@/presentation/components/ui/scroll-area"
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/presentation/components/ui/sheet"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/presentation/components/ui/sheet"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/presentation/components/ui/dialog"
 import { Textarea } from "@/presentation/components/ui/textarea"
 import { Badge } from "@/presentation/components/ui/badge"
@@ -39,20 +39,82 @@ const formatCurrency = (value: number | string | undefined | null) => {
     return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(num);
 }
 
+const parseMoney = (value: unknown): number | null => {
+    if (typeof value === "number" && Number.isFinite(value)) return value
+    if (typeof value !== "string") return null
+
+    const raw = value.trim()
+    if (!raw || raw === "-" || raw === "â€”" || raw === "—") return null
+
+    const cleaned = raw.replace(/[^\d,.-]/g, "")
+    if (!cleaned) return null
+
+    const hasComma = cleaned.includes(",")
+    const hasDot = cleaned.includes(".")
+    let normalized = cleaned
+
+    if (hasComma && hasDot) {
+        const lastComma = cleaned.lastIndexOf(",")
+        const lastDot = cleaned.lastIndexOf(".")
+
+        if (lastComma > lastDot) {
+            normalized = cleaned.replace(/\./g, "").replace(",", ".")
+        } else {
+            normalized = cleaned.replace(/,/g, "")
+        }
+    } else if (hasComma) {
+        normalized = cleaned.replace(",", ".")
+    }
+
+    if (!normalized) return null
+
+    const parsed = Number(normalized)
+    return Number.isFinite(parsed) ? parsed : null
+}
+
+const getContractBudgetDisplay = (contract: Contract | null): string => {
+    if (!contract) return "-"
+
+    if (typeof contract.formatted_budget === "string") {
+        const formatted = contract.formatted_budget.trim()
+        if (formatted && formatted !== "-" && formatted !== "â€”" && formatted !== "—") {
+            return formatted
+        }
+    }
+
+    const budgetValue = parseMoney(contract.budget)
+    if (budgetValue !== null) {
+        return formatCurrency(budgetValue)
+    }
+
+    const amountValue = parseMoney(contract.amount)
+    if (amountValue !== null) {
+        return formatCurrency(amountValue)
+    }
+
+    const creatorAmountValue = parseMoney(contract.creator_amount)
+    const platformFeeValue = parseMoney(contract.platform_fee)
+    if (creatorAmountValue !== null && platformFeeValue !== null) {
+        return formatCurrency(creatorAmountValue + platformFeeValue)
+    }
+
+    return "-"
+}
+
 const getWorkflowStatusLabel = (status: string | undefined | null) => {
-    if (!status) return "—";
+    if (!status) return "â€”";
     const statusMap: Record<string, string> = {
         'product_received': 'Produto Recebido',
         'product_sent': 'Produto Enviado',
         'material_sent': 'Material Enviado',
-        'production_started': 'Produção Iniciada',
-        'alignment_preparation': 'Preparação de Alinhamento',
+        'production_started': 'ProduÃ§Ã£o Iniciada',
+        'alignment_preparation': 'PreparaÃ§Ã£o de Alinhamento',
         'active': 'Ativo',
-        'completed': 'Concluído',
+        'completed': 'ConcluÃ­do',
         'cancelled': 'Cancelado',
         'pending': 'Pendente',
         'draft': 'Rascunho',
-        'review': 'Em Análise',
+        'review': 'Em AnÃ¡lise',
         'approved': 'Aprovado',
         'rejected': 'Rejeitado',
     };
@@ -60,7 +122,7 @@ const getWorkflowStatusLabel = (status: string | undefined | null) => {
 };
 
 const formatDate = (date: string | undefined | null) => {
-    if (!date) return "—";
+    if (!date) return "â€”";
     return new Date(date).toLocaleDateString('pt-BR');
 }
 
@@ -231,18 +293,65 @@ export default function MessagesPage() {
     const [detailsTab, setDetailsTab] = useState<"briefing" | "contract" | "milestones">("milestones")
     const [contractDetails, setContractDetails] = useState<Contract | null>(null)
     const [isContractDetailsLoading, setIsContractDetailsLoading] = useState(false)
+    const [timelineSyncVersion, setTimelineSyncVersion] = useState(0)
+    const [chatListTab, setChatListTab] = useState<"messages" | "archived">("messages")
+    const selectedChatState =
+        selectedChat
+            ? chats.find(chat => chat.room_id === selectedChat.room_id) ?? selectedChat
+            : null
+    const isChatReadOnly =
+        !!selectedChatState &&
+        (!selectedChatState.can_send_messages || selectedChatState.chat_status !== "active")
+    const isArchivedChat = selectedChatState?.chat_status === "archived"
+    const readOnlyStatusLabel = isArchivedChat ? "Conversa arquivada" : "Conversa encerrada"
+    const readOnlyStatusDescription = isArchivedChat
+        ? "Campanha encerrada formalmente. Este chat estÃ¡ disponÃ­vel apenas para leitura."
+        : "Contrato concluÃ­do. Este chat permanece apenas para leitura, sem novas interaÃ§Ãµes."
+    const nonArchivedChats = chats.filter(chat => chat.chat_status !== "archived")
+    const archivedChats = chats.filter(chat => chat.chat_status === "archived")
+    const visibleChats = chatListTab === "archived" ? archivedChats : nonArchivedChats
+
+    const refreshChatRooms = useCallback(async () => {
+        try {
+            const chatList = await chatRepository.getChats(true)
+            setChats(chatList)
+        } catch (error) {
+            console.error("Failed to refresh chat rooms", error)
+        }
+    }, [setChats])
+
+    useEffect(() => {
+        if (!isChatReadOnly) return
+        setRemoteTyping(false)
+        setIsTyping(false)
+        if (typingTimeoutRef.current) {
+            clearTimeout(typingTimeoutRef.current)
+            typingTimeoutRef.current = null
+        }
+        if (isOfferDialogOpen) {
+            setIsOfferDialogOpen(false)
+        }
+        if (selectedFile) {
+            setSelectedFile(null)
+        }
+    }, [isChatReadOnly, isOfferDialogOpen, selectedFile])
+
+    useEffect(() => {
+        if (!user?.id) return
+        void refreshChatRooms()
+    }, [user?.id, refreshChatRooms])
 
     const formatDate = (value?: string | null) => {
-        if (!value) return "—"
+        if (!value) return "â€”"
         const date = new Date(value)
-        if (Number.isNaN(date.getTime())) return "—"
+        if (Number.isNaN(date.getTime())) return "â€”"
         return date.toLocaleDateString("pt-BR")
     }
 
     const formatCurrency = (value?: number | string | null) => {
-        if (value === null || value === undefined) return "—"
+        if (value === null || value === undefined) return "â€”"
         const num = Number(value)
-        if (isNaN(num)) return "—"
+        if (isNaN(num)) return "â€”"
         return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(num)
     }
 
@@ -250,7 +359,7 @@ export default function MessagesPage() {
         switch (status) {
             case "pending": return "Pendente"
             case "active": return "Ativo"
-            case "completed": return "Concluído"
+            case "completed": return "ConcluÃ­do"
             case "cancelled": return "Cancelado"
             case "disputed": return "Em disputa"
             default: return "Indefinido"
@@ -323,7 +432,7 @@ export default function MessagesPage() {
         }
     }, [getContractIdFromOfferMessages])
 
-    // Função para recarregar o contrato explicitamente
+    // FunÃ§Ã£o para recarregar o contrato explicitamente
     const refreshContract = useCallback(async () => {
         if (!selectedChat?.room_id) return;
         
@@ -379,7 +488,7 @@ export default function MessagesPage() {
             if (!force && !shouldAutoScroll) return
 
             // Usamos um pequeno timeout para garantir que o DOM foi atualizado
-            // e as dimensões calculadas corretamente
+            // e as dimensÃµes calculadas corretamente
             setTimeout(() => {
                 messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
             }, 50)
@@ -404,7 +513,7 @@ export default function MessagesPage() {
         setShouldAutoScroll(distanceFromBottom < 100)
     }
 
-    // ResizeObserver para detectar mudanças de tamanho (como imagens carregando)
+    // ResizeObserver para detectar mudanÃ§as de tamanho (como imagens carregando)
     useEffect(() => {
         const container = messagesContainerRef.current
         if (!container) return
@@ -420,7 +529,7 @@ export default function MessagesPage() {
     }, [shouldAutoScroll, scrollToBottom])
 
     const handleTyping = () => {
-        if (!selectedChat) return
+        if (!selectedChat || isChatReadOnly) return
 
         if (!isTyping) {
             setIsTyping(true)
@@ -439,6 +548,10 @@ export default function MessagesPage() {
 
     const handleSendMessage = async () => {
         if (!selectedChat) return
+        if (isChatReadOnly) {
+            toast.error("Esta conversa foi encerrada e estÃ¡ disponÃ­vel apenas para leitura.")
+            return
+        }
 
         const hasText = newMessage.trim().length > 0
         const hasFile = !!selectedFile
@@ -455,6 +568,12 @@ export default function MessagesPage() {
     }
 
     const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+        if (isChatReadOnly) {
+            toast.error("NÃ£o Ã© possÃ­vel anexar arquivos em uma conversa encerrada.")
+            event.target.value = ""
+            return
+        }
+
         const file = event.target.files?.[0]
         if (file) {
             setSelectedFile(file)
@@ -477,10 +596,13 @@ export default function MessagesPage() {
         if (selectedChat?.room_id === roomId) return
         const targetChat = chats.find(chat => chat.room_id === roomId)
         if (!targetChat) return
+        setChatListTab(targetChat.chat_status === "archived" ? "archived" : "messages")
         selectChat(targetChat)
 
         // Trigger guide messages (backend will check if already sent)
-        sendGuideMessages(roomId).catch(console.error)
+        if (targetChat.can_send_messages && targetChat.chat_status === "active") {
+            sendGuideMessages(roomId).catch(console.error)
+        }
 
         // Fetch contract for this room
         fetchContractId(roomId)
@@ -521,7 +643,7 @@ export default function MessagesPage() {
 
         if (fundingCanceled === "true") {
             toast("Pagamento cancelado", {
-                description: "O financiamento do contrato foi cancelado. Você pode tentar novamente quando quiser.",
+                description: "O financiamento do contrato foi cancelado. VocÃª pode tentar novamente quando quiser.",
             })
             void finalizeRedirect()
             return
@@ -529,7 +651,7 @@ export default function MessagesPage() {
 
         const parsedContractId = contractIdParam ? Number(contractIdParam) : Number.NaN
         if (!sessionId || !Number.isFinite(parsedContractId) || parsedContractId <= 0) {
-            toast.error("Não foi possível confirmar o pagamento do contrato.")
+            toast.error("NÃ£o foi possÃ­vel confirmar o pagamento do contrato.")
             void finalizeRedirect()
             return
         }
@@ -556,7 +678,7 @@ export default function MessagesPage() {
                 const message =
                     axiosError.response?.data?.message ||
                     axiosError.message ||
-                    "Não foi possível confirmar o pagamento do contrato."
+                    "NÃ£o foi possÃ­vel confirmar o pagamento do contrato."
                 toast.error(message)
             } finally {
                 await finalizeRedirect()
@@ -591,8 +713,13 @@ export default function MessagesPage() {
     }, [activeTab, selectedChat?.room_id, contractId, refreshContract])
 
     const handleAcceptOffer = async (offerId: number) => {
+        if (isChatReadOnly) {
+            toast.error("Esta conversa foi encerrada e nÃ£o permite mais alteraÃ§Ãµes de oferta.")
+            return
+        }
+
         if (!offerId || offerId <= 0 || Number.isNaN(offerId)) {
-            toast.error("ID da oferta inválido")
+            toast.error("ID da oferta invÃ¡lido")
             return
         }
         if (!selectedChat) return
@@ -644,8 +771,13 @@ export default function MessagesPage() {
     }
 
     const handleRejectOffer = async (offerId: number) => {
+        if (isChatReadOnly) {
+            toast.error("Esta conversa foi encerrada e nÃ£o permite mais alteraÃ§Ãµes de oferta.")
+            return
+        }
+
         if (!offerId || offerId <= 0 || Number.isNaN(offerId)) {
-            toast.error("ID da oferta inválido")
+            toast.error("ID da oferta invÃ¡lido")
             return
         }
         if (!selectedChat) return
@@ -675,8 +807,13 @@ export default function MessagesPage() {
     }
 
     const handleCancelOffer = async (offerId: number) => {
+        if (isChatReadOnly) {
+            toast.error("Esta conversa foi encerrada e nÃ£o permite mais alteraÃ§Ãµes de oferta.")
+            return
+        }
+
         if (!offerId || offerId <= 0 || Number.isNaN(offerId)) {
-            toast.error("ID da oferta inválido")
+            toast.error("ID da oferta invÃ¡lido")
             return
         }
         if (!selectedChat) return
@@ -714,7 +851,7 @@ export default function MessagesPage() {
                 setContractForReview(response.data[0])
                 setIsReviewModalOpen(true)
             } else {
-                toast.error("Nenhum contrato encontrado para avaliação")
+                toast.error("Nenhum contrato encontrado para avaliaÃ§Ã£o")
             }
         } catch (error) {
             console.error("Error fetching contract for review:", error)
@@ -725,13 +862,17 @@ export default function MessagesPage() {
     const handleSubmitOffer = async (event: FormEvent) => {
         event.preventDefault()
         if (!selectedChat || user?.role !== "brand") return
+        if (isChatReadOnly) {
+            toast.error("Esta conversa foi encerrada e nÃ£o aceita novas ofertas.")
+            return
+        }
 
         const normalizedBudget = typeof offerBudget === 'string' ? offerBudget.replace(',', '.') : offerBudget
         const budgetValue = parseFloat(normalizedBudget)
         const daysValue = parseInt(offerEstimatedDays, 10)
 
         if (!budgetValue || Number.isNaN(budgetValue) || budgetValue < 10) {
-            toast.error("Orçamento deve ser pelo menos R$ 10,00")
+            toast.error("OrÃ§amento deve ser pelo menos R$ 10,00")
             return
         }
 
@@ -769,7 +910,7 @@ export default function MessagesPage() {
                 const redirectUrl = axiosError.response?.data?.redirect_url
                 const message =
                     axiosError.response?.data?.message ||
-                    "Você precisa configurar um método de pagamento antes de enviar ofertas."
+                    "VocÃª precisa configurar um mÃ©todo de pagamento antes de enviar ofertas."
 
                 if (typeof window !== "undefined") {
                     const pendingOffer = {
@@ -810,6 +951,7 @@ export default function MessagesPage() {
     }
 
     const handleSelectChat = (chat: Chat) => {
+        setChatListTab(chat.chat_status === "archived" ? "archived" : "messages")
         if (typeof window !== "undefined") {
             const userId = user?.id ? String(user.id) : "anon"
             window.localStorage.setItem(`last_selected_room_id_user_${userId}`, chat.room_id)
@@ -847,16 +989,16 @@ export default function MessagesPage() {
 
             setMessages((prev) => {
 
-                // Se a mensagem já existe (por ID ou ID temporário que virou real), ignora
+                // Se a mensagem jÃ¡ existe (por ID ou ID temporÃ¡rio que virou real), ignora
                 const alreadyExists = prev.some(m => m.id === incoming.id)
                 if (alreadyExists) return prev
 
-                // Se a mensagem é minha e chegou via socket, preciso remover a otimista se ela ainda estiver lá (embora o fluxo de envio já deva ter tratado)
+                // Se a mensagem Ã© minha e chegou via socket, preciso remover a otimista se ela ainda estiver lÃ¡ (embora o fluxo de envio jÃ¡ deva ter tratado)
                 // Mas como estamos recebendo via socket, o socket pode chegar antes ou depois da resposta da API.
-                // Se for minha mensagem, vamos garantir que não duplique verificando se já tem uma mensagem igual recente (otimista)
+                // Se for minha mensagem, vamos garantir que nÃ£o duplique verificando se jÃ¡ tem uma mensagem igual recente (otimista)
                 if (incoming.is_sender) {
-                    // Procura mensagem otimista (id gerado por Date.now() é grande, id do banco é incremental e menor)
-                    // Ou verifica por conteúdo e timestamp próximo
+                    // Procura mensagem otimista (id gerado por Date.now() Ã© grande, id do banco Ã© incremental e menor)
+                    // Ou verifica por conteÃºdo e timestamp prÃ³ximo
                     const isDuplicateOptimistic = prev.some(m =>
                         (m.id > 1000000000000 && m.message === incoming.message) || // ID grande = otimista
                         m.id === incoming.id
@@ -875,6 +1017,39 @@ export default function MessagesPage() {
             // Mark as read if it's not my message
             if (incoming.sender_id !== user?.id) {
                 chatRepository.markAsRead(selectedChat.room_id, [incoming.id])
+            }
+
+            const closurePayload =
+                incoming.message_type === "system" &&
+                incoming.offer_data &&
+                typeof incoming.offer_data === "object" &&
+                incoming.offer_data["message_type"] === "chat_closure"
+                    ? incoming.offer_data
+                    : null
+
+            if (closurePayload) {
+                const rawStatus = closurePayload["chat_status"]
+                const nextStatus =
+                    rawStatus === "completed" || rawStatus === "archived" ? rawStatus : null
+
+                if (nextStatus) {
+                    setChats(prev =>
+                        prev.map(chat =>
+                            chat.room_id === selectedChat.room_id
+                                ? {
+                                    ...chat,
+                                    chat_status: nextStatus,
+                                    can_send_messages: false,
+                                    archived_at:
+                                        nextStatus === "archived"
+                                            ? incoming.created_at || chat.archived_at
+                                            : chat.archived_at,
+                                }
+                                : chat
+                        )
+                    )
+                    setRemoteTyping(false)
+                }
             }
             
             // Check if the message is an offer acceptance or contract creation notification
@@ -902,12 +1077,15 @@ export default function MessagesPage() {
                 setContractId(id!)
                 refreshContract();
             }
+            setTimelineSyncVersion(prev => prev + 1)
             refreshRoomMessages(selectedChat.room_id)
+            void refreshChatRooms()
         }
 
         channel.listen('.contract_activated', handleContractEvent)
         channel.listen('.contract_completed', handleContractEvent)
         channel.listen('.contract_terminated', handleContractEvent)
+        channel.listen('.contract_updated', handleContractEvent)
 
         // Handle typing events
         channel.listen('.user_typing', (e: {
@@ -953,15 +1131,16 @@ export default function MessagesPage() {
             channel.stopListening('.contract_activated')
             channel.stopListening('.contract_completed')
             channel.stopListening('.contract_terminated')
+            channel.stopListening('.contract_updated')
             channel.stopListening('.user_typing')
             channel.stopListening('.messages_read')
             statusChannel.stopListening('.user_status_updated')
         }
-    }, [selectedChat, echo, scrollToBottom, user?.id, setChats, setMessages, updateChatList, refreshRoomMessages, refreshContract])
+    }, [selectedChat, echo, scrollToBottom, user?.id, setChats, setMessages, updateChatList, refreshRoomMessages, refreshContract, refreshChatRooms])
 
     const renderChatList = () => (
         <div className="flex flex-col gap-1 p-2" data-testid="chat-room-list">
-            {chats.map((chat) => (
+            {visibleChats.map((chat) => (
                 <button
                     key={chat.room_id}
                     onClick={() => handleSelectChat(chat)}
@@ -997,6 +1176,11 @@ export default function MessagesPage() {
                                     />
                                     {chat.other_user.online ? "Online" : "Offline"}
                                 </span>
+                                {chat.chat_status !== "active" && (
+                                    <span className="inline-flex items-center rounded-full border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-600">
+                                        {chat.chat_status === "archived" ? "Arquivado" : "Encerrado"}
+                                    </span>
+                                )}
                             </div>
                             <span className="text-xs text-muted-foreground">
                                 {chat.last_message?.created_at
@@ -1018,18 +1202,41 @@ export default function MessagesPage() {
                     </div>
                 </button>
             ))}
-            {chats.length === 0 && (
+            {visibleChats.length === 0 && (
                 <span className="px-3 py-2 text-sm text-muted-foreground">
-                    {isInitialLoading ? "Carregando conversas..." : "Nenhuma conversa encontrada."}
+                    {isInitialLoading
+                        ? "Carregando conversas..."
+                        : chatListTab === "archived"
+                            ? "Nenhum chat arquivado."
+                            : "Nenhuma conversa encontrada."}
                 </span>
             )}
+        </div>
+    )
+
+    const renderChatListTabs = () => (
+        <div className="border-b p-3">
+            <Tabs
+                value={chatListTab}
+                onValueChange={(value) => setChatListTab((value === "archived" ? "archived" : "messages"))}
+                className="w-full"
+            >
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="messages">
+                        Mensagens ({nonArchivedChats.length})
+                    </TabsTrigger>
+                    <TabsTrigger value="archived">
+                        Arquivados ({archivedChats.length})
+                    </TabsTrigger>
+                </TabsList>
+            </Tabs>
         </div>
     )
 
     return (
         <div className="flex flex-col md:flex-row h-[calc(100dvh-130px)] md:h-[calc(100vh-9rem)] rounded-lg border bg-background overflow-hidden">
             <div className="hidden md:flex md:w-80 border-r flex-col flex-none">
-                <div className="p-4 border-b font-semibold">Mensagens</div>
+                {renderChatListTabs()}
                 <ScrollArea className="flex-1">{renderChatList()}</ScrollArea>
             </div>
 
@@ -1054,10 +1261,9 @@ export default function MessagesPage() {
                                             <SheetHeader className="p-4 border-b">
                                                 <SheetTitle>Mensagens</SheetTitle>
                                             </SheetHeader>
+                                            {renderChatListTabs()}
                                             <ScrollArea className="h-full">
-                                                <SheetClose asChild>
-                                                    <div>{renderChatList()}</div>
-                                                </SheetClose>
+                                                <div>{renderChatList()}</div>
                                             </ScrollArea>
                                         </SheetContent>
                                     </Sheet>
@@ -1088,7 +1294,11 @@ export default function MessagesPage() {
                                         })()}
                                     </div>
                                     <div className="text-xs text-muted-foreground h-4">
-                                        {remoteTyping ? (
+                                        {isChatReadOnly ? (
+                                            <span className="text-amber-600">
+                                                {isArchivedChat ? "Arquivado â€¢ Somente leitura" : "Encerrado â€¢ Somente leitura"}
+                                            </span>
+                                        ) : remoteTyping ? (
                                             <div className="flex items-center gap-1">
                                                 <span className="text-primary font-medium">Digitando</span>
                                                 <div className="flex gap-0.5 pt-1">
@@ -1121,6 +1331,7 @@ export default function MessagesPage() {
                                         size="sm"
                                         variant="outline"
                                         onClick={() => setIsOfferDialogOpen(true)}
+                                        disabled={isChatReadOnly}
                                         className="bg-primary text-primary-foreground hover:bg-primary/90"
                                     >
                                         <Briefcase className="h-4 w-4 mr-2" />
@@ -1167,6 +1378,12 @@ export default function MessagesPage() {
                                 </div>
 
                                 <TabsContent value="messages" className="mt-0 flex flex-1 flex-col overflow-hidden">
+                                {isChatReadOnly && (
+                                    <div className="border-b bg-amber-500/10 px-4 py-3 text-xs">
+                                        <div className="font-semibold text-amber-700">{readOnlyStatusLabel}</div>
+                                        <div className="text-muted-foreground">{readOnlyStatusDescription}</div>
+                                    </div>
+                                )}
                                 <div
                                     ref={messagesContainerRef}
                                     className="flex-1 overflow-y-auto px-4 py-3 mb-1"
@@ -1195,16 +1412,19 @@ export default function MessagesPage() {
                                                         const isCreatorUser = user?.role === "creator"
                                                         const canAccept =
                                                             status === "pending" &&
+                                                            !isChatReadOnly &&
                                                             isCreatorUser &&
                                                             offer.id &&
                                                             !Number.isNaN(offer.id)
                                                         const canReject =
                                                             status === "pending" &&
+                                                            !isChatReadOnly &&
                                                             isCreatorUser &&
                                                             offer.id &&
                                                             !Number.isNaN(offer.id)
                                                         const canCancel =
                                                             status === "pending" &&
+                                                            !isChatReadOnly &&
                                                             user?.role === "brand" &&
                                                             offer.id &&
                                                             !Number.isNaN(offer.id)
@@ -1394,7 +1614,7 @@ export default function MessagesPage() {
                                                                         </Button>
                                                                     )}
                                                                     <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-                                                                        Mensagem do Sistema • {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                                                        Mensagem do Sistema â€¢ {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -1481,7 +1701,7 @@ export default function MessagesPage() {
                                                 </div>
                                             )
                                         })}
-                                        {remoteTyping && (
+                                        {remoteTyping && !isChatReadOnly && (
                                             <div className="flex w-max max-w-[75%] flex-col gap-2 rounded-lg px-4 py-3 text-sm bg-muted self-start" data-testid="typing-indicator">
                                                 <div className="flex gap-1 items-center">
                                                     <div className="w-1.5 h-1.5 bg-muted-foreground/60 rounded-full animate-bounce [animation-delay:-0.3s]" />
@@ -1502,14 +1722,22 @@ export default function MessagesPage() {
                                             type="button"
                                             variant="outline"
                                             size="icon"
+                                            disabled={isChatReadOnly}
                                             onClick={() => fileInputRef.current?.click()}
                                         >
                                             <Paperclip className="h-4 w-4" />
                                         </Button>
                                         <Input
-                                            placeholder="Digite sua mensagem..."
+                                            placeholder={
+                                                isChatReadOnly
+                                                    ? isArchivedChat
+                                                        ? "Chat arquivado (somente leitura)"
+                                                        : "Conversa encerrada (somente leitura)"
+                                                    : "Digite sua mensagem..."
+                                            }
                                             value={newMessage}
                                             data-testid="message-input"
+                                            disabled={isChatReadOnly}
                                             onChange={(e) => {
                                                 setNewMessage(e.target.value)
                                                 handleTyping()
@@ -1517,10 +1745,15 @@ export default function MessagesPage() {
                                             onFocus={() => {
                                                 setTimeout(() => scrollToBottom(true), 100)
                                             }}
-                                            onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+                                            onKeyDown={(e) => e.key === "Enter" && !isChatReadOnly && handleSendMessage()}
                                         />
                                     </div>
-                                    <Button size="icon" onClick={handleSendMessage} data-testid="send-message-button">
+                                    <Button
+                                        size="icon"
+                                        onClick={handleSendMessage}
+                                        disabled={isChatReadOnly || (!newMessage.trim() && !selectedFile)}
+                                        data-testid="send-message-button"
+                                    >
                                         <Send className="h-4 w-4" />
                                     </Button>
                                 </div>
@@ -1565,6 +1798,7 @@ export default function MessagesPage() {
                                             isOpen={activeTab === "milestones"}
                                             onClose={() => null}
                                             variant="inline"
+                                            syncVersion={timelineSyncVersion}
                                         />
                                     ) : (
                                         <div className="flex flex-1 flex-col items-center justify-center text-sm text-muted-foreground gap-3 border rounded-lg p-6 text-center">
@@ -1574,6 +1808,7 @@ export default function MessagesPage() {
                                                 <Button
                                                     size="sm"
                                                     onClick={() => setIsOfferDialogOpen(true)}
+                                                    disabled={isChatReadOnly}
                                                     className="bg-primary text-primary-foreground hover:bg-primary/90"
                                                 >
                                                     Criar proposta
@@ -1596,6 +1831,7 @@ export default function MessagesPage() {
                             ref={fileInputRef}
                             type="file"
                             className="hidden"
+                            disabled={isChatReadOnly}
                             onChange={handleFileChange}
                         />
                         <Dialog open={isOfferDialogOpen} onOpenChange={setIsOfferDialogOpen}>
@@ -1608,29 +1844,31 @@ export default function MessagesPage() {
                                 </DialogHeader>
                                 <form onSubmit={handleSubmitOffer} className="space-y-4 pt-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="offer-title">Título da Proposta</Label>
+                                        <Label htmlFor="offer-title">TÃ­tulo da Proposta</Label>
                                         <Input
                                             id="offer-title"
-                                            placeholder="Ex: Produção de 3 Reels"
+                                            placeholder="Ex: ProduÃ§Ã£o de 3 Reels"
                                             value={offerTitle}
                                             onChange={(e) => setOfferTitle(e.target.value)}
+                                            disabled={isChatReadOnly || isSubmittingOffer}
                                             required
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="offer-description">Descrição/Detalhes</Label>
+                                        <Label htmlFor="offer-description">DescriÃ§Ã£o/Detalhes</Label>
                                         <Textarea
                                             id="offer-description"
-                                            placeholder="Descreva o que está incluído nesta proposta..."
+                                            placeholder="Descreva o que estÃ¡ incluÃ­do nesta proposta..."
                                             value={offerDescription}
                                             onChange={(e) => setOfferDescription(e.target.value)}
                                             rows={3}
+                                            disabled={isChatReadOnly || isSubmittingOffer}
                                             required
                                         />
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <Label htmlFor="offer_budget">Orçamento (R$)</Label>
+                                            <Label htmlFor="offer_budget">OrÃ§amento (R$)</Label>
                                             <Input
                                                 id="offer_budget"
                                                 type="number"
@@ -1639,6 +1877,7 @@ export default function MessagesPage() {
                                                 placeholder="0,00"
                                                 value={offerBudget}
                                                 onChange={(e) => setOfferBudget(e.target.value)}
+                                                disabled={isChatReadOnly || isSubmittingOffer}
                                                 required
                                             />
                                         </div>
@@ -1651,6 +1890,7 @@ export default function MessagesPage() {
                                                 placeholder="Ex: 7"
                                                 value={offerEstimatedDays}
                                                 onChange={(e) => setOfferEstimatedDays(e.target.value)}
+                                                disabled={isChatReadOnly || isSubmittingOffer}
                                                 required
                                             />
                                         </div>
@@ -1666,7 +1906,7 @@ export default function MessagesPage() {
                                         </Button>
                                         <Button
                                             type="submit"
-                                            disabled={isSubmittingOffer}
+                                            disabled={isSubmittingOffer || isChatReadOnly}
                                         >
                                             {isSubmittingOffer
                                                 ? "Enviando..."
@@ -1720,6 +1960,7 @@ export default function MessagesPage() {
                                                     isOpen={isCampaignDetailsOpen && detailsTab === "milestones"}
                                                     onClose={() => null}
                                                     variant="inline"
+                                                    syncVersion={timelineSyncVersion}
                                                 />
                                             </div>
                                         ) : (
@@ -1733,6 +1974,7 @@ export default function MessagesPage() {
                                                             setIsCampaignDetailsOpen(false)
                                                             setIsOfferDialogOpen(true)
                                                         }}
+                                                        disabled={isChatReadOnly}
                                                         className="bg-primary text-primary-foreground hover:bg-primary/90"
                                                     >
                                                         Criar proposta
@@ -1764,20 +2006,20 @@ export default function MessagesPage() {
                                                         </Badge>
                                                     </div>
                                                     <div className="text-sm text-muted-foreground">
-                                                        {contractDetails.description || "Sem descrição"}
+                                                        {contractDetails.description || "Sem descriÃ§Ã£o"}
                                                     </div>
                                                 </div>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div className="rounded-lg border p-4 space-y-2 text-sm">
                                                         <div className="text-xs text-muted-foreground">Campanha</div>
-                                                        <div className="font-medium">{contractDetails.campaign?.title || "—"}</div>
+                                                        <div className="font-medium">{contractDetails.campaign?.title || "â€”"}</div>
                                                         <div className="text-xs text-muted-foreground mt-3">Parceiro</div>
-                                                        <div className="font-medium">{contractDetails.other_user?.name || "—"}</div>
+                                                        <div className="font-medium">{contractDetails.other_user?.name || "â€”"}</div>
                                                     </div>
                                                     <div className="rounded-lg border p-4 space-y-2 text-sm">
-                                                        <div className="text-xs text-muted-foreground">Orçamento</div>
+                                                        <div className="text-xs text-muted-foreground">OrÃ§amento</div>
                                                         <div className="font-medium">
-                                                            {contractDetails.formatted_budget || formatCurrency(contractDetails.budget)}
+                                                            {getContractBudgetDisplay(contractDetails)}
                                                         </div>
                                                         <div className="text-xs text-muted-foreground mt-3">Workflow</div>
                                                         <div className="font-medium">{getWorkflowStatusLabel(contractDetails.workflow_status)}</div>
@@ -1785,20 +2027,20 @@ export default function MessagesPage() {
                                                 </div>
                                                 <div className="rounded-lg border p-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                                     <div>
-                                                        <div className="text-xs text-muted-foreground">Início</div>
+                                                        <div className="text-xs text-muted-foreground">InÃ­cio</div>
                                                         <div className="font-medium">{formatDate(contractDetails.started_at || contractDetails.start_date)}</div>
                                                     </div>
                                                     <div>
-                                                        <div className="text-xs text-muted-foreground">Conclusão prevista</div>
+                                                        <div className="text-xs text-muted-foreground">ConclusÃ£o prevista</div>
                                                         <div className="font-medium">{formatDate(contractDetails.expected_completion_at || contractDetails.end_date)}</div>
                                                     </div>
                                                     <div>
-                                                        <div className="text-xs text-muted-foreground">Concluído em</div>
+                                                        <div className="text-xs text-muted-foreground">ConcluÃ­do em</div>
                                                         <div className="font-medium">{formatDate(contractDetails.completed_at)}</div>
                                                     </div>
                                                     <div>
                                                         <div className="text-xs text-muted-foreground">Dias estimados</div>
-                                                        <div className="font-medium">{contractDetails.estimated_days ?? "—"}</div>
+                                                        <div className="font-medium">{contractDetails.estimated_days ?? "â€”"}</div>
                                                     </div>
                                                 </div>
                                                 {contractDetails.requirements && (
@@ -1818,16 +2060,16 @@ export default function MessagesPage() {
                                                                 if (typeof reqs === 'object' && reqs !== null) {
                                                                     if (Array.isArray(reqs)) {
                                                                          return reqs.map((req: any, i: number) => (
-                                                                            <div key={i}>• {typeof req === 'string' ? req : JSON.stringify(req)}</div>
+                                                                            <div key={i}>â€¢ {typeof req === 'string' ? req : JSON.stringify(req)}</div>
                                                                         ));
                                                                     }
                                                                     
                                                                     const items = Object.entries(reqs).map(([key, value]) => {
                                                                         if (key === '_logistics_workflow_status') {
-                                                                            return <div key={key}><strong>Status Logístico:</strong> {getWorkflowStatusLabel(String(value))}</div>;
+                                                                            return <div key={key}><strong>Status LogÃ­stico:</strong> {getWorkflowStatusLabel(String(value))}</div>;
                                                                         }
                                                                         if (key === '_tracking_code') {
-                                                                            return <div key={key}><strong>Código de Rastreio:</strong> {String(value)}</div>;
+                                                                            return <div key={key}><strong>CÃ³digo de Rastreio:</strong> {String(value)}</div>;
                                                                         }
                                                                         if (key.startsWith('_')) return null;
 
@@ -1854,6 +2096,7 @@ export default function MessagesPage() {
                                                                 setIsCampaignDetailsOpen(false)
                                                                 setIsOfferDialogOpen(true)
                                                             }}
+                                                            disabled={isChatReadOnly}
                                                             className="bg-primary text-primary-foreground hover:bg-primary/90"
                                                         >
                                                             Criar proposta
@@ -1903,6 +2146,7 @@ export default function MessagesPage() {
                                                                         <>
                                                                             <Button
                                                                                 size="sm"
+                                                                                disabled={isChatReadOnly}
                                                                                 onClick={() => handleAcceptOffer(offer.id as number)}
                                                                             >
                                                                                 Aceitar
@@ -1910,6 +2154,7 @@ export default function MessagesPage() {
                                                                             <Button
                                                                                 size="sm"
                                                                                 variant="outline"
+                                                                                disabled={isChatReadOnly}
                                                                                 onClick={() => handleRejectOffer(offer.id as number)}
                                                                             >
                                                                                 Rejeitar
@@ -1920,6 +2165,7 @@ export default function MessagesPage() {
                                                                         <Button
                                                                             size="sm"
                                                                             variant="outline"
+                                                                            disabled={isChatReadOnly}
                                                                             onClick={() => handleCancelOffer(offer.id as number)}
                                                                         >
                                                                             Cancelar
@@ -1951,7 +2197,7 @@ export default function MessagesPage() {
                     </>
                 ) : (
                     <div className="flex-1 flex flex-col items-center justify-center gap-4 text-muted-foreground">
-                        <p>Selecione uma conversa para começar</p>
+                        <p>Selecione uma conversa para comeÃ§ar</p>
                         <div className="md:hidden">
                             <Sheet open={isListOpen} onOpenChange={setIsListOpen}>
                                 <SheetTrigger asChild>
@@ -1963,10 +2209,9 @@ export default function MessagesPage() {
                                     <SheetHeader className="p-4 border-b">
                                         <SheetTitle>Mensagens</SheetTitle>
                                     </SheetHeader>
+                                    {renderChatListTabs()}
                                     <ScrollArea className="h-full">
-                                        <SheetClose asChild>
-                                            <div>{renderChatList()}</div>
-                                        </SheetClose>
+                                        <div>{renderChatList()}</div>
                                     </ScrollArea>
                                 </SheetContent>
                             </Sheet>
@@ -1977,3 +2222,4 @@ export default function MessagesPage() {
         </div>
     )
 }
+

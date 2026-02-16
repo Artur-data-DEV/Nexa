@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/presentation/components/ui/dialog"
 import { Button } from "@/presentation/components/ui/button"
 import { Input } from "@/presentation/components/ui/input"
@@ -17,6 +17,7 @@ import type { AxiosError } from "axios"
 const financialRepository = new ApiFinancialRepository(api)
 const getWithdrawalMethodsUseCase = new GetWithdrawalMethodsUseCase(financialRepository)
 const requestWithdrawalUseCase = new RequestWithdrawalUseCase(financialRepository)
+const ALLOWED_WITHDRAWAL_METHOD_CODES = new Set(["pix", "pagarme_bank_transfer", "bank_transfer"])
 
 interface WithdrawalModalProps {
     open: boolean
@@ -32,17 +33,34 @@ export function WithdrawalModal({ open, onOpenChange, availableBalance, onSucces
     const [loading, setLoading] = useState(false)
     const [submitting, setSubmitting] = useState(false)
 
-    useEffect(() => {
-        if (open) {
-            loadMethods()
-        }
-    }, [open])
-
-    const loadMethods = async () => {
+    const loadMethods = useCallback(async () => {
         setLoading(true)
         try {
             const data = await getWithdrawalMethodsUseCase.execute()
-            setMethods(data)
+            const filteredMethods = data
+                .filter((method) => ALLOWED_WITHDRAWAL_METHOD_CODES.has(method.id))
+                .map((method) => {
+                    if (method.id === "pix") {
+                        return {
+                            ...method,
+                            name: "PIX",
+                        }
+                    }
+
+                    if (method.id === "pagarme_bank_transfer" || method.id === "bank_transfer") {
+                        return {
+                            ...method,
+                            name: "Dados Bancarios",
+                        }
+                    }
+
+                    return method
+                })
+
+            setMethods(filteredMethods)
+            if (selectedMethod && !filteredMethods.some((method) => method.id === selectedMethod)) {
+                setSelectedMethod("")
+            }
         } catch (error: unknown) {
             console.error("Failed to load withdrawal methods", error)
             const axiosError = error as AxiosError<{ message?: string }>
@@ -50,7 +68,13 @@ export function WithdrawalModal({ open, onOpenChange, availableBalance, onSucces
         } finally {
             setLoading(false)
         }
-    }
+    }, [selectedMethod])
+
+    useEffect(() => {
+        if (open) {
+            loadMethods()
+        }
+    }, [open, loadMethods])
 
     const handleSubmit = async () => {
         if (!selectedMethod || !amount) {
@@ -85,7 +109,7 @@ export function WithdrawalModal({ open, onOpenChange, availableBalance, onSucces
         try {
             await requestWithdrawalUseCase.execute({
                 amount: numericAmount,
-                method: selectedMethod,
+                withdrawal_method: selectedMethod,
             })
             toast.success("Solicitação de saque enviada com sucesso!")
             onSuccess()

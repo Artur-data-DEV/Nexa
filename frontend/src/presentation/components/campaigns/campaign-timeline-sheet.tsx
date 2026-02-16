@@ -46,12 +46,13 @@ interface CampaignTimelineSheetProps {
     isOpen: boolean
     onClose: () => void
     variant?: 'sheet' | 'inline'
+    syncVersion?: number
 }
 
 const timelineRepository = new ApiCampaignTimelineRepository(api)
 const contractRepository = new ApiContractRepository(api)
 
-export default function CampaignTimelineSheet({ contractId, isOpen, onClose, variant = 'sheet' }: CampaignTimelineSheetProps) {
+export default function CampaignTimelineSheet({ contractId, isOpen, onClose, variant = 'sheet', syncVersion = 0 }: CampaignTimelineSheetProps) {
     const { user } = useAuth()
 
     const [milestones, setMilestones] = useState<CampaignMilestone[]>([])
@@ -124,7 +125,7 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
         if (isOpen && contractId) {
             void loadTimeline()
         }
-    }, [isOpen, contractId, loadTimeline])
+    }, [isOpen, contractId, loadTimeline, syncVersion])
 
     const createMilestones = async () => {
         try {
@@ -374,9 +375,10 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
         }
     }
 
-    const scriptMilestones = milestones.filter(m => ['script_submission', 'script_approval'].includes(m.milestone_type))
+    const scriptMilestones = milestones.filter(m => m.milestone_type === 'script_submission')
     const productionMilestones = milestones.filter(m => m.milestone_type === 'video_submission')
-    const approvalMilestones = milestones.filter(m => m.milestone_type === 'final_approval')
+    const isScriptApproved = scriptMilestones.some(m => m.status === 'completed' || m.status === 'approved')
+    const isVideoApproved = productionMilestones.some(m => m.status === 'completed' || m.status === 'approved')
 
     const renderMilestoneList = (milestonesToRender: CampaignMilestone[]) => {
         if (milestonesToRender.length === 0) return <div className="p-3 border rounded-md border-dashed text-xs text-muted-foreground text-center">Aguardando etapa anterior...</div>
@@ -574,9 +576,19 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
           : "Pagamento pendente"
     const normalizedTrackingCode = (contract?.tracking_code || '').trim()
     const hasTrackingCode = normalizedTrackingCode.length > 0
-    const productDeliveryDescription = hasTrackingCode
-        ? `Codigo de rastreio: ${normalizedTrackingCode}`
-        : "Aguardando entrega de rastreio"
+    const logisticsWorkflowStatus = contract?.workflow_status || ''
+    const isLogisticsAwaitingShipment = logisticsWorkflowStatus === 'active' && isEscrowFunded
+    const isLogisticsInTransit = ['material_sent', 'product_sent'].includes(logisticsWorkflowStatus)
+    const isLogisticsDelivered = ['product_received', 'production_started'].includes(logisticsWorkflowStatus)
+    const isLogisticsClosed =
+        contract?.status === 'completed'
+        || ['waiting_review', 'payment_available', 'payment_withdrawn'].includes(logisticsWorkflowStatus)
+
+    const productDeliveryDescription = isLogisticsClosed
+        ? "Fluxo logístico encerrado"
+        : hasTrackingCode
+          ? `Codigo de rastreio: ${normalizedTrackingCode}`
+          : "Aguardando entrega de rastreio"
 
     const steps = [
         {
@@ -620,11 +632,11 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
             id: 3,
             title: "Produto Entregue",
             icon: Package,
-            status: ['material_sent', 'product_sent', 'product_received', 'production_started'].includes(contract?.workflow_status || '') ? 'completed' : (isEscrowFunded ? 'current' : 'pending'),
+            status: (isLogisticsDelivered || isLogisticsClosed) ? 'completed' : (isEscrowFunded ? 'current' : 'pending'),
             description: productDeliveryDescription,
             content: (
                 <div className="mt-3 p-3 bg-muted/30 rounded-lg border space-y-3">
-                    {contract?.workflow_status === 'active' && isEscrowFunded && (
+                    {isLogisticsAwaitingShipment && (
                         <div className="flex flex-col gap-2">
                             {user?.role === 'brand' ? (
                                 <Button size="sm" onClick={() => openTrackingDialog('material_sent')} disabled={isLoading}>
@@ -639,7 +651,7 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
                             )}
                         </div>
                     )}
-                    {['material_sent', 'product_sent'].includes(contract?.workflow_status || '') && (
+                    {isLogisticsInTransit && (
                         <div className="flex flex-col gap-2">
                             <p className="text-xs text-muted-foreground">Produto em trânsito. Aguardando confirmação.</p>
                             {hasTrackingCode && (
@@ -666,10 +678,30 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
                             )}
                         </div>
                     )}
-                    {['product_received', 'production_started'].includes(contract?.workflow_status || '') && (
+                    {isLogisticsDelivered && (
                         <div className="flex items-center gap-2 text-green-600 text-xs bg-green-50 p-2 rounded border border-green-100">
                             <Check className="w-3 h-3" />
                             <span>Produto Entregue</span>
+                        </div>
+                    )}
+                    {isLogisticsClosed && (
+                        <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-green-600 text-xs bg-green-50 p-2 rounded border border-green-100">
+                                <Check className="w-3 h-3" />
+                                <span>Fluxo logístico encerrado para este contrato.</span>
+                            </div>
+                            {hasTrackingCode && (
+                                <div className="rounded-md border bg-background/60 p-2">
+                                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Codigo de rastreio</div>
+                                    <div className="text-xs font-medium break-all">{normalizedTrackingCode}</div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    {!isLogisticsAwaitingShipment && !isLogisticsInTransit && !isLogisticsDelivered && !isLogisticsClosed && (
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted p-2 rounded">
+                            <Clock className="w-3 h-3" />
+                            Aguardando atualização da logística.
                         </div>
                     )}
                 </div>
@@ -679,7 +711,7 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
             id: 4,
             title: "Roteiro Aprovado",
             icon: FileText,
-            status: scriptMilestones.some(m => m.status === 'completed' || m.status === 'approved') ? 'completed' : (scriptMilestones.length > 0 && ['product_received', 'production_started'].includes(contract?.workflow_status || '') ? 'current' : 'pending'),
+            status: isScriptApproved ? 'completed' : (scriptMilestones.length > 0 && ['product_received', 'production_started'].includes(contract?.workflow_status || '') ? 'current' : 'pending'),
             description: "Roteiro aprovado pela marca",
             content: renderMilestoneList(scriptMilestones)
         },
@@ -687,7 +719,7 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
             id: 5,
             title: "Enviar Gravação",
             icon: Video,
-            status: productionMilestones.some(m => m.status === 'completed' || m.status === 'approved') ? 'completed' : (productionMilestones.length > 0 && scriptMilestones.every(m => m.status === 'approved') ? 'current' : 'pending'),
+            status: isVideoApproved ? 'completed' : (productionMilestones.length > 0 && isScriptApproved ? 'current' : 'pending'),
             description: "Envie até " + (contract?.expected_completion_at ? new Date(contract.expected_completion_at).toLocaleDateString() : 'data final'),
             content: (
                 <div className="space-y-3 mt-3">
@@ -713,18 +745,26 @@ export default function CampaignTimelineSheet({ contractId, isOpen, onClose, var
         },
         {
             id: 6,
-            title: "Finalizado",
+            title: "Finalização",
             icon: Check,
-            status: contract?.status === 'completed' ? 'completed' : 'pending',
-            description: "Comprovante de pagamento anexado",
+            status: contract?.status === 'completed' ? 'completed' : (isVideoApproved ? 'current' : 'pending'),
+            description: contract?.status === 'completed'
+                ? "Campanha finalizada"
+                : isVideoApproved
+                  ? "Conteúdo aprovado. Pronto para finalizar."
+                  : "Aguardando aprovação do conteúdo final",
             content: (
                 <div className="space-y-3 mt-3">
-                    {renderMilestoneList(approvalMilestones)}
-                    {user?.role === 'brand' && contract?.status === 'active' && approvalMilestones.some(m => m.status === 'approved') && (
+                    {user?.role === 'brand' && contract?.status === 'active' && isVideoApproved && (
                         <Button onClick={handleFinalizeContract} disabled={isLoading} className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white" size="sm">
                             <Check className="w-4 h-4 mr-2" />
-                            Aprovar e Finalizar
+                            Finalizar campanha
                         </Button>
+                    )}
+                    {user?.role !== 'brand' && contract?.status === 'active' && isVideoApproved && (
+                        <div className="text-xs text-muted-foreground bg-muted/30 border rounded-md p-3">
+                            Aguardando a marca finalizar a campanha.
+                        </div>
                     )}
                 </div>
             )

@@ -278,11 +278,6 @@ test.describe('Campaign End-to-End Flow (Brand -> Admin -> Creator -> Brand)', (
                 await moderateMilestone(brandPage, brandDialogScript, 'approve')
                 await brandPage.keyboard.press('Escape')
 
-                const brandDialogScriptApproval = await openMilestonesDialog(brandPage, roomId)
-                await expandMilestone(brandDialogScriptApproval, /Aprova.*Roteiro/i)
-                await moderateMilestone(brandPage, brandDialogScriptApproval, 'approve')
-                await brandPage.keyboard.press('Escape')
-
                 const creatorDialogVideo = await openMilestonesDialog(creatorPage, roomId)
                 await expandMilestone(creatorDialogVideo, /Envio.*V[i\u00ED]deo/i)
                 await uploadMilestoneFile(creatorPage, creatorDialogVideo, /Enviar Arquivo|Substituir Arquivo/i, 'video.mp4', 'video/mp4')
@@ -292,11 +287,7 @@ test.describe('Campaign End-to-End Flow (Brand -> Admin -> Creator -> Brand)', (
                 await expandMilestone(brandDialogVideo, /Envio.*V[i\u00ED]deo/i)
                 await moderateMilestone(brandPage, brandDialogVideo, 'approve')
                 await brandPage.keyboard.press('Escape')
-
-                const brandDialogFinal = await openMilestonesDialog(brandPage, roomId)
-                await expandMilestone(brandDialogFinal, /Aprova.*Final/i)
-                await moderateMilestone(brandPage, brandDialogFinal, 'approve')
-                await expect(brandDialogFinal.getByText(/Aprovado/i).first()).toBeVisible({ timeout: timeouts.pageLoad })
+                await expect(brandDialogVideo.getByText(/Aprovado/i).first()).toBeVisible({ timeout: timeouts.pageLoad })
             })
         } finally {
             await Promise.allSettled([

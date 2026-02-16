@@ -7,7 +7,7 @@ export interface Contract {
     brand_id: number
     creator_id: number
     status: 'pending' | 'active' | 'completed' | 'cancelled' | 'disputed'
-    amount: number
+    amount: number | string
     created_at: string
     updated_at: string
     title: string
@@ -16,10 +16,10 @@ export interface Contract {
     end_date?: string
     workflow_status?: string
     tracking_code?: string | null
-    budget?: number
+    budget?: number | string
     formatted_budget?: string
-    creator_amount?: number
-    platform_fee?: number
+    creator_amount?: number | string
+    platform_fee?: number | string
     estimated_days?: number
     requirements?: Record<string, any> | null
     started_at?: string

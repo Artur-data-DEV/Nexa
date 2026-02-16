@@ -139,6 +139,18 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     async (roomId: string, content: string, file?: File | null) => {
       if (!user?.id) return
 
+      const targetChat =
+        chats.find(chat => chat.room_id === roomId) ??
+        (selectedChat?.room_id === roomId ? selectedChat : null)
+
+      if (
+        targetChat &&
+        (!targetChat.can_send_messages || targetChat.chat_status !== "active")
+      ) {
+        toast.error("Esta conversa foi encerrada e está disponível apenas para leitura.")
+        return
+      }
+
       const trimmed = content.trim()
       if (!trimmed && !file) return
 
@@ -200,7 +212,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         toast.error(`Erro ao enviar: ${errorMessage}`)
       }
     },
-    [user, updateChatList]
+    [chats, selectedChat, user, updateChatList]
   )
 
   const sendGuideMessages = useCallback(async (roomId: string) => {
