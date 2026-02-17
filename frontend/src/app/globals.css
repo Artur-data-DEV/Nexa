@@ -238,3 +238,59 @@
     @apply text-base md:text-lg font-medium;
   }
 }
+
+/* Contract-like typography used for legal terms content (modal and public page). */
+.contract-terms {
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  color: #111827;
+  line-height: 1.65;
+  letter-spacing: 0;
+  text-align: justify;
+}
+
+.contract-terms h1,
+.contract-terms h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-align: center;
+  margin: 0 0 1rem;
+  line-height: 1.4;
+}
+
+.contract-terms h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin: 1.4rem 0 0.6rem;
+  line-height: 1.4;
+}
+
+.contract-terms h4,
+.contract-terms h5,
+.contract-terms h6 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin: 1rem 0 0.5rem;
+  text-transform: uppercase;
+}
+
+.contract-terms p {
+  margin: 0 0 0.8rem;
+  text-indent: 1.2rem;
+}
+
+.contract-terms ul,
+.contract-terms ol {
+  margin: 0.75rem 0 0.9rem 1.5rem;
+  padding: 0;
+}
+
+.contract-terms li {
+  margin: 0 0 0.45rem;
+}
+
+.contract-terms li p {
+  text-indent: 0;
+  margin: 0;
+}

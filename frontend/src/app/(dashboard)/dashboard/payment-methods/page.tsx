@@ -198,12 +198,20 @@ function PaymentMethodsInner() {
           ? await api.post<{ success: boolean; url?: string; message?: string }>("/brand-payment/create-checkout-session")
           : await stripeRepository.createPaymentMethodCheckout();
 
-      if (response.success && response.url) {
-        window.location.href = response.url;
+      const checkoutUrl =
+        (response as { url?: string }).url ??
+        ((response as { data?: { url?: string } }).data?.url ?? "");
+      const isSuccess = (response as { success?: boolean }).success ?? !!checkoutUrl;
+
+      if (isSuccess && checkoutUrl) {
+        window.location.href = checkoutUrl;
         return;
       }
 
-      throw new Error(response.message || "Erro ao criar sessão de checkout");
+      throw new Error(
+        (response as { message?: string }).message ||
+          "Erro ao criar sessao de checkout",
+      );
     } catch (error: unknown) {
       const axiosError = error as AxiosError<{ message?: string }>;
       console.error("Error connecting payment method:", axiosError);

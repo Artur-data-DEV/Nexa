@@ -301,7 +301,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (typeof window === "undefined") return
-    if (chats.length === 0) return
     const userId = user?.id ? String(user.id) : "anon"
     localStorage.setItem(`chat_list_cache_v1_user_${userId}`, JSON.stringify(chats))
   }, [chats, user?.id])

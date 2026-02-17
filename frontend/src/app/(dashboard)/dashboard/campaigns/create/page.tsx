@@ -525,7 +525,6 @@ export default function CreateCampaignPage() {
                 <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                     <div className="mb-4">
                         <h2 className="text-xl font-semibold mb-2">Vamos começar!</h2>
-                        <p className="text-muted-foreground">2 minutinhos e nossa IA fará seu briefing!</p>
                     </div>
 
                     <div>

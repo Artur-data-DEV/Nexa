@@ -65,10 +65,10 @@ interface Campaign {
     campaign_type: string
     brand: {
         id: number
-        name: string
-        company_name: string
+        name?: string | null
+        company_name?: string | null
         profile_image?: string
-    }
+    } | null
     created_at: string
     start_date?: string
     end_date?: string
@@ -97,6 +97,11 @@ export default function AdminCampaignsPage() {
     const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
     const [rejectReason, setRejectReason] = useState("")
 
+    const getBrandDisplayName = (campaign: Campaign) =>
+        campaign.brand?.company_name?.trim() ||
+        campaign.brand?.name?.trim() ||
+        "Marca desconhecida"
+
     const fetchCampaigns = useCallback(async (page = 1) => {
         setLoading(true)
         try {
@@ -118,7 +123,14 @@ export default function AdminCampaignsPage() {
             }>(`/admin/campaigns?${params.toString()}`)
 
             if (response.success) {
-                setCampaigns(Array.isArray(response.data) ? response.data : [])
+                const safeCampaigns = Array.isArray(response.data)
+                    ? response.data.map((campaign) => ({
+                        ...campaign,
+                        brand: campaign.brand ?? null,
+                    }))
+                    : []
+
+                setCampaigns(safeCampaigns)
                 setPagination({
                     current_page: response.pagination.current_page,
                     last_page: response.pagination.last_page,
@@ -386,7 +398,7 @@ export default function AdminCampaignsPage() {
                                                 <div className="flex items-center gap-2">
                                                     <Building className="h-3 w-3 text-muted-foreground" />
                                                     <span className="truncate max-w-37.5">
-                                                        {campaign.brand.company_name || campaign.brand.name}
+                                                        {getBrandDisplayName(campaign)}
                                                     </span>
                                                 </div>
                                             </td>
@@ -517,7 +529,7 @@ export default function AdminCampaignsPage() {
                                     <h2 className="text-xl font-bold">{selectedCampaign.title}</h2>
                                     <div className="flex items-center gap-2 mt-1 text-muted-foreground">
                                         <Building className="h-4 w-4" />
-                                        <span>{selectedCampaign.brand.company_name || selectedCampaign.brand.name}</span>
+                                        <span>{getBrandDisplayName(selectedCampaign)}</span>
                                     </div>
                                 </div>
                                 {getStatusBadge(selectedCampaign.status)}

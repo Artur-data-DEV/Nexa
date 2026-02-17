@@ -71,8 +71,8 @@ export function TermsModal({
                     </DialogDescription>
                 </DialogHeader>
                 
-                <ScrollArea className="flex-1 p-4 border rounded-md bg-muted/50 my-4">
-                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                <ScrollArea className="flex-1 p-4 border rounded-md bg-white my-4">
+                    <div className="contract-terms text-sm max-w-none">
                         <ReactMarkdown>{content}</ReactMarkdown>
                     </div>
                 </ScrollArea>

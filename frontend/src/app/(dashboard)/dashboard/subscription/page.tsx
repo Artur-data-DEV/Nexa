@@ -113,12 +113,13 @@ function SubscriptionForm({ plan }: { plan: SubscriptionPlan }) {
 
       if (err && typeof err === "object") {
         const maybeAxiosError = err as {
-          response?: { data?: { message?: string } };
+          response?: { data?: { message?: string; error?: string } };
           message?: string;
         };
 
         errorMessage =
           maybeAxiosError.response?.data?.message ??
+          maybeAxiosError.response?.data?.error ??
           maybeAxiosError.message ??
           errorMessage;
         if ((plan.duration_months || 0) >= 12) {

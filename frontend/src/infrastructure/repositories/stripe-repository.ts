@@ -25,6 +25,20 @@ export class ApiStripeRepository implements StripeRepositoryInterface {
     }
 
     async createPaymentMethodCheckout(): Promise<{ success: boolean; url: string; message?: string }> {
-        return this.http.post("/freelancer/stripe-payment-method-checkout");
+        const response = await this.http.post<{
+            success?: boolean;
+            message?: string;
+            url?: string;
+            data?: { url?: string };
+        }>("/freelancer/stripe-payment-method-checkout");
+
+        const url = response?.url ?? response?.data?.url ?? "";
+        const success = response?.success ?? !!url;
+
+        return {
+            success: Boolean(success),
+            url,
+            message: response?.message,
+        };
     }
 }

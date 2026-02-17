@@ -97,7 +97,7 @@ export const Footer = () => {
         </div>
 
         <div className="border-t border-gray-800 mt-6 md:mt-8 pt-6 md:pt-8 text-center text-sm text-gray-400">
-          © 2025 NEXA. Todos os direitos reservados. | CNPJ: XX.XXX.XXX/0001-XX
+          © 2025 NEXA. Todos os direitos reservados. | CNPJ: 58.033.639/0001-53
         </div>
       </div>
     </footer>
