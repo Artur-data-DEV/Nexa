@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState, useRef, useCallback, useLayoutEffect, useEffect, FormEvent, ChangeEvent } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
@@ -44,7 +44,7 @@ const parseMoney = (value: unknown): number | null => {
     if (typeof value !== "string") return null
 
     const raw = value.trim()
-    if (!raw || raw === "-" || raw === "â€”" || raw === "—") return null
+    if (!raw || raw === "-" || raw === "-”" || raw === "—") return null
 
     const cleaned = raw.replace(/[^\d,.-]/g, "")
     if (!cleaned) return null
@@ -77,7 +77,7 @@ const getContractBudgetDisplay = (contract: Contract | null): string => {
 
     if (typeof contract.formatted_budget === "string") {
         const formatted = contract.formatted_budget.trim()
-        if (formatted && formatted !== "-" && formatted !== "â€”" && formatted !== "—") {
+        if (formatted && formatted !== "-" && formatted !== "-”" && formatted !== "—") {
             return formatted
         }
     }
@@ -102,19 +102,19 @@ const getContractBudgetDisplay = (contract: Contract | null): string => {
 }
 
 const getWorkflowStatusLabel = (status: string | undefined | null) => {
-    if (!status) return "â€”";
+    if (!status) return "-”";
     const statusMap: Record<string, string> = {
         'product_received': 'Produto Recebido',
         'product_sent': 'Produto Enviado',
         'material_sent': 'Material Enviado',
-        'production_started': 'ProduÃ§Ã£o Iniciada',
-        'alignment_preparation': 'PreparaÃ§Ã£o de Alinhamento',
+        'production_started': 'Produção Iniciada',
+        'alignment_preparation': 'Preparação de Alinhamento',
         'active': 'Ativo',
-        'completed': 'ConcluÃ­do',
+        'completed': 'Concluído',
         'cancelled': 'Cancelado',
         'pending': 'Pendente',
         'draft': 'Rascunho',
-        'review': 'Em AnÃ¡lise',
+        'review': 'Em Análise',
         'approved': 'Aprovado',
         'rejected': 'Rejeitado',
     };
@@ -122,7 +122,7 @@ const getWorkflowStatusLabel = (status: string | undefined | null) => {
 };
 
 const formatDate = (date: string | undefined | null) => {
-    if (!date) return "â€”";
+    if (!date) return "-”";
     return new Date(date).toLocaleDateString('pt-BR');
 }
 
@@ -305,8 +305,8 @@ export default function MessagesPage() {
     const isArchivedChat = selectedChatState?.chat_status === "archived"
     const readOnlyStatusLabel = isArchivedChat ? "Conversa arquivada" : "Conversa encerrada"
     const readOnlyStatusDescription = isArchivedChat
-        ? "Campanha encerrada formalmente. Este chat estÃ¡ disponÃ­vel apenas para leitura."
-        : "Contrato concluÃ­do. Este chat permanece apenas para leitura, sem novas interaÃ§Ãµes."
+        ? "Campanha encerrada formalmente. Este chat está disponível apenas para leitura."
+        : "Contrato concluído. Este chat permanece apenas para leitura, sem novas interações."
     const nonArchivedChats = chats.filter(chat => chat.chat_status !== "archived")
     const archivedChats = chats.filter(chat => chat.chat_status === "archived")
     const visibleChats = chatListTab === "archived" ? archivedChats : nonArchivedChats
@@ -342,16 +342,16 @@ export default function MessagesPage() {
     }, [user?.id, refreshChatRooms])
 
     const formatDate = (value?: string | null) => {
-        if (!value) return "â€”"
+        if (!value) return "-”"
         const date = new Date(value)
-        if (Number.isNaN(date.getTime())) return "â€”"
+        if (Number.isNaN(date.getTime())) return "-”"
         return date.toLocaleDateString("pt-BR")
     }
 
     const formatCurrency = (value?: number | string | null) => {
-        if (value === null || value === undefined) return "â€”"
+        if (value === null || value === undefined) return "-”"
         const num = Number(value)
-        if (isNaN(num)) return "â€”"
+        if (isNaN(num)) return "-”"
         return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(num)
     }
 
@@ -359,7 +359,7 @@ export default function MessagesPage() {
         switch (status) {
             case "pending": return "Pendente"
             case "active": return "Ativo"
-            case "completed": return "ConcluÃ­do"
+            case "completed": return "Concluído"
             case "cancelled": return "Cancelado"
             case "disputed": return "Em disputa"
             default: return "Indefinido"
@@ -389,6 +389,36 @@ export default function MessagesPage() {
         .filter(offer => typeof offer.id === "number" && !Number.isNaN(offer.id))
 
     const pendingOffers = offerMessages.filter(offer => (offer.status || "pending") === "pending")
+    const uniqueOfferHistory = (() => {
+        const sortedOffers = [...offerMessages].sort((a, b) => {
+            const aTime = a.created_at ? new Date(a.created_at).getTime() : 0
+            const bTime = b.created_at ? new Date(b.created_at).getTime() : 0
+            return aTime - bTime
+        })
+
+        const seen = new Set<number>()
+        const unique: typeof offerMessages = []
+        for (const offer of sortedOffers) {
+            if (typeof offer.id !== "number") continue
+            if (seen.has(offer.id)) continue
+            seen.add(offer.id)
+            unique.push(offer)
+        }
+        return unique
+    })()
+    const originalOfferBudget = (() => {
+        const firstOffer = uniqueOfferHistory[0]
+        if (!firstOffer) return null
+        if (typeof firstOffer.budget === "number" && Number.isFinite(firstOffer.budget)) {
+            return firstOffer.budget
+        }
+        return parseMoney(firstOffer.formatted_budget ?? null)
+    })()
+    const shouldConfirmMilestoneReset =
+        !!contractId ||
+        uniqueOfferHistory.some(
+            (offer) => offer.status === "accepted" || typeof offer.contract_id === "number"
+        )
 
     const getContractIdFromOfferMessages = useCallback((): number | null => {
         for (let index = messages.length - 1; index >= 0; index -= 1) {
@@ -432,7 +462,7 @@ export default function MessagesPage() {
         }
     }, [getContractIdFromOfferMessages])
 
-    // FunÃ§Ã£o para recarregar o contrato explicitamente
+    // Função para recarregar o contrato explicitamente
     const refreshContract = useCallback(async () => {
         if (!selectedChat?.room_id) return;
         
@@ -513,7 +543,7 @@ export default function MessagesPage() {
         setShouldAutoScroll(distanceFromBottom < 100)
     }
 
-    // ResizeObserver para detectar mudanÃ§as de tamanho (como imagens carregando)
+    // ResizeObserver para detectar mudanças de tamanho (como imagens carregando)
     useEffect(() => {
         const container = messagesContainerRef.current
         if (!container) return
@@ -549,7 +579,7 @@ export default function MessagesPage() {
     const handleSendMessage = async () => {
         if (!selectedChat) return
         if (isChatReadOnly) {
-            toast.error("Esta conversa foi encerrada e estÃ¡ disponÃ­vel apenas para leitura.")
+            toast.error("Esta conversa foi encerrada e está disponível apenas para leitura.")
             return
         }
 
@@ -569,7 +599,7 @@ export default function MessagesPage() {
 
     const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
         if (isChatReadOnly) {
-            toast.error("NÃ£o Ã© possÃ­vel anexar arquivos em uma conversa encerrada.")
+            toast.error("Não é possível anexar arquivos em uma conversa encerrada.")
             event.target.value = ""
             return
         }
@@ -651,7 +681,7 @@ export default function MessagesPage() {
 
         const parsedContractId = contractIdParam ? Number(contractIdParam) : Number.NaN
         if (!sessionId || !Number.isFinite(parsedContractId) || parsedContractId <= 0) {
-            toast.error("NÃ£o foi possÃ­vel confirmar o pagamento do contrato.")
+            toast.error("Não foi possível confirmar o pagamento do contrato.")
             void finalizeRedirect()
             return
         }
@@ -678,7 +708,7 @@ export default function MessagesPage() {
                 const message =
                     axiosError.response?.data?.message ||
                     axiosError.message ||
-                    "NÃ£o foi possÃ­vel confirmar o pagamento do contrato."
+                    "Não foi possível confirmar o pagamento do contrato."
                 toast.error(message)
             } finally {
                 await finalizeRedirect()
@@ -714,12 +744,12 @@ export default function MessagesPage() {
 
     const handleAcceptOffer = async (offerId: number) => {
         if (isChatReadOnly) {
-            toast.error("Esta conversa foi encerrada e nÃ£o permite mais alteraÃ§Ãµes de oferta.")
+            toast.error("Esta conversa foi encerrada e não permite mais alterações de oferta.")
             return
         }
 
         if (!offerId || offerId <= 0 || Number.isNaN(offerId)) {
-            toast.error("ID da oferta invÃ¡lido")
+            toast.error("ID da oferta inválido")
             return
         }
         if (!selectedChat) return
@@ -772,12 +802,12 @@ export default function MessagesPage() {
 
     const handleRejectOffer = async (offerId: number) => {
         if (isChatReadOnly) {
-            toast.error("Esta conversa foi encerrada e nÃ£o permite mais alteraÃ§Ãµes de oferta.")
+            toast.error("Esta conversa foi encerrada e não permite mais alterações de oferta.")
             return
         }
 
         if (!offerId || offerId <= 0 || Number.isNaN(offerId)) {
-            toast.error("ID da oferta invÃ¡lido")
+            toast.error("ID da oferta inválido")
             return
         }
         if (!selectedChat) return
@@ -808,12 +838,12 @@ export default function MessagesPage() {
 
     const handleCancelOffer = async (offerId: number) => {
         if (isChatReadOnly) {
-            toast.error("Esta conversa foi encerrada e nÃ£o permite mais alteraÃ§Ãµes de oferta.")
+            toast.error("Esta conversa foi encerrada e não permite mais alterações de oferta.")
             return
         }
 
         if (!offerId || offerId <= 0 || Number.isNaN(offerId)) {
-            toast.error("ID da oferta invÃ¡lido")
+            toast.error("ID da oferta inválido")
             return
         }
         if (!selectedChat) return
@@ -851,7 +881,7 @@ export default function MessagesPage() {
                 setContractForReview(response.data[0])
                 setIsReviewModalOpen(true)
             } else {
-                toast.error("Nenhum contrato encontrado para avaliaÃ§Ã£o")
+                toast.error("Nenhum contrato encontrado para avaliação")
             }
         } catch (error) {
             console.error("Error fetching contract for review:", error)
@@ -863,7 +893,7 @@ export default function MessagesPage() {
         event.preventDefault()
         if (!selectedChat || user?.role !== "brand") return
         if (isChatReadOnly) {
-            toast.error("Esta conversa foi encerrada e nÃ£o aceita novas ofertas.")
+            toast.error("Esta conversa foi encerrada e não aceita novas ofertas.")
             return
         }
 
@@ -872,13 +902,34 @@ export default function MessagesPage() {
         const daysValue = parseInt(offerEstimatedDays, 10)
 
         if (!budgetValue || Number.isNaN(budgetValue) || budgetValue < 10) {
-            toast.error("OrÃ§amento deve ser pelo menos R$ 10,00")
+            toast.error("Orçamento deve ser pelo menos R$ 10,00")
             return
         }
 
         if (!daysValue || Number.isNaN(daysValue) || daysValue < 1) {
             toast.error("Prazo estimado deve ser pelo menos 1 dia")
             return
+        }
+
+        if (originalOfferBudget !== null && budgetValue < originalOfferBudget) {
+            toast.error(
+                `O valor da nova oferta não pode ser menor que a oferta original (${formatCurrency(originalOfferBudget)}).`
+            )
+            return
+        }
+
+        let milestoneResetConfirmed = false
+        if (shouldConfirmMilestoneReset) {
+            milestoneResetConfirmed =
+                typeof window === "undefined"
+                    ? true
+                    : window.confirm(
+                        "Ao criar uma nova oferta, o fluxo de milestones será reiniciado e deverá ser preenchido novamente do zero. Deseja continuar?"
+                    )
+
+            if (!milestoneResetConfirmed) {
+                return
+            }
         }
 
         try {
@@ -890,6 +941,7 @@ export default function MessagesPage() {
                 description: offerDescription,
                 budget: budgetValue,
                 estimated_days: daysValue,
+                confirm_milestone_reset: shouldConfirmMilestoneReset ? milestoneResetConfirmed : false,
             }
             const response = await api.post<{ success: boolean; message?: string }, typeof payload>("/offers", payload)
 
@@ -910,7 +962,7 @@ export default function MessagesPage() {
                 const redirectUrl = axiosError.response?.data?.redirect_url
                 const message =
                     axiosError.response?.data?.message ||
-                    "VocÃª precisa configurar um mÃ©todo de pagamento antes de enviar ofertas."
+                    "VocÃª precisa configurar um método de pagamento antes de enviar ofertas."
 
                 if (typeof window !== "undefined") {
                     const pendingOffer = {
@@ -989,16 +1041,16 @@ export default function MessagesPage() {
 
             setMessages((prev) => {
 
-                // Se a mensagem jÃ¡ existe (por ID ou ID temporÃ¡rio que virou real), ignora
+                // Se a mensagem já existe (por ID ou ID temporário que virou real), ignora
                 const alreadyExists = prev.some(m => m.id === incoming.id)
                 if (alreadyExists) return prev
 
-                // Se a mensagem Ã© minha e chegou via socket, preciso remover a otimista se ela ainda estiver lÃ¡ (embora o fluxo de envio jÃ¡ deva ter tratado)
+                // Se a mensagem é minha e chegou via socket, preciso remover a otimista se ela ainda estiver lá (embora o fluxo de envio já deva ter tratado)
                 // Mas como estamos recebendo via socket, o socket pode chegar antes ou depois da resposta da API.
-                // Se for minha mensagem, vamos garantir que nÃ£o duplique verificando se jÃ¡ tem uma mensagem igual recente (otimista)
+                // Se for minha mensagem, vamos garantir que não duplique verificando se já tem uma mensagem igual recente (otimista)
                 if (incoming.is_sender) {
-                    // Procura mensagem otimista (id gerado por Date.now() Ã© grande, id do banco Ã© incremental e menor)
-                    // Ou verifica por conteÃºdo e timestamp prÃ³ximo
+                    // Procura mensagem otimista (id gerado por Date.now() é grande, id do banco é incremental e menor)
+                    // Ou verifica por conteúdo e timestamp próximo
                     const isDuplicateOptimistic = prev.some(m =>
                         (m.id > 1000000000000 && m.message === incoming.message) || // ID grande = otimista
                         m.id === incoming.id
@@ -1296,7 +1348,7 @@ export default function MessagesPage() {
                                     <div className="text-xs text-muted-foreground h-4">
                                         {isChatReadOnly ? (
                                             <span className="text-amber-600">
-                                                {isArchivedChat ? "Arquivado â€¢ Somente leitura" : "Encerrado â€¢ Somente leitura"}
+                                                {isArchivedChat ? "Arquivado - Somente leitura" : "Encerrado - Somente leitura"}
                                             </span>
                                         ) : remoteTyping ? (
                                             <div className="flex items-center gap-1">
@@ -1614,7 +1666,7 @@ export default function MessagesPage() {
                                                                         </Button>
                                                                     )}
                                                                     <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-                                                                        Mensagem do Sistema â€¢ {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                                                        Mensagem do Sistema -- {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -1844,10 +1896,10 @@ export default function MessagesPage() {
                                 </DialogHeader>
                                 <form onSubmit={handleSubmitOffer} className="space-y-4 pt-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="offer-title">TÃ­tulo da Proposta</Label>
+                                        <Label htmlFor="offer-title">Título da Proposta</Label>
                                         <Input
                                             id="offer-title"
-                                            placeholder="Ex: ProduÃ§Ã£o de 3 Reels"
+                                            placeholder="Ex: Produção de 3 Reels"
                                             value={offerTitle}
                                             onChange={(e) => setOfferTitle(e.target.value)}
                                             disabled={isChatReadOnly || isSubmittingOffer}
@@ -1855,10 +1907,10 @@ export default function MessagesPage() {
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="offer-description">DescriÃ§Ã£o/Detalhes</Label>
+                                        <Label htmlFor="offer-description">Descrição/Detalhes</Label>
                                         <Textarea
                                             id="offer-description"
-                                            placeholder="Descreva o que estÃ¡ incluÃ­do nesta proposta..."
+                                            placeholder="Descreva o que está incluído nesta proposta..."
                                             value={offerDescription}
                                             onChange={(e) => setOfferDescription(e.target.value)}
                                             rows={3}
@@ -1868,7 +1920,7 @@ export default function MessagesPage() {
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <Label htmlFor="offer_budget">OrÃ§amento (R$)</Label>
+                                            <Label htmlFor="offer_budget">Orçamento (R$)</Label>
                                             <Input
                                                 id="offer_budget"
                                                 type="number"
@@ -2006,18 +2058,18 @@ export default function MessagesPage() {
                                                         </Badge>
                                                     </div>
                                                     <div className="text-sm text-muted-foreground">
-                                                        {contractDetails.description || "Sem descriÃ§Ã£o"}
+                                                        {contractDetails.description || "Sem descrição"}
                                                     </div>
                                                 </div>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div className="rounded-lg border p-4 space-y-2 text-sm">
                                                         <div className="text-xs text-muted-foreground">Campanha</div>
-                                                        <div className="font-medium">{contractDetails.campaign?.title || "â€”"}</div>
+                                                        <div className="font-medium">{contractDetails.campaign?.title || "-"}</div>
                                                         <div className="text-xs text-muted-foreground mt-3">Parceiro</div>
-                                                        <div className="font-medium">{contractDetails.other_user?.name || "â€”"}</div>
+                                                        <div className="font-medium">{contractDetails.other_user?.name || "-"}</div>
                                                     </div>
                                                     <div className="rounded-lg border p-4 space-y-2 text-sm">
-                                                        <div className="text-xs text-muted-foreground">OrÃ§amento</div>
+                                                        <div className="text-xs text-muted-foreground">Orçamento</div>
                                                         <div className="font-medium">
                                                             {getContractBudgetDisplay(contractDetails)}
                                                         </div>
@@ -2027,20 +2079,20 @@ export default function MessagesPage() {
                                                 </div>
                                                 <div className="rounded-lg border p-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                                     <div>
-                                                        <div className="text-xs text-muted-foreground">InÃ­cio</div>
+                                                        <div className="text-xs text-muted-foreground">Início</div>
                                                         <div className="font-medium">{formatDate(contractDetails.started_at || contractDetails.start_date)}</div>
                                                     </div>
                                                     <div>
-                                                        <div className="text-xs text-muted-foreground">ConclusÃ£o prevista</div>
+                                                        <div className="text-xs text-muted-foreground">Conclusão prevista</div>
                                                         <div className="font-medium">{formatDate(contractDetails.expected_completion_at || contractDetails.end_date)}</div>
                                                     </div>
                                                     <div>
-                                                        <div className="text-xs text-muted-foreground">ConcluÃ­do em</div>
+                                                        <div className="text-xs text-muted-foreground">Concluído em</div>
                                                         <div className="font-medium">{formatDate(contractDetails.completed_at)}</div>
                                                     </div>
                                                     <div>
                                                         <div className="text-xs text-muted-foreground">Dias estimados</div>
-                                                        <div className="font-medium">{contractDetails.estimated_days ?? "â€”"}</div>
+                                                        <div className="font-medium">{contractDetails.estimated_days ?? "-"}</div>
                                                     </div>
                                                 </div>
                                                 {contractDetails.requirements && (
@@ -2060,16 +2112,16 @@ export default function MessagesPage() {
                                                                 if (typeof reqs === 'object' && reqs !== null) {
                                                                     if (Array.isArray(reqs)) {
                                                                          return reqs.map((req: any, i: number) => (
-                                                                            <div key={i}>â€¢ {typeof req === 'string' ? req : JSON.stringify(req)}</div>
+                                                                            <div key={i}>• {typeof req === 'string' ? req : JSON.stringify(req)}</div>
                                                                         ));
                                                                     }
                                                                     
                                                                     const items = Object.entries(reqs).map(([key, value]) => {
                                                                         if (key === '_logistics_workflow_status') {
-                                                                            return <div key={key}><strong>Status LogÃ­stico:</strong> {getWorkflowStatusLabel(String(value))}</div>;
+                                                                            return <div key={key}><strong>Status Logístico:</strong> {getWorkflowStatusLabel(String(value))}</div>;
                                                                         }
                                                                         if (key === '_tracking_code') {
-                                                                            return <div key={key}><strong>CÃ³digo de Rastreio:</strong> {String(value)}</div>;
+                                                                            return <div key={key}><strong>Código de Rastreio:</strong> {String(value)}</div>;
                                                                         }
                                                                         if (key.startsWith('_')) return null;
 
@@ -2197,7 +2249,7 @@ export default function MessagesPage() {
                     </>
                 ) : (
                     <div className="flex-1 flex flex-col items-center justify-center gap-4 text-muted-foreground">
-                        <p>Selecione uma conversa para comeÃ§ar</p>
+                        <p>Selecione uma conversa para começar</p>
                         <div className="md:hidden">
                             <Sheet open={isListOpen} onOpenChange={setIsListOpen}>
                                 <SheetTrigger asChild>

@@ -197,6 +197,51 @@ export default function ProfilePage() {
         }
     }
 
+    const handleSavePortfolioLinks = async (links: Array<{ title?: string; url?: string }>) => {
+        setIsLoading(true)
+        try {
+            const normalizedLinks = links.map((link) => ({
+                title: (link.title || "").trim(),
+                url: (link.url || "").trim(),
+            }))
+
+            const form = new FormData()
+            form.append('project_links', JSON.stringify(normalizedLinks))
+
+            const newUser = await updateProfileUseCase.execute(form)
+            const mergedUser: User = {
+                ...user,
+                ...newUser,
+                portfolio: newUser.portfolio ?? user.portfolio,
+            }
+
+            if (!newUser.portfolio && mergedUser.portfolio) {
+                mergedUser.portfolio = {
+                    ...mergedUser.portfolio,
+                    project_links: normalizedLinks,
+                }
+            }
+
+            updateUser(mergedUser)
+            toast.success("Links do portfólio salvos com sucesso!")
+        } catch (error: unknown) {
+            console.error("Failed to save portfolio links", error)
+            const errorData = typeof error === "object" && error !== null && "response" in error
+                ? (error as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } }).response?.data
+                : undefined
+            const msg = errorData?.message || "Falha ao salvar links do portfólio"
+            const errors = errorData?.errors
+            if (errors) {
+                const firstError = Object.values(errors)[0] as string[]
+                toast.error(`${msg}: ${firstError[0]}`)
+            } else {
+                toast.error(msg)
+            }
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
     if (isEditing) {
         if (user.role === 'brand' && brandProfile) {
             return (
@@ -213,6 +258,7 @@ export default function ProfilePage() {
                 initialProfile={user}
                 onCancel={() => setIsEditing(false)}
                 onSave={handleSaveProfile}
+                onSavePortfolioLinks={handleSavePortfolioLinks}
                 isLoading={isLoading}
             />
         )

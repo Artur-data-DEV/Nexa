@@ -49,10 +49,17 @@ interface EditProfileProps {
   initialProfile: User
   onCancel: () => void
   onSave: (profile: User & { image?: File | null }) => void
+  onSavePortfolioLinks?: (links: Array<{ title: string; url: string }>) => void | Promise<void>
   isLoading?: boolean
 }
 
-export const EditProfile: React.FC<EditProfileProps> = ({ initialProfile, onCancel, onSave, isLoading = false }) => {
+export const EditProfile: React.FC<EditProfileProps> = ({
+  initialProfile,
+  onCancel,
+  onSave,
+  onSavePortfolioLinks,
+  isLoading = false
+}) => {
   const [profile, setProfile] = useState<User & { image?: File | null }>(() => {
     const niches = Array.isArray(initialProfile.niches)
       ? initialProfile.niches
@@ -200,13 +207,48 @@ export const EditProfile: React.FC<EditProfileProps> = ({ initialProfile, onCanc
     }))
   }
 
-  const handleSaveLink = (index: number) => {
-    const link = profile.portfolio?.project_links?.[index]
+  const handleSaveLink = async (index: number) => {
+    const allLinks = profile.portfolio?.project_links || []
+    const link = allLinks[index]
     if (!link?.title?.trim() || !link?.url?.trim()) {
       toast.error("Preencha o título e a URL do link.")
       return
     }
-    // toast removed as per user request
+
+    try {
+      new URL(link.url.trim())
+    } catch {
+      toast.error(`A URL "${link.url}" é inválida. Certifique-se de incluir http:// ou https://`)
+      return
+    }
+
+    if (!onSavePortfolioLinks) {
+      toast.success("Link validado. Clique em \"Salvar Alterações\" para persistir.")
+      return
+    }
+
+    for (const portfolioLink of allLinks) {
+      if (!portfolioLink.title?.trim() || !portfolioLink.url?.trim()) {
+        toast.error("Preencha o título e a URL de todos os links do portfólio")
+        return
+      }
+      try {
+        new URL(portfolioLink.url.trim())
+      } catch {
+        toast.error(`A URL "${portfolioLink.url}" é inválida. Certifique-se de incluir http:// ou https://`)
+        return
+      }
+    }
+
+    setError("")
+    await Promise.resolve(
+      onSavePortfolioLinks(
+        allLinks.map((portfolioLink) => ({
+          title: portfolioLink.title.trim(),
+          url: portfolioLink.url.trim(),
+        }))
+      )
+    )
   }
 
   const handleSave = (e?: React.FormEvent) => {
@@ -530,8 +572,9 @@ export const EditProfile: React.FC<EditProfileProps> = ({ initialProfile, onCanc
                             variant="ghost" 
                             size="icon" 
                             className="text-primary hover:text-primary/90"
+                            disabled={isLoading}
                             onClick={() => handleSaveLink(index)}
-                            title="Validar link"
+                            title="Salvar link"
                         >
                             <Save className="w-4 h-4" />
                         </Button>
